@@ -1,0 +1,180 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>⚙ System Update</h1>
+
+
+<div class="card">
+
+
+    <h3>Installed Version</h3>
+
+    <p>
+        Medical System Version {{ current_version }}
+    </p>
+
+
+
+    <h3>Available Updates</h3>
+
+
+    {% if update_available %}
+
+        <p>
+            🚀 New version available:
+            {{ latest_version }}
+        </p>
+
+
+        <p>
+            {{ latest_description }}
+        </p>
+
+
+    {% else %}
+
+        <p>
+            ✅ Your system is up to date.
+        </p>
+
+
+    {% endif %}
+
+
+
+    <!-- Update Buttons -->
+
+    <div style="
+        display:flex;
+        gap:15px;
+        align-items:center;
+        margin-top:20px;
+    ">
+
+
+        <!-- Check Update Button -->
+
+        <form method="post" action="{% url 'check_update' %}">
+
+            {% csrf_token %}
+
+            <button type="submit">
+                🔍 Check Update
+            </button>
+
+        </form>
+
+
+
+        <!-- Install Update Button -->
+
+        {% if update_available %}
+
+        <form method="post" action="{% url 'run_update' %}">
+
+            {% csrf_token %}
+
+            <button type="submit">
+                🔄 Install Update
+            </button>
+
+        </form>
+
+        {% endif %}
+
+
+
+    </div>
+
+
+</div>
+
+<div class="card" style="margin-top:20px;">
+
+    <h3>📜 Update History</h3>
+
+    <table style="width:100%; border-collapse: collapse;">
+
+        <tr>
+
+            <th style="text-align:left; padding:8px;">
+                Version
+            </th>
+
+            <th style="text-align:left; padding:8px;">
+                Date
+            </th>
+
+            <th style="text-align:left; padding:8px;">
+                Description
+            </th>
+
+            <th style="text-align:left; padding:8px;">
+                Status
+            </th>
+
+        </tr>
+
+
+        {% for item in update_history %}
+
+        <tr>
+
+            <td style="padding:8px;">
+                {{ item.version }}
+            </td>
+
+            <td style="padding:8px;">
+                {{ item.date }}
+            </td>
+
+            <td style="padding:8px;">
+                {{ item.description }}
+            </td>
+
+            <td style="padding:8px;">
+                {{ item.status }}
+            </td>
+
+        </tr>
+
+
+        {% empty %}
+
+        <tr>
+            <td colspan="4">
+                No update history available.
+            </td>
+        </tr>
+
+
+        {% endfor %}
+
+
+    </table>
+
+</div>
+
+
+
+<div class="card" style="margin-top:20px;">
+
+    <h3>📄 Update Log</h3>
+
+
+    <textarea
+        readonly
+        style="
+        width:100%;
+        height:200px;
+        padding:10px;
+        border-radius:8px;
+        "
+    >{{ update_log }}</textarea>
+
+
+</div>
+
+
+{% endblock %}

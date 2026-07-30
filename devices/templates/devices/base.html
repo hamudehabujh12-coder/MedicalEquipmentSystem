@@ -388,6 +388,21 @@ details.menu-group ul li a:hover {
     color: #4da3ff;
 }
 
+.main-content {
+    min-height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+}
+
+.page-content {
+    flex: 1;
+}
+
+.version-footer {
+    text-align: center;
+    padding: 15px;
+}
+
 </style>
 
 </head>
@@ -525,6 +540,11 @@ details.menu-group ul li a:hover {
         ☎️ Kontakt
     </a>
 
+    <a href="{% url 'system_update' %}">
+        🔄 System Update
+    </a>
+
+
     <a href="{% url 'settings' %}">
         ⚙️ Einstellungen
     </a>
@@ -546,10 +566,21 @@ details.menu-group ul li a:hover {
 
     {% endfor %}
 
-{% endif %}
-{% block content %}
-{% endblock %}
 
+{% endif %}
+<div class="main-content">
+
+    <div class="page-content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer class="version-footer">
+        Medical Equipment System |
+        Version {{ APP_VERSION }}
+    </footer>
+
+</div>
 </div>
 
 
@@ -629,6 +660,7 @@ document.querySelectorAll("details.menu-group").forEach(menu => {
 
 });
 </script>
+
 </body>
 </html>
 

@@ -1,14 +1,50 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.admin.views.decorators import staff_member_required
+from pathlib import Path
 import os
+import json
 import shutil
-from datetime import datetime
+import subprocess
+
+from datetime import datetime, date, timedelta
+
 from django.conf import settings
 from django.contrib import messages
-from django.http import FileResponse, Http404
+from django.contrib.auth import (
+    authenticate,
+    login,
+    logout,
+    update_session_auth_hash,
+)
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.models import User
+from django.contrib.admin.views.decorators import staff_member_required
+
+from django.db.models import (
+    Count,
+    Q,
+    Case,
+    When,
+    Value,
+    IntegerField,
+)
+
+from django.http import (
+    FileResponse,
+    Http404,
+    JsonResponse,
+)
+
+from django.shortcuts import (
+    render,
+    redirect,
+    get_object_or_404,
+)
+
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+
+
 from .models import (
     Device,
     Reparatur,
@@ -29,9 +65,8 @@ from .models import (
     ContactInformation,
     ContactImage,
     DashboardWidget,
-
-    
 )
+
 
 from .forms import (
     DeviceForm,
@@ -42,27 +77,9 @@ from .forms import (
     GeraetartForm,
     TechnicianDocumentForm,
     HomeInformationForm,
+    ReparaturForm,
+    ReparaturBearbeitenForm,
 )
-from django.db.models import Count
-from .forms import ReparaturForm, ReparaturBearbeitenForm
-from datetime import date, timedelta
-from django.http import JsonResponse
-from django.db.models import Q, Case, When, Value, IntegerField
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
-
-from django.contrib.auth import (
-    authenticate,
-    login,
-    logout,
-    update_session_auth_hash,
-)
-
-from django.contrib.auth.forms import PasswordChangeForm
-
-from django.contrib.auth.decorators import login_required
-
-from django.contrib.auth.models import User
 
 
 def login_view(request):
@@ -323,7 +340,7 @@ def device_list(request):
         }
 
     )
-from .models import DocumentType
+
 
 def device_detail(request, device_id):
 
@@ -1624,7 +1641,6 @@ def documents(request):
         request,
         "devices/documents.html"
     )
-from django.shortcuts import get_object_or_404
 
 @login_required
 def documents_by_type(request, document_type_id):
@@ -2116,8 +2132,7 @@ def user_edit(request, user_id):
     )
 
 
-from django.contrib.auth.models import User
-from django.contrib import messages
+
 
 @login_required
 def user_delete(request, user_id):
@@ -2315,9 +2330,6 @@ def standort_delete(request, standort_id):
 
     return redirect("standort_list")
 
-from django.contrib.auth import authenticate, login
-from django.shortcuts import render, redirect
-
 
 def login_view(request):
 
@@ -2348,7 +2360,7 @@ def login_view(request):
         "registration/login.html"
     )
 
-from django.db.models import Count
+
 
 @login_required
 def documents_home(request):
@@ -2362,8 +2374,6 @@ def documents_home(request):
             "document_types": document_types
         }
     )
-from django.shortcuts import render, redirect
-from .forms import FilterwechselForm
 
 
 @login_required
@@ -2448,10 +2458,8 @@ def filterwechsel_history(request):
         }
     )
 
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Filterwechsel
-from .forms import FilterwechselForm
-from django.contrib.auth.decorators import login_required
+
+
 
 
 @login_required
@@ -2938,6 +2946,40 @@ def create_daily_backup():
             db,
             destination
         )
+        return filename
+
+def create_update_backup():
+
+    backup_dir = os.path.join(
+        settings.BASE_DIR,
+        "backups"
+    )
+
+    os.makedirs(
+        backup_dir,
+        exist_ok=True
+    )
+
+    db_path = os.path.join(
+        settings.BASE_DIR,
+        "db.sqlite3"
+    )
+
+    filename = datetime.now().strftime(
+        "update_backup_%Y-%m-%d_%H-%M-%S.sqlite3"
+    )
+
+    destination = os.path.join(
+        backup_dir,
+        filename
+    )
+
+    shutil.copy2(
+        db_path,
+        destination
+    )
+
+    return filename
 
 
 @login_required
@@ -3948,3 +3990,227 @@ def dashboard_widget_delete(request, id):
     return redirect(
         "dashboard_widgets"
     )
+
+
+@login_required
+def system_update(request):
+
+    # ملف آخر إصدار متوفر
+    update_file = Path(settings.BASE_DIR) / "update" / "version.json"
+
+    latest_version = None
+    latest_description = None
+    update_available = False
+
+
+    # قراءة معلومات التحديث
+    if update_file.exists():
+
+        with open(update_file, "r", encoding="utf-8") as f:
+
+            data = json.load(f)
+
+            latest_version = data.get("version")
+            latest_description = data.get("description")
+
+
+        # مقارنة النسخ
+        if latest_version and latest_version != settings.APP_VERSION:
+            update_available = True
+
+
+
+    # قراءة سجل التحديثات
+    history_file = (
+        Path(settings.BASE_DIR)
+        / "update"
+        / "logs"
+        / "update_history.json"
+    )
+
+    update_history = []
+
+
+    if history_file.exists():
+
+        with open(
+            history_file,
+            "r",
+            encoding="utf-8-sig"
+        ) as f:
+
+            update_history = json.load(f)
+
+
+
+    # قراءة Update Log
+
+    log_file = (
+        Path(settings.BASE_DIR)
+        / "update"
+        / "logs"
+        / "update.log"
+    )
+
+    update_log = ""
+
+
+    if log_file.exists():
+
+        with open(
+            log_file,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            update_log = f.read()
+
+
+
+    print("Current Version:", settings.APP_VERSION)
+    print("Latest Version:", latest_version)
+    print("Update Available:", update_available)
+
+
+
+    return render(
+        request,
+        "devices/system_update.html",
+        {
+            "current_version": settings.APP_VERSION,
+            "latest_version": latest_version,
+            "latest_description": latest_description,
+            "update_available": update_available,
+            "update_history": update_history,
+            "update_log": update_log,
+        }
+    )
+
+@login_required
+def check_update(request):
+
+    update_file = Path(settings.BASE_DIR) / "update_version.json"
+
+    if not update_file.exists():
+
+        messages.error(
+            request,
+            "Update server not found."
+        )
+
+        return redirect("system_update")
+
+
+    with open(update_file, "r", encoding="utf-8") as f:
+
+        data = json.load(f)
+
+
+    latest_version = data.get("version")
+
+
+    if latest_version != settings.APP_VERSION:
+
+        # إنشاء نسخة احتياطية قبل التحديث
+        backup_file = create_update_backup()
+
+
+        messages.success(
+            request,
+            f"New update available: {latest_version}. "
+            f"Backup created: {backup_file}"
+        )
+
+
+    else:
+
+        messages.info(
+            request,
+            "Your system is already up to date."
+        )
+
+
+    return redirect("system_update")
+
+
+@login_required
+def run_update(request):
+
+    if not request.user.is_superuser:
+        return redirect("permission_denied")
+
+
+    if request.method != "POST":
+        return redirect("system_update")
+
+
+    update_script = os.path.join(
+        settings.BASE_DIR,
+        "update",
+        "scripts",
+        "update.bat"
+    )
+
+
+    if not os.path.exists(update_script):
+
+        messages.error(
+            request,
+            "Update script not found."
+        )
+
+        return redirect("system_update")
+
+
+
+    # كتابة Log قبل بدء التحديث
+
+    log_dir = os.path.join(
+        settings.BASE_DIR,
+        "update",
+        "logs"
+    )
+
+    os.makedirs(
+        log_dir,
+        exist_ok=True
+    )
+
+
+    log_file = os.path.join(
+        log_dir,
+        "update.log"
+    )
+
+
+    with open(
+        log_file,
+        "a",
+        encoding="utf-8"
+    ) as f:
+
+        f.write(
+            f"\n[{datetime.now()}] Update started from System Update page\n"
+        )
+
+
+
+    # تشغيل ملف التحديث
+
+    subprocess.Popen(
+        [
+            "cmd",
+            "/c",
+            update_script
+        ],
+        cwd=settings.BASE_DIR
+    )
+
+
+    messages.success(
+        request,
+        "Update process started successfully."
+    )
+
+
+    return redirect("system_update")

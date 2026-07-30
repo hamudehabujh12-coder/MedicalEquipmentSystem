@@ -39,6 +39,6 @@ python manage.py runserver
 
 ## Version
 
-Version 1.0
+Version 1.0.1
 
 Developed by Mohammed Abujheisha

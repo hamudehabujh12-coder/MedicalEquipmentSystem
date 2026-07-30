@@ -528,4 +528,22 @@ urlpatterns = [
     views.kontakt_edit,
     name="kontakt_edit"
     ),
+
+    path(
+    "system-update/",
+    views.system_update,
+    name="system_update"
+    ),
+
+    path(
+    "check-update/",
+    views.check_update,
+    name="check_update"
+    ),
+
+    path(
+    "run-update/",
+    views.run_update,
+    name="run_update"
+    ),
 ]

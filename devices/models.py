@@ -983,3 +983,26 @@ class DashboardWidget(models.Model):
     def __str__(self):
 
         return self.display_title
+
+
+class SystemUpdate(models.Model):
+    version = models.CharField(
+        max_length=20,
+        verbose_name="Version"
+    )
+
+    release_date = models.DateField(
+        auto_now_add=True
+    )
+
+    description = models.TextField(
+        blank=True,
+        verbose_name="Update Notes"
+    )
+
+    installed = models.BooleanField(
+        default=False
+    )
+
+    def __str__(self):
+        return self.version

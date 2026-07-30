@@ -68,6 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'devices.context_processors.app_version',
             ],
         },
     },
@@ -134,3 +135,13 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
+
+
+VERSION_FILE = BASE_DIR / "version.txt"
+
+if VERSION_FILE.exists():
+    with open(VERSION_FILE, "r") as f:
+        APP_VERSION = f.read().strip()
+else:
+    APP_VERSION = "unknown"

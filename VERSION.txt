@@ -1,5 +1,1 @@
-MedicalSystem
-Version: 1.0
-Date: 30.07.2026
-Framework: Django 6.0.7
-Python: 3.x
+1.0.0

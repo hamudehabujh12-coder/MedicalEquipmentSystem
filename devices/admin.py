@@ -82,3 +82,13 @@ class DashboardWidgetAdmin(admin.ModelAdmin):
         "widget_type",
     )
 
+from .models import SystemUpdate
+
+
+@admin.register(SystemUpdate)
+class SystemUpdateAdmin(admin.ModelAdmin):
+    list_display = (
+        "version",
+        "release_date",
+        "installed",
+    )
