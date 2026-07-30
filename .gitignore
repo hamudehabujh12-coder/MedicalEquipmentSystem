@@ -23,3 +23,17 @@ Desktop.ini
 
 # Python cache
 .pytest_cache/
+# Database
+db.sqlite3
+
+# Backups
+backups/
+
+# User uploaded files
+media/
+
+# Python virtual environment
+venv/
+
+# Environment variables
+.env
