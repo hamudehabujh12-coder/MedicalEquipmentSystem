@@ -1,0 +1,192 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>👥 Benutzerverwaltung</h1>
+
+<div style="margin-bottom:20px;">
+
+    <a href="{% url 'user_create' %}" class="add-btn">
+        ➕ Neuer Benutzer
+    </a>
+
+</div>
+
+<table class="table">
+
+    <thead>
+        <tr>
+            <th>Benutzername</th>
+            <th>Name</th>
+            <th>E-Mail</th>
+            <th>Rolle</th>
+            <th>Erstellt am</th>
+            <th>Letzter Login</th>
+            <th>Status</th>
+            <th>Aktionen</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+{% for user in users %}
+
+<tr>
+
+    <td>{{ user.username }}</td>
+
+    <td>{{ user.first_name }} {{ user.last_name }}</td>
+
+    <td>{{ user.email }}</td>
+
+    <td>
+        {% if user.is_superuser %}
+            👑 Administrator
+        {% else %}
+            👤 Benutzer
+        {% endif %}
+    </td>
+
+    <td>
+        {{ user.date_joined|date:"d.m.Y" }}
+    </td>
+
+    <td>
+        {% if user.last_login %}
+            {{ user.last_login|date:"d.m.Y H:i" }}
+        {% else %}
+            —
+        {% endif %}
+    </td>
+
+    <td>
+        {% if user.is_active %}
+            🟢 Aktiv
+        {% else %}
+            🔴 Gesperrt
+        {% endif %}
+    </td>
+    <td>
+
+        <div style="
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 200px;
+        ">
+
+
+            <a href="{% url 'user_edit' user.id %}"
+            style="
+            display:block;
+            padding:10px;
+            text-align:center;
+            background:#0d6efd;
+            color:white;
+            border-radius:8px;
+            text-decoration:none;
+            ">
+                ✏️ Bearbeiten
+            </a>
+
+
+
+
+            {% if request.user != user %}
+
+            <form method="POST"
+                action="{% url 'user_delete' user.id %}"
+                onsubmit="return confirm('Benutzer wirklich löschen?');">
+
+                {% csrf_token %}
+
+                <button type="submit"
+                        style="
+                        width:100%;
+                        padding:10px;
+                        background:#dc3545;
+                        color:white;
+                        border:none;
+                        border-radius:8px;
+                        cursor:pointer;
+                        ">
+                    🗑️ Löschen
+                </button>
+
+            </form>
+
+            {% endif %}
+
+
+        </div>
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+<style>
+
+
+.delete-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.delete-btn:hover{
+    background:#b91c1c;
+}
+
+.add-btn{
+    background:#16a34a;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.table th{
+    background:#1f2937;
+    color:white;
+    padding:15px;
+}
+
+.table td{
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:center;
+}
+
+.table tr:hover{
+    background:#f8fafc;
+}
+
+.table a{
+    text-decoration:none;
+    font-weight:bold;
+    color:#2563eb;
+}
+
+</style>
+
+
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>🏢 Firmeninformationen</h1>
+
+
+<div class="device-info-grid">
+
+
+    <div class="info-card">
+
+        <h4>Firmenname</h4>
+
+        <p>
+            {{ company.company_name|default:"—" }}
+        </p>
+
+    </div>
+
+
+
+    <div class="info-card">
+
+        <h4>Adresse</h4>
+
+        <p>
+            {{ company.address|default:"—" }}
+        </p>
+
+    </div>
+
+
+
+    <div class="info-card">
+
+        <h4>Telefon</h4>
+
+        <p>
+            {{ company.phone|default:"—" }}
+        </p>
+
+    </div>
+
+
+
+    <div class="info-card">
+
+        <h4>E-Mail</h4>
+
+        <p>
+            {{ company.email|default:"—" }}
+        </p>
+
+    </div>
+
+
+
+    <div class="info-card">
+
+        <h4>Kundennummer</h4>
+
+        <p>
+            {{ company.customer_number|default:"—" }}
+        </p>
+
+    </div>
+
+
+</div>
+
+
+
+<br>
+
+
+<a href="{% url 'firmeninformationen_edit' %}" class="backup-btn">
+    ✏️ Bearbeiten
+</a>
+
+
+
+{% endblock %}

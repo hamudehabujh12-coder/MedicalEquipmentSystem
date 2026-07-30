@@ -1,0 +1,636 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h1>📋 Gesamte Geräte</h1>
+
+
+<form method="get" id="searchForm" style="margin-bottom:25px;">
+
+
+<input 
+type="text"
+id="live_search"
+name="search"
+value="{{ search|default:'' }}"
+style="
+width:450px;
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+">
+
+
+<button type="submit"
+style="
+padding:12px 20px;
+border-radius:8px;
+background:#1f2937;
+color:white;
+border:none;
+cursor:pointer;
+">
+🔍 Suchen
+</button>
+
+
+</form>
+
+
+
+<table class="table table-hover">
+
+<thead>
+
+<tr>
+
+<th>Inventarnummer</th>
+
+<th>Seriennummer</th>
+<th>Gerätebezeichnung</th>
+<th class="filter">
+
+Geräteart ▼
+
+<div class="filter-menu">
+
+{% for art in geraetarten %}
+<a href="?geraetart={{ art.id }}">
+{{ art.name }}
+</a>
+{% endfor %}
+
+<a href="{% url 'device_list' %}">
+Alle
+</a>
+
+</div>
+
+</th>
+
+
+
+<th class="filter">
+
+Standort ▼
+
+
+<div class="filter-menu">
+
+{% for standort in standorte %}
+
+<a href="?practice={{ standort.id }}">
+🏥 {{ standort.name }}
+</a>
+
+{% endfor %}
+
+
+<a href="{% url 'device_list' %}">
+Alle
+</a>
+
+
+</div>
+
+</th>
+
+
+
+
+<th class="filter">
+
+
+Betriebsstunden ▼
+
+
+<div class="filter-menu">
+
+
+<a href="?sort=operating_hours">
+⬇ Weniger
+</a>
+
+
+<a href="?sort=-operating_hours">
+⬆ Mehr
+</a>
+
+
+</div>
+
+
+</th>
+
+
+
+
+
+
+<th class="filter">
+
+
+Nächste Wartung ▼
+
+
+<div class="filter-menu">
+
+
+<a href="?sort=next_stk">
+📅 Früheste 
+</a>
+
+
+<a href="?sort=-next_stk">
+📅 Späteste 
+</a>
+
+
+</div>
+
+
+</th>
+
+
+
+
+
+
+
+<th class="filter">
+
+
+Status ▼
+
+
+<div class="filter-menu">
+
+
+<a href="?status=Aktiv">
+🟢 Aktiv
+</a>
+
+
+<a href="?status=Nicht aktiv">
+🔴 Nicht aktiv
+</a>
+
+
+<a href="{% url 'device_list' %}">
+Alle
+</a>
+
+
+</div>
+
+
+</th>
+
+
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for device in devices %}
+
+
+<tr
+onclick="window.location='{% url 'device_detail' device.id %}'"
+style="cursor:pointer;"
+>
+
+
+<td class="searchable">
+{{ device.inventory_number }}
+</td>
+
+
+<td class="searchable">
+{{ device.serial_number }}
+</td>
+
+<td class="searchable">
+{{ device.name }}
+</td>
+
+<td class="searchable">
+{{ device.geraetart.name }}
+</td>
+
+
+<td class="searchable">
+{% if device.practice %}
+    {{ device.practice.name }}
+{% else %}
+    -
+{% endif %}
+</td>
+
+
+<td>
+
+
+{% if device.geraetart.name == "Dialyse Maschinen" %}
+
+{{ device.operating_hours|default:"-" }}
+
+{% else %}
+
+-
+
+{% endif %}
+
+
+</td>
+
+
+
+<td>
+
+
+{% if device.next_stk %}
+STK: {{ device.next_stk|date:"d.m.Y" }}<br>
+{% endif %}
+
+
+{% if device.next_mtk %}
+MTK: {{ device.next_mtk|date:"d.m.Y" }}<br>
+{% endif %}
+
+
+{% if device.next_dguv %}
+DGUV: {{ device.next_dguv|date:"d.m.Y" }}
+{% endif %}
+
+
+{% if not device.next_stk and not device.next_mtk and not device.next_dguv %}
+-
+{% endif %}
+
+
+</td>
+
+
+
+
+<td>
+
+
+{% if device.status == "Aktiv" %}
+
+🟢 Aktiv
+
+{% else %}
+
+🔴 Nicht aktiv
+
+{% endif %}
+
+
+</td>
+
+
+</tr>
+
+
+{% empty %}
+
+
+<tr>
+
+<td colspan="7">
+
+Keine Geräte gefunden.
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+
+
+<style>
+
+
+.filter{
+    position:relative;
+    cursor:pointer;
+    white-space:nowrap;
+    height:40px;
+}
+
+
+.filter-menu{
+    display:none;
+    position:absolute;
+    top:100%;
+    left:0;
+    background:white;
+    width:200px;
+    padding:10px;
+    border-radius:8px;
+    box-shadow:0 5px 15px rgba(0,0,0,.25);
+    z-index:9999;
+}
+
+
+.filter-menu.show{
+    display: block;
+
+}
+
+.filter-menu a{
+
+    display:block;
+
+    padding:6px 8px;
+
+    font-size:14px;
+
+    text-decoration:none;
+
+    color:#1f2937;
+
+    white-space:nowrap;
+
+}
+
+
+.filter-menu a:hover{
+
+    background:#e5e7eb;
+
+}
+
+.container{
+    position:relative;
+    overflow:visible;
+}
+.table{
+    overflow:visible;
+}
+
+
+
+.highlight{
+
+    background:yellow;
+    font-weight:bold;
+    padding:2px 4px;
+    border-radius:3px;
+
+}
+
+
+
+
+</style>
+
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+
+    const input = document.getElementById("live_search");
+
+    let searchText = input.value.trim();
+
+
+    if(searchText === ""){
+        return;
+    }
+
+
+    let cells = document.querySelectorAll(
+        ".table td"
+    );
+
+
+    cells.forEach(function(cell){
+
+
+        let text = cell.textContent;
+
+
+        let regex = new RegExp(
+            "(" + searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ")",
+            "gi"
+        );
+
+
+        cell.innerHTML = text.replace(
+            regex,
+            "<span class='highlight'>$1</span>"
+        );
+
+
+    });
+
+
+});
+
+</script>
+
+<script>
+
+const searchInput = document.getElementById("live_search");
+
+let timer = null;
+
+
+searchInput.addEventListener("input", function(){
+
+
+    clearTimeout(timer);
+
+
+    timer = setTimeout(function(){
+
+
+        let value = searchInput.value.trim();
+
+
+        let url = new URL(window.location.href);
+
+
+        if(value === ""){
+
+            url.searchParams.delete("search");
+
+        }
+
+        else{
+
+            url.searchParams.set(
+                "search",
+                value
+            );
+
+        }
+
+
+        window.location.href = url.toString();
+
+
+    },300);
+
+
+});
+
+
+
+document.addEventListener(
+"DOMContentLoaded",
+function(){
+
+
+let text = searchInput.value.trim();
+
+
+if(text !== ""){
+
+
+let cells = document.querySelectorAll(
+".searchable"
+);
+
+
+
+let regex = new RegExp(
+"(" + text + ")",
+"gi"
+);
+
+
+
+cells.forEach(function(cell){
+
+
+let original = cell.textContent;
+
+
+cell.innerHTML = original.replace(
+regex,
+"<mark>$1</mark>"
+);
+
+
+});
+
+
+}
+
+
+
+// إبقاء المؤشر في البحث
+
+searchInput.focus();
+
+searchInput.setSelectionRange(
+searchInput.value.length,
+searchInput.value.length
+);
+
+
+
+});
+
+</script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+
+    const filters = document.querySelectorAll(".filter");
+
+
+    filters.forEach(function(filter){
+
+
+        filter.addEventListener("click", function(event){
+
+
+            event.stopPropagation();
+
+
+            const menu = this.querySelector(".filter-menu");
+
+
+            if(menu){
+
+
+                // إغلاق كل القوائم الأخرى
+                document.querySelectorAll(".filter-menu")
+                .forEach(function(otherMenu){
+
+
+                    if(otherMenu !== menu){
+
+                        otherMenu.classList.remove("show");
+
+                    }
+
+
+                });
+
+
+                // فتح أو إغلاق القائمة الحالية
+                menu.classList.toggle("show");
+
+
+            }
+
+
+        });
+
+
+    });
+
+
+
+    // إغلاق القائمة عند الضغط خارجها
+
+    document.addEventListener("click", function(){
+
+
+        document.querySelectorAll(".filter-menu")
+        .forEach(function(menu){
+
+
+            menu.classList.remove("show");
+
+
+        });
+
+
+    });
+
+
+
+});
+
+</script>
+{% endblock %}

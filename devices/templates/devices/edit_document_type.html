@@ -1,0 +1,28 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>✏️ Dokumenttyp bearbeiten</h1>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <label>
+        Dokumenttyp:
+    </label>
+
+    <input 
+        type="text" 
+        name="name"
+        value="{{ type.name }}"
+        required
+    >
+
+    <button type="submit">
+        Speichern
+    </button>
+
+</form>
+
+{% endblock %}

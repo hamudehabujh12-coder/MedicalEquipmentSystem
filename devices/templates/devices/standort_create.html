@@ -1,0 +1,102 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>🏥 Neuer Standort</h1>
+
+<form method="POST" class="form-card">
+
+    {% csrf_token %}
+
+    <label>Name</label>
+    <input type="text" name="name" required>
+
+    <label>Adresse</label>
+    <input type="text" name="address">
+
+    <label>Telefon</label>
+    <input type="text" name="phone">
+
+    <label>E-Mail</label>
+    <input type="email" name="email">
+
+    <label>
+        <input type="checkbox" name="active" checked>
+        Standort aktiv
+    </label>
+
+    <div class="buttons">
+
+            <button type="submit" class="save-btn">
+                💾 speichern
+            </button>
+
+            <a href="{% url 'user_list' %}" class="cancel-btn">
+                ↩ Zurück
+            </a>
+
+        </div>
+
+</form>
+
+<style>
+
+.form-card{
+    max-width:700px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.form-card label{
+    display:block;
+    margin-top:18px;
+    margin-bottom:8px;
+    font-weight:bold;
+}
+
+.form-card input{
+    width:100%;
+    padding:12px;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    box-sizing:border-box;
+}
+
+.save-btn{
+    margin-top:25px;
+    background:#16a34a;
+    color:white;
+    border:none;
+    padding:14px 25px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+    font-weight:bold;
+}
+
+.save-btn:hover{
+    background:#15803d;
+}
+.cancel-btn{
+    margin-top:25px;
+    background:#6b7280;
+    color:white;
+     border:none;
+    padding:14px 25px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+    font-weight:bold;
+}
+
+.cancel-btn:hover{
+    background:#4b5563;
+}
+
+
+</style>
+
+{% endblock %}

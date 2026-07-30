@@ -1,0 +1,193 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>💾 Backup</h1>
+
+<div class="backup-card">
+
+    <h2>Datensicherung</h2>
+
+    <p>
+        Erstellen und verwalten Sie Ihre Datenbanksicherungen.
+    </p>
+
+    <form method="POST" style="margin:25px 0;">
+
+        {% csrf_token %}
+
+        <button type="submit" class="backup-btn">
+            💾 Backup erstellen
+        </button>
+
+    </form>
+
+</div>
+
+<div class="backup-table">
+
+    <h2>Vorhandene Backups</h2>
+
+    <table class="table">
+
+        <thead>
+
+            <tr>
+                <th>Dateiname</th>
+                <th>Erstellt am</th>
+                <th>Größe</th>
+                <th>Aktionen</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        {% for backup in backups %}
+
+            <tr>
+
+                <td>{{ backup.name }}</td>
+
+                <td>{{ backup.date|date:"d.m.Y H:i" }}</td>
+
+                <td>{{ backup.size }} MB</td>
+
+                <td>
+
+                    <a href="{% url 'backup_download' backup.name %}">
+                       ⬇️ Download
+                    </a>
+
+                    |
+
+                    <form method="POST"
+                          action="{% url 'backup_restore' backup.name %}"
+                          style="display:inline;"
+                          onsubmit="return confirm('Möchten Sie dieses Backup wirklich wiederherstellen? Die aktuelle Datenbank wird überschrieben.');">
+
+                        {% csrf_token %}
+
+                        <button type="submit" class="restore-btn">
+                             🔄 Wiederherstellen
+                        </button>
+
+                    </form>
+
+                    |
+
+                    <form method="POST"
+                          action="{% url 'backup_delete' backup.name %}"
+                          style="display:inline;"
+                          onsubmit="return confirm('Backup wirklich löschen?');">
+
+                        {% csrf_token %}
+
+                        <button type="submit" class="delete-btn">
+                              🗑️ Löschen
+                        </button>
+
+                    </form>>
+
+                </td>
+
+            </tr>
+
+        {% empty %}
+
+            <tr>
+
+                <td colspan="4">
+
+                    Keine Backups vorhanden.
+
+                </td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<style>
+
+.delete-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.delete-btn:hover{
+    background:#b91c1c;
+}
+
+.restore-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+    margin:0 6px;
+}
+
+.restore-btn:hover{
+    background:#1d4ed8;
+}
+
+.backup-card{
+
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    margin-bottom:30px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+.backup-btn{
+
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:14px 22px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+
+}
+
+.backup-btn:hover{
+
+    background:#1d4ed8;
+
+}
+
+.backup-table{
+
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+.backup-table a{
+
+    text-decoration:none;
+    font-weight:bold;
+
+}
+
+</style>
+
+{% endblock %}

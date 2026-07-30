@@ -1,0 +1,36 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>✏️ Standort bearbeiten</h1>
+
+<form method="POST" class="form-card">
+
+    {% csrf_token %}
+
+    <label>Name</label>
+    <input type="text" name="name" value="{{ standort.name }}">
+
+    <label>Adresse</label>
+    <input type="text" name="address" value="{{ standort.address }}">
+
+    <label>Telefon</label>
+    <input type="text" name="phone" value="{{ standort.phone }}">
+
+    <label>E-Mail</label>
+    <input type="email" name="email" value="{{ standort.email }}">
+
+    <label>
+        <input type="checkbox"
+               name="active"
+               {% if standort.active %}checked{% endif %}>
+        Standort aktiv
+    </label>
+
+    <button class="save-btn">
+        💾 Speichern
+    </button>
+
+</form>
+
+{% endblock %}

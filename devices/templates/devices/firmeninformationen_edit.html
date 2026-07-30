@@ -1,0 +1,156 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>✏️ Firmeninformationen bearbeiten</h1>
+
+
+<div class="backup-card">
+
+
+<form method="POST">
+
+    {% csrf_token %}
+
+
+    <label>
+        Firmenname
+    </label>
+
+    <input
+        type="text"
+        name="company_name"
+        value="{{ company.company_name }}"
+        required
+    >
+
+
+
+    <label>
+        Adresse
+    </label>
+
+    <textarea
+        name="address"
+        rows="3"
+    >{{ company.address }}</textarea>
+
+
+
+    <label>
+        Telefon
+    </label>
+
+    <input
+        type="text"
+        name="phone"
+        value="{{ company.phone }}"
+    >
+
+
+
+    <label>
+        E-Mail
+    </label>
+
+    <input
+        type="email"
+        name="email"
+        value="{{ company.email }}"
+    >
+
+
+
+    <label>
+        Kundennummer
+    </label>
+
+    <input
+        type="text"
+        name="customer_number"
+        value="{{ company.customer_number }}"
+    >
+
+
+
+    <br><br>
+
+
+    <button type="submit" class="backup-btn">
+        💾 Speichern
+    </button>
+
+
+    <a href="{% url 'firmeninformationen' %}" class="backup-btn">
+        ❌ Abbrechen
+    </a>
+
+
+</form>
+
+
+</div>
+
+
+
+<style>
+
+.backup-card{
+
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+label{
+
+    display:block;
+    margin-top:15px;
+    font-weight:bold;
+
+}
+
+
+input,
+textarea{
+
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border-radius:8px;
+    border:1px solid #ccc;
+
+}
+
+
+.backup-btn{
+
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:12px 25px;
+    border-radius:8px;
+    cursor:pointer;
+    text-decoration:none;
+
+}
+
+
+.cancel-btn{
+
+    background:#6b7280;
+    color:white;
+    padding:12px 25px;
+    border-radius:8px;
+    text-decoration:none;
+    margin-left:10px;
+
+}
+
+</style>
+
+
+{% endblock %}

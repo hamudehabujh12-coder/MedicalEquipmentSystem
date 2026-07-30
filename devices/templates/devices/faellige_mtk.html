@@ -1,0 +1,71 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>❤️ Fällige MTK</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Inventarnummer</th>
+            <th>Gerätebezeichnung</th>
+            <th>Praxis</th>
+            <th>Nächste MTK</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for device in devices %}
+
+        <tr
+            onclick="window.location='{% url 'device_detail' device.id %}'"
+            onclick="window.location='{% url 'device_detail' device.id %}'"
+            style="cursor:pointer;
+            {% if device.next_mtk < heute %}
+                background-color:#ffcccc;
+            {% else %}
+                background-color:#fff3cd;
+            {% endif %}
+            "
+        >
+
+            <td>
+                {{ device.inventory_number }}
+            </td>
+
+            <td>{{ device.name }}</td>
+
+            <td>{{ device.practice }}</td>
+
+            <td>{{ device.next_mtk|date:"d.m.Y" }}</td>
+
+            <td>
+                {% if device.next_mtk < heute %}
+                    🔴 MTK überfällig
+
+                {% else %}
+                    🟡 MTK fällig
+
+                {% endif %}
+
+            </td>
+            
+        </tr>
+
+    {% empty %}
+
+        <tr>
+            <td colspan="5" style="text-align:center;">
+                Keine MTK in den nächsten 30 Tagen fällig.
+            </td>
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

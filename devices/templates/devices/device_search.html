@@ -1,0 +1,72 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>🔍 Gerätesuche</h1>
+
+<form method="get" style="margin-bottom:25px;">
+
+    <input
+        type="text"
+        name="q"
+        value="{{ query }}"
+        placeholder="Seriennummer, Inventarnummer oder Gerätebezeichnung eingeben..."
+        style="width:400px; padding:12px; border:1px solid #ccc; border-radius:6px; font-size:16px;">
+
+    <button
+        type="submit"
+        style="padding:12px 20px; background:#1f2937; color:white; border:none; border-radius:6px; cursor:pointer;">
+        🔍 Suchen
+    </button>
+
+</form>
+
+<table class="table">
+
+    <thead>
+        <tr>
+            <th>Inventarnummer</th>
+            <th>Seriennummer</th>
+            <th>Gerätebezeichnung</th>
+            <th>Standort</th>
+            <th>Nächste Wartung</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for device in devices %}
+
+        <tr onclick="window.location='{% url 'device_detail' device.id %}'" style="cursor:pointer;">
+
+            <td>{{ device.inventory_number }}</td>
+
+            <td>{{ device.serial_number }}</td>
+
+            <td>{{ device.name }}</td>
+
+            <td>{{ device.location }}</td>
+
+            <td>{{ device.next_maintenance|date:"d.m.Y" }}</td>
+
+        </tr>
+
+    {% empty %}
+
+        <tr>
+
+            <td colspan="5" style="text-align:center; padding:20px;">
+
+                Keine Geräte gefunden.
+
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

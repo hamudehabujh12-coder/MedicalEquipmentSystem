@@ -1,0 +1,80 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="delete-confirm">
+
+<h2>🗑️ Datei löschen</h2>
+
+<p>
+Möchten Sie diese Datei wirklich löschen?
+</p>
+
+<p>
+<strong>
+📄 {{ document.file.name }}
+</strong>
+</p>
+
+
+<form method="POST">
+
+{% csrf_token %}
+
+<button class="delete-button">
+Ja, löschen
+</button>
+
+
+<a href="{% url 'device_detail' document.device.id %}"
+class="cancel-button">
+Nein, zurück
+</a>
+
+</form>
+
+
+</div>
+
+
+<style>
+
+.delete-confirm{
+
+background:white;
+padding:30px;
+border-radius:15px;
+max-width:500px;
+margin:50px auto;
+box-shadow:0 5px 15px rgba(0,0,0,.15);
+
+}
+
+
+.delete-button{
+
+background:#dc2626;
+color:white;
+border:none;
+padding:12px 20px;
+border-radius:8px;
+cursor:pointer;
+
+}
+
+
+.cancel-button{
+
+background:#6b7280;
+color:white;
+padding:12px 20px;
+border-radius:8px;
+text-decoration:none;
+margin-left:10px;
+
+}
+
+</style>
+
+
+{% endblock %}

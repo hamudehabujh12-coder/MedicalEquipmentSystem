@@ -1,0 +1,526 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>📁 {{ document_type }}</h1>
+
+
+<div class="top-bar">
+
+<input 
+type="text" 
+id="searchInput"
+placeholder="🔍 Dokument suchen..."
+>
+
+</div>
+
+
+
+<table class="table" id="documentsTable">
+
+
+<thead>
+
+<tr>
+
+<th>🔢 Inventarnummer</th>
+<th>🔢 Seriennummer</th>
+<th style="position:relative;">
+
+    ⚙️ Geräteart
+
+    <span id="geraetart-arrow" style="cursor:pointer;">▼</span>
+
+
+    <div id="geraetart-menu" class="filter-menu">
+
+
+        {% for art in geraetarten %}
+
+        <a href="?geraetart={{ art.id }}">
+            {{ art.name }}
+        </a>
+
+        {% endfor %}
+
+
+        <a href="{% url 'documents_by_type' document_type_id=document_type.id %}">
+            Alle
+        </a>
+
+
+    </div>
+
+</th>
+<th style="position:relative;">
+
+    📍 Standort
+
+    <span id="standort-arrow" style="cursor:pointer;">▼</span>
+
+    <div id="standort-menu" class="filter-menu">
+
+        {% for standort in standorte %}
+            <a href="?practice={{ standort.id }}">
+                🏥 {{ standort.name }}
+            </a>
+        {% endfor %}
+
+        <a href="?">Alle</a>
+
+    </div>
+
+</th>
+<th>📄 Dokument</th>
+<th>⚙️ Aktionen</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for doc in documents %}
+
+
+<tr>
+
+
+<td>
+
+{% if doc.device %}
+
+{{ doc.device.inventory_number }}
+
+{% else %}
+
+—
+
+{% endif %}
+
+</td>
+
+
+
+<td>
+
+{% if doc.device %}
+
+{{ doc.device.serial_number }}
+
+{% else %}
+
+—
+
+{% endif %}
+
+</td>
+
+
+
+<td>
+
+{% if doc.device %}
+
+{{ doc.device.name }}
+
+{% else %}
+
+—
+
+{% endif %}
+
+</td>
+
+
+
+<td>
+
+{% if doc.device %}
+
+{{ doc.device.practice.name }}
+
+{% else %}
+
+—
+
+{% endif %}
+
+</td>
+
+
+
+<td>
+
+📄
+
+{% if doc.display_name %}
+
+{{ doc.display_name }}
+
+{% else %}
+
+{{ doc.file.name|cut:"general_documents/" }}
+
+{% endif %}
+
+</td>
+
+
+
+<td>
+
+
+<a href="{{ doc.file.url }}" target="_blank">
+
+👁 Öffnen
+
+</a>
+
+
+
+{% if request.user.is_superuser %}
+
+<form method="POST" 
+      action="{% url 'document_delete' doc.id %}"
+      style="display:inline;"
+      onsubmit="return confirm('Dokument löschen?');">
+
+    {% csrf_token %}
+
+    <button type="submit" class="delete-link">
+        🗑 Löschen
+    </button>
+
+</form>
+
+{% endif %}
+
+</td>
+
+
+</tr>
+
+
+
+{% empty %}
+
+
+<tr>
+
+<td colspan="6">
+
+Keine Dokumente vorhanden.
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+
+
+
+<style>
+
+.filter{
+    position:relative;
+    cursor:pointer;
+    white-space:nowrap;
+    height:40px;
+}
+
+
+.filter-menu{
+    display:none;
+    position:absolute;
+    top:100%;
+    left:0;
+    background:white;
+    width:180px;
+    padding:8px;
+    border-radius:8px;
+    box-shadow:0 5px 15px rgba(0,0,0,.25);
+    z-index:9999;
+}
+
+/* احذف هذا السطر نهائياً */
+/*
+.filter:hover .filter-menu{
+    display:block;
+}
+*/
+
+.filter-menu a{
+    display:block;
+    padding:8px;
+    text-decoration:none;
+    color:#1f2937;
+}
+
+.filter-menu a:hover{
+    background:#e5e7eb;
+}
+
+
+.top-bar{
+
+margin-bottom:20px;
+
+}
+.container{
+    overflow:visible;
+    position:relative;
+}
+
+thead{
+    overflow:visible;
+}
+
+.filter{
+    position:relative;
+}
+
+
+#searchInput{
+
+width:350px;
+
+padding:12px;
+
+border-radius:8px;
+
+border:1px solid #ccc;
+
+font-size:16px;
+
+}
+
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    box-shadow:0 4px 12px rgba(0,0,0,.1);
+    border-radius:10px;
+    overflow:visible;
+}
+
+
+
+.table th{
+
+background:#1f2937;
+
+color:white;
+
+padding:15px;
+
+text-align:center;
+
+}
+
+
+
+.table td{
+
+padding:14px;
+
+border-bottom:1px solid #ddd;
+
+text-align:center;
+
+}
+
+
+/* مهم: إزالة اللون الأزرق عند المرور */
+
+.table tr:hover{
+
+background:white;
+
+}
+
+
+/* منع أي تأثير على الصف */
+
+.table tbody tr{
+
+transition:none;
+
+}
+
+
+
+/* الروابط */
+
+.table a{
+
+text-decoration:none;
+
+color:#2563eb;
+
+font-weight:bold;
+
+margin:5px;
+
+}
+
+
+
+.table a:hover{
+
+color:#2563eb;
+
+text-decoration:none;
+
+}
+
+
+
+/* زر الحذف */
+
+.delete-link{
+
+color:#dc2626 !important;
+
+}
+
+
+
+.delete-link:hover{
+
+color:#dc2626 !important;
+
+}
+
+
+
+</style>
+
+
+
+
+
+<script>
+
+
+document
+.getElementById("searchInput")
+.addEventListener("keyup",function(){
+
+
+let filter=this.value.toLowerCase();
+
+
+let rows=document
+.querySelectorAll("#documentsTable tbody tr");
+
+
+
+rows.forEach(function(row){
+
+
+let text=row.innerText.toLowerCase();
+
+
+if(text.includes(filter)){
+
+
+row.style.display="";
+
+}
+
+else{
+
+
+row.style.display="none";
+
+}
+
+
+});
+
+
+});
+
+
+</script>
+
+<script>
+const arrow = document.getElementById("standort-arrow");
+const menu = document.getElementById("standort-menu");
+
+arrow.addEventListener("click", function(e){
+    e.stopPropagation();
+
+    if(menu.style.display === "block"){
+        menu.style.display = "none";
+    }else{
+        menu.style.display = "block";
+    }
+});
+
+menu.addEventListener("click", function(e){
+    e.stopPropagation();
+});
+
+document.addEventListener("click", function(){
+    menu.style.display = "none";
+});
+</script>
+
+<script>
+
+const geraetartArrow = document.getElementById("geraetart-arrow");
+const geraetartMenu = document.getElementById("geraetart-menu");
+
+
+geraetartArrow.addEventListener("click", function(e){
+
+    e.stopPropagation();
+
+
+    if(geraetartMenu.style.display === "block"){
+
+        geraetartMenu.style.display = "none";
+
+    }
+
+    else{
+
+        geraetartMenu.style.display = "block";
+
+    }
+
+});
+
+
+geraetartMenu.addEventListener("click", function(e){
+
+    e.stopPropagation();
+
+});
+
+
+document.addEventListener("click", function(){
+
+    geraetartMenu.style.display = "none";
+
+});
+
+</script>
+
+{% endblock %}

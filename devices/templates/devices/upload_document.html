@@ -1,0 +1,21 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>📂 Dokument hochladen</h1>
+
+<h3>{{ device.name }}</h3>
+
+<form method="post" enctype="multipart/form-data">
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        Hochladen
+    </button>
+
+</form>
+
+{% endblock %}

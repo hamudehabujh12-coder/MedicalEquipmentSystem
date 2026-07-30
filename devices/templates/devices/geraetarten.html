@@ -1,0 +1,139 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h1>🩺 Gerätarten</h1>
+
+<div style="margin-bottom:20px;">
+
+    <a href="{% url 'geraetart_create' %}" class="add-btn">
+        ➕ Gerätart hinzufügen
+    </a>
+
+</div>
+
+<table class="table">
+
+    <thead>
+
+        <tr>
+
+            <th>Gerätart</th>
+
+            <th>Aktionen</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for art in geraetarten %}
+
+        <tr>
+
+            <td>{{ art.name }}</td>
+
+            <td>
+
+                <a href="{% url 'geraetart_update' art.id %}">
+                    ✏️ Bearbeiten
+                </a>
+
+                |
+
+                <form method="POST"
+                      action="{% url 'geraetart_delete' art.id %}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Gerätart wirklich löschen?');">
+
+                    {% csrf_token %}
+
+                    <button class="delete-btn" type="submit">
+                        🗑️ Löschen
+                    </button>
+
+                </form>
+
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+
+            <td colspan="2">
+                Keine Gerätarten vorhanden.
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+<style>
+
+
+.delete-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.delete-btn:hover{
+    background:#b91c1c;
+}
+
+.add-btn{
+    background:#16a34a;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.table th{
+    background:#1f2937;
+    color:white;
+    padding:15px;
+}
+
+.table td{
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:center;
+}
+
+.table tr:hover{
+    background:#f8fafc;
+}
+
+.table a{
+    text-decoration:none;
+    font-weight:bold;
+    color:#2563eb;
+}
+
+</style>
+
+{% endblock %}

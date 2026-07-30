@@ -1,0 +1,317 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>📤 Export</h1>
+
+
+<div class="backup-card">
+
+    <h2>Datenexport</h2>
+
+    <p>
+        Exportieren Sie Gerätedaten nach Excel.
+    </p>
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+
+        <div class="filter-box">
+
+            <label>
+                Geräteart:
+            </label>
+
+
+            <select name="geraetart">
+
+                <option value="">
+                    Alle Geräte
+                </option>
+
+
+                {% for art in geraetearten %}
+
+                <option value="{{ art.name }}">
+                    {{ art.name }}
+                </option>
+
+                {% endfor %}
+
+
+            </select>
+
+
+
+            <label>
+                Standort:
+            </label>
+
+
+            <select name="standort">
+
+
+                <option value="">
+                    Alle Standorte
+                </option>
+
+
+                {% for ort in standorte %}
+
+                <option value="{{ ort.name }}">
+                    {{ ort.name }}
+                </option>
+
+
+                {% endfor %}
+
+
+            </select>
+
+
+        </div>
+
+
+        <br>
+
+
+        <button class="backup-btn">
+            📤 Export erstellen
+        </button>
+
+
+    </form>
+
+
+</div>
+
+
+
+
+<div class="backup-table">
+
+    <h2>Vorhandene Exporte</h2>
+
+
+    <table class="table">
+
+
+        <thead>
+
+            <tr>
+
+                <th>Dateiname</th>
+
+                <th>Erstellt am</th>
+
+                <th>Größe</th>
+
+                <th>Aktionen</th>
+
+            </tr>
+
+
+        </thead>
+
+
+
+        <tbody>
+
+
+        {% for export in exports %}
+
+
+            <tr>
+
+
+                <td>
+                    {{ export.name }}
+                </td>
+
+
+                <td>
+                    {{ export.date|date:"d.m.Y H:i" }}
+                </td>
+
+
+                <td>
+                    {{ export.size }} MB
+                </td>
+
+
+                <td>
+
+
+                    <a href="{% url 'export_download' export.name %}">
+                        ⬇️ Download
+                    </a>
+
+
+
+                    |
+
+
+
+                    <form method="POST"
+                          action="{% url 'export_delete' export.name %}"
+                          style="display:inline;"
+                          onsubmit="return confirm('Export wirklich löschen?');">
+
+
+                        {% csrf_token %}
+
+
+                        <button type="submit" class="delete-btn">
+
+                            🗑️ Löschen
+
+                        </button>
+
+
+                    </form>
+
+
+                </td>
+
+
+            </tr>
+
+
+        {% empty %}
+
+
+            <tr>
+
+                <td colspan="4">
+
+                    Keine Exporte vorhanden.
+
+                </td>
+
+            </tr>
+
+
+        {% endfor %}
+
+
+        </tbody>
+
+
+    </table>
+
+
+</div>
+
+
+
+
+<style>
+
+
+.filter-box{
+
+    display:flex;
+    gap:20px;
+    align-items:center;
+    flex-wrap:wrap;
+
+}
+
+
+.filter-box label{
+
+    font-weight:bold;
+
+}
+
+
+.filter-box select{
+
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    min-width:200px;
+
+}
+
+
+
+.delete-btn{
+
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+
+}
+
+
+.delete-btn:hover{
+
+    background:#b91c1c;
+
+}
+
+
+
+.backup-card{
+
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    margin-bottom:30px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+
+.backup-btn{
+
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:14px 22px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+
+}
+
+
+.backup-btn:hover{
+
+    background:#1d4ed8;
+
+}
+
+
+
+.backup-table{
+
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+.backup-table a{
+
+    text-decoration:none;
+    font-weight:bold;
+
+}
+
+
+</style>
+
+
+{% endblock %}

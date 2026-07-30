@@ -1,0 +1,17 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1 style="color:red;">
+    ⛔ Zugriff verweigert
+</h1>
+
+<p>
+Sie haben keine Berechtigung für diese Seite.
+</p>
+
+<a href="{% url 'home' %}">
+← Zurück
+</a>
+
+{% endblock %}

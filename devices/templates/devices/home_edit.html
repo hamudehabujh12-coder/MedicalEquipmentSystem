@@ -1,0 +1,179 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>🏠 Home bearbeiten</h1>
+
+<div class="backup-card">
+
+<form method="POST" enctype="multipart/form-data">
+
+    {% csrf_token %}
+
+    <label><strong>Titel</strong></label>
+
+    {{ form.title }}
+
+    <br><br>
+
+    <label><strong>Bilder hinzufügen</strong></label>
+
+    <input
+        type="file"
+        name="images"
+        multiple
+    >
+
+    <br><br>
+
+    {% if home.images.all %}
+
+    <h3>Vorhandene Bilder</h3>
+
+    <div class="gallery">
+
+        {% for image in home.images.all %}
+
+        <div class="image-card">
+
+            <img src="{{ image.image.url }}">
+
+            <label class="delete-label">
+                <input
+                    type="checkbox"
+                    name="delete_images"
+                    value="{{ image.id }}">
+                Bild löschen
+            </label>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    <br>
+
+    {% endif %}
+
+    <div class="button-group">
+
+        <button class="backup-btn" type="submit">
+            💾 Speichern
+        </button>
+
+        <button
+            class="delete-btn"
+            type="submit"
+            name="delete_selected"
+            value="1">
+
+            🗑 Ausgewählte Bilder löschen
+
+        </button>
+
+    </div>
+
+</form>
+
+</div>
+
+<style>
+
+.backup-card{
+
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+.button-group{
+
+    display:flex;
+    gap:12px;
+    margin-top:20px;
+
+}
+
+.backup-btn{
+
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:8px;
+    cursor:pointer;
+
+}
+
+.backup-btn:hover{
+
+    background:#1d4ed8;
+
+}
+
+.delete-btn{
+
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:8px;
+    cursor:pointer;
+
+}
+
+.delete-btn:hover{
+
+    background:#b91c1c;
+
+}
+
+.gallery{
+
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:20px;
+    margin-top:25px;
+
+}
+
+.image-card{
+
+    background:#fff;
+    border-radius:15px;
+    padding:10px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    text-align:center;
+
+}
+
+.image-card img{
+
+    width:100%;
+    height:220px;
+    object-fit:cover;
+    border-radius:12px;
+
+}
+
+.delete-label{
+
+    display:block;
+    margin-top:10px;
+    font-size:15px;
+    cursor:pointer;
+
+}
+
+.delete-label input{
+
+    margin-right:8px;
+
+}
+
+</style>
+
+{% endblock %}

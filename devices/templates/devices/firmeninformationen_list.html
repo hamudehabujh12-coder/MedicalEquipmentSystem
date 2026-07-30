@@ -1,0 +1,172 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>🏢 Firmeninformationen</h1>
+
+
+<form method="GET" id="search-form" style="margin-bottom:25px;">
+
+
+<input 
+
+type="text"
+
+id="search-input"
+
+name="search"
+
+value="{{ search|default:'' }}"
+
+placeholder="Suche nach Firma oder Adresse..."
+
+style="
+width:450px;
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+"
+
+
+>
+
+
+<button type="submit"
+
+style="
+padding:12px 20px;
+border-radius:8px;
+background:#1f2937;
+color:white;
+border:none;
+cursor:pointer;
+"
+>
+
+🔍 Suchen
+
+</button>
+
+</form>
+
+<table class="table">
+
+
+
+<tr>
+
+<th>Firmenname</th>
+<th>Adresse</th>
+<th>Telefon</th>
+<th>E-Mail</th>
+<th>Ansprechpartner</th>
+<th>Kundennummer</th>
+
+</tr>
+
+{% for company in companies %}
+
+<tr>
+
+<td>
+{{ company.company_name }}
+</td>
+
+
+<td>
+{{ company.address|default:"—" }}
+</td>
+
+
+<td>
+{{ company.phone|default:"—" }}
+</td>
+
+
+<td>
+{{ company.email|default:"—" }}
+</td>
+
+<td>
+{{ company.ansprechpartner|default:"—" }}
+</td>
+
+<td>
+{{ company.customer_number|default:"—" }}
+</td>
+
+
+</tr>
+
+
+{% empty %}
+
+<tr>
+
+<td colspan="5">
+
+Keine Firmen vorhanden.
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</table>
+
+
+</div>
+
+
+
+<style>
+
+.backup-card{
+
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    margin-bottom:30px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+.backup-card input{
+
+    width:70%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+
+}
+
+
+.backup-btn{
+
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:8px;
+    cursor:pointer;
+
+}
+
+
+.backup-table{
+
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+</style>
+
+
+{% endblock %}

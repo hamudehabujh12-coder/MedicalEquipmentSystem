@@ -1,0 +1,29 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h2>Gerät löschen</h2>
+
+<p>
+Möchten Sie das Gerät 
+<strong>{{ device.name }}</strong>
+wirklich löschen?
+</p>
+
+
+<form method="POST">
+
+{% csrf_token %}
+
+<button type="submit">
+Ja, löschen
+</button>
+
+<a href="{% url 'device_detail' device.id %}">
+Nein
+</a>
+
+</form>
+
+
+{% endblock %}

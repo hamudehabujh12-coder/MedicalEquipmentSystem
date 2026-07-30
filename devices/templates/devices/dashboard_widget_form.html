@@ -1,0 +1,365 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>
+    📊 Neues Dashboard Widget
+</h1>
+
+
+<form method="post">
+
+{% csrf_token %}
+
+
+
+<div class="form-group">
+
+<label>
+    Widget Typ
+</label>
+
+
+<select
+    name="widget_type"
+    id="widget_type"
+    class="form-control"
+    onchange="toggleDeviceFields()"
+    required
+>
+
+<option value="">
+    Bitte wählen
+</option>
+
+
+{% for value,label in types %}
+
+<option value="{{ value }}"
+{% if widget and widget.widget_type == value %}
+selected
+{% endif %}
+>
+{{ label }}
+</option>
+
+{% endfor %}
+
+
+</select>
+
+</div>
+
+
+
+
+<div id="device-fields" style="display:none;">
+
+
+<div class="form-group">
+
+<label>
+    Standort
+</label>
+
+
+<select
+name="standort"
+class="form-control"
+>
+
+
+<option value="">
+---------
+</option>
+
+
+{% for s in standorte %}
+
+<option value="{{ s.id }}">
+{{ s.name }}
+</option>
+
+{% endfor %}
+
+
+</select>
+
+
+</div>
+
+
+
+
+<div class="form-group">
+
+<label>
+    Geräteart
+</label>
+
+
+<select
+name="geraetart"
+class="form-control"
+>
+
+
+<option value="">
+---------
+</option>
+
+
+{% for g in geraetarten %}
+
+<option value="{{ g.id }}">
+{{ g.name }}
+</option>
+
+{% endfor %}
+
+
+</select>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="form-group">
+
+
+<label>
+    Eigener Titel (optional)
+</label>
+
+
+<input
+type="text"
+name="title"
+class="form-control"
+value="{{ widget.title|default:'' }}"
+>
+
+
+</div>
+
+
+
+
+
+
+<div class="form-group">
+
+<label>Farbe</label>
+
+<select
+name="color"
+class="form-control"
+>
+
+<option value="primary"
+{% if widget.color == "primary" %}selected{% endif %}
+>
+🔵 Blau
+</option>
+
+
+<option value="success"
+{% if widget.color == "success" %}selected{% endif %}
+>
+🟢 Grün
+</option>
+
+
+<option value="danger"
+{% if widget.color == "danger" %}selected{% endif %}
+>
+🔴 Rot
+</option>
+
+
+<option value="warning"
+{% if widget.color == "warning" %}selected{% endif %}
+>
+🟡 Gelb
+</option>
+
+
+<option value="info"
+{% if widget.color == "info" %}selected{% endif %}
+>
+🔷 Türkis
+</option>
+
+
+<option value="purple"
+{% if widget.color == "purple" %}selected{% endif %}
+>
+🟣 Lila
+</option>
+
+
+<option value="dark"
+{% if widget.color == "dark" %}selected{% endif %}
+>
+⚫ Dunkel
+</option>
+
+<option value="orange"
+{% if widget.color == "orange" %}selected{% endif %}
+>
+🟠 Orange
+</option>
+
+
+<option value="teal"
+{% if widget.color == "teal" %}selected{% endif %}
+>
+🟦 Petrol
+</option>
+
+
+<option value="pink"
+{% if widget.color == "pink" %}selected{% endif %}
+>
+🩷 Pink
+</option>
+
+
+<option value="brown"
+{% if widget.color == "brown" %}selected{% endif %}
+>
+🟤 Braun
+</option>
+
+
+<option value="gray"
+{% if widget.color == "gray" %}selected{% endif %}
+>
+⚪ Grau
+</option>
+</select>
+
+</div>
+
+<div class="form-group">
+
+
+<label>
+    Reihenfolge
+</label>
+
+
+<input
+type="number"
+name="order"
+value="{{ widget.order|default:0 }}"
+class="form-control"
+>
+
+
+</div>
+
+
+
+
+
+
+<div class="form-check">
+
+
+<input
+type="checkbox"
+name="visible"
+{% if widget.visible or not widget %}
+checked
+{% endif %}
+>
+
+
+<label>
+Im Dashboard anzeigen
+</label>
+
+
+</div>
+
+
+
+
+
+<br>
+
+
+<button
+type="submit"
+class="btn btn-success"
+>
+
+💾 Widget speichern
+
+</button>
+
+
+
+<a
+href="{% url 'dashboard_widgets' %}"
+class="btn btn-secondary"
+>
+
+Zurück
+
+</a>
+
+
+
+</form>
+
+
+
+
+
+<script>
+
+
+function toggleDeviceFields(){
+
+
+const type =
+document.getElementById("widget_type").value;
+
+
+const fields =
+document.getElementById("device-fields");
+
+
+
+if(type === "devices"){
+
+fields.style.display="block";
+
+}
+
+else{
+
+fields.style.display="none";
+
+}
+
+
+}
+
+
+toggleDeviceFields();
+
+
+
+</script>
+
+
+{% endblock %}

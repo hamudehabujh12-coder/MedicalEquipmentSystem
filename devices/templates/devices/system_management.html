@@ -1,0 +1,51 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="settings-container">
+
+    <h1>⚙️ Systemverwaltung</h1>
+
+    <div class="settings-cards">
+
+        <!-- Home Bilder -->
+        <div class="settings-card">
+
+            <h2>🏠 Home Bilder</h2>
+
+            <p>
+                Startseitenbilder verwalten
+            </p>
+
+          
+
+                <a href="{% url 'home_slider_edit' %}">
+                    <button>
+                        Home-Bilder ändern
+                    </button>
+                </a>
+        </div>
+
+
+        <!-- Design -->
+        <div class="settings-card">
+
+            <h2>🎨 Design</h2>
+
+            <p>
+                System Design ändern
+            </p>
+
+            <a href="{% url 'system_settings' %}">
+                <button>
+                    Design ändern
+                </button>
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

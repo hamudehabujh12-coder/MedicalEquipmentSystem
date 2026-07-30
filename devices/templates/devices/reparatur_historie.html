@@ -1,0 +1,222 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h1>🗂 Reparaturhistorie</h1>
+
+
+<!-- Suchfeld -->
+<form method="GET" id="search-form" style="margin-bottom:25px;">
+
+<input 
+type="text"
+id="search-input"
+name="search"
+value="{{ search|default:'' }}"
+placeholder="Suche nach Inventarnummer, Seriennummer, Problem oder Ausführung..."
+style="
+width:450px;
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+">
+
+<button type="submit"
+style="
+padding:12px 20px;
+border-radius:8px;
+background:#1f2937;
+color:white;
+border:none;
+cursor:pointer;
+">
+🔍 Suchen
+</button>
+
+</form>
+
+
+
+<table class="table">
+
+<tr>
+    <th>Gerät</th>
+    <th>Inventarnummer</th>
+    <th>Seriennummer</th>
+    <th>Problemmeldung</th>
+    <th>Reparaturausführung</th>
+    <th>Datum</th>
+    <th>Status</th>
+</tr>
+
+{% for reparatur in reparaturen %}
+
+<tr onclick="window.location.href='{% url 'reparatur_detail' reparatur.id %}?readonly=1';"
+    style="cursor:pointer;">
+
+    <td>
+        {{ reparatur.geraet.name }}
+    </td>
+
+    <td>
+        {{ reparatur.geraet.inventory_number }}
+    </td>
+
+    <td>
+        {{ reparatur.geraet.serial_number }}
+    </td>
+
+    <td>
+        {{ reparatur.beschreibung }}
+    </td>
+
+    <td>
+        {{ reparatur.ausfuehrung }}
+    </td>
+
+    <td>
+        {{ reparatur.datum }}
+    </td>
+
+    <td>
+        {% if reparatur.status == "Offen" %}
+            <span class="badge bg-danger">🔴 Offen</span>
+        {% elif reparatur.status == "In Bearbeitung" %}
+            <span class="badge bg-warning text-dark">🟡 In Bearbeitung</span>
+        {% elif reparatur.status == "Erledigt" %}
+            <span class="badge bg-success">🟢 Erledigt</span>
+        {% endif %}
+    </td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+    <td colspan="7">
+        Keine Reparaturen vorhanden
+    </td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+<script>
+
+const searchInput = document.getElementById("search-input");
+const searchForm = document.getElementById("search-form");
+
+
+let timer = null;
+
+
+searchInput.addEventListener("input", function(){
+
+    clearTimeout(timer);
+
+
+    timer = setTimeout(function(){
+
+        if(searchInput.value.trim() === ""){
+
+            window.location.href = "{% url 'reparatur_historie' %}";
+
+        }
+        else{
+
+            searchForm.submit();
+
+        }
+
+
+    }, 300);
+
+
+});
+
+
+</script>
+<style>
+
+mark {
+    background:#ffd54f;
+    color:black;
+    font-weight:bold;
+    padding:2px 4px;
+    border-radius:4px;
+}
+
+</style>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+
+    const input = document.getElementById("search-input");
+
+    let searchText = input.value.trim();
+
+
+    if(searchText === ""){
+        return;
+    }
+
+
+    let cells = document.querySelectorAll(
+        ".table td"
+    );
+
+
+    cells.forEach(function(cell){
+
+
+        let text = cell.textContent;
+
+
+        let regex = new RegExp(
+            "(" + searchText + ")",
+            "gi"
+        );
+
+
+        cell.innerHTML = text.replace(
+            regex,
+            "<mark>$1</mark>"
+        );
+
+
+    });
+
+
+});
+
+</script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const input = document.getElementById("search-input");
+
+    if(input && input.value.trim() !== ""){
+
+        input.focus();
+
+        // وضع المؤشر في نهاية النص
+        input.setSelectionRange(
+            input.value.length,
+            input.value.length
+        );
+
+    }
+
+});
+
+</script>
+{% endblock %}

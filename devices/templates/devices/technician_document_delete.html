@@ -1,0 +1,35 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h2>🗑️ Dokument löschen</h2>
+
+<p>
+
+Möchten Sie dieses Dokument wirklich löschen?
+
+</p>
+
+<strong>{{ doc.title }}</strong>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <br><br>
+
+    <button class="btn btn-danger">
+
+        Ja, löschen
+
+    </button>
+
+    <a href="{% url 'technician_documents' %}" class="btn btn-secondary">
+
+        Abbrechen
+
+    </a>
+
+</form>
+
+{% endblock %}

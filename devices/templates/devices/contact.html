@@ -1,0 +1,212 @@
+{% extends "devices/base.html" %}
+
+{% load static %}
+
+{% block content %}
+
+
+<div class="contact-container">
+
+
+    <div class="contact-info">
+
+
+        <h2>Kontaktdaten</h2>
+
+
+        {% if kontakt %}
+
+
+        <p>
+            <strong>Techniker:</strong>
+            {{ kontakt.technician_name }}
+        </p>
+
+
+        <p>
+            <strong>E-Mail-Adresse:</strong>
+            {{ kontakt.email }}
+        </p>
+
+
+        <p>
+            <strong>Telefonnummer:</strong>
+            {{ kontakt.phone }}
+        </p>
+
+
+        <p>
+            <strong>Adresse:</strong>
+            {{ kontakt.address }}
+        </p>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+
+    {% if kontakt %}
+
+    <div class="slider">
+
+
+        {% for image in kontakt.images.all %}
+
+        <div class="slide">
+
+            <img src="{{ image.image.url }}"
+                 alt="Kontaktbild">
+
+        </div>
+
+
+        {% endfor %}
+
+
+    </div>
+
+    {% endif %}
+
+
+
+</div>
+
+
+
+
+
+<style>
+
+
+.contact-container {
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width:100%;
+    gap:50px;
+
+}
+
+
+
+.contact-info {
+
+    text-align:left;
+    font-size:22px;
+    margin-left:30px;
+
+}
+
+
+
+.slider {
+
+    width:500px;
+    height:600px;
+    position:relative;
+    overflow:hidden;
+    border-radius:20px;
+    margin:40px;
+
+}
+
+
+
+.slide {
+
+    position:absolute;
+    width:100%;
+    height:100%;
+    opacity:0;
+    animation:fade 15s infinite;
+
+}
+
+
+
+.slide img {
+
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:20px;
+
+}
+
+
+
+/* حركة الصور */
+
+.slide:nth-child(1){
+
+    animation-delay:0s;
+
+}
+
+
+.slide:nth-child(2){
+
+    animation-delay:5s;
+
+}
+
+
+.slide:nth-child(3){
+
+    animation-delay:10s;
+
+}
+
+
+
+@keyframes fade {
+
+
+    0% {
+
+        opacity:0;
+        transform:scale(1.08);
+
+    }
+
+
+    10% {
+
+        opacity:1;
+        transform:scale(1);
+
+    }
+
+
+    30% {
+
+        opacity:1;
+
+    }
+
+
+    40% {
+
+        opacity:0;
+
+    }
+
+
+    100% {
+
+        opacity:0;
+
+    }
+
+}
+
+
+</style>
+
+
+
+{% endblock %}

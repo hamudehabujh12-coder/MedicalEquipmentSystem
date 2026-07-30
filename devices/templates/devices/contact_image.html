@@ -1,0 +1,54 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="contact-image-container">
+
+    <h1>Kontaktbild ändern</h1>
+
+    {% if profile.contact_image %}
+        <img src="{{ profile.contact_image.url }}" class="preview-image">
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <input type="file" name="contact_image" accept="image/*">
+
+        <br><br>
+
+        <button type="submit" class="save-btn">
+            Speichern
+        </button>
+
+    </form>
+
+</div>
+
+<style>
+
+.contact-image-container{
+    width:600px;
+    margin:auto;
+    text-align:center;
+}
+
+.preview-image{
+    width:300px;
+    height:300px;
+    object-fit:cover;
+    border-radius:20px;
+    margin-bottom:30px;
+}
+
+.save-btn{
+    padding:12px 30px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+</style>
+
+{% endblock %}

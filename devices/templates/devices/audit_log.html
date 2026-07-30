@@ -1,0 +1,270 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>📋 Audit Log</h1>
+
+
+<div class="backup-card">
+
+<form method="GET">
+
+<input
+type="text"
+name="search"
+value="{{ search }}"
+placeholder="🔍 Benutzer, Bereich oder Beschreibung suchen..."
+style="
+width:450px;
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+"
+>
+
+
+<button type="submit"
+style="
+padding:12px 20px;
+border:none;
+border-radius:8px;
+background:#1f2937;
+color:white;
+cursor:pointer;
+">
+
+🔍 Suchen
+
+</button>
+
+
+</form>
+
+</div>
+
+
+
+
+{% if request.user.is_superuser %}
+
+<form method="POST" action="{% url 'audit_log_delete_selected' %}">
+
+{% csrf_token %}
+
+
+<button 
+type="button"
+onclick="selectAllLogs()"
+class="select-btn">
+
+☑️ Alle auswählen
+
+</button>
+
+
+
+<button 
+type="submit"
+class="delete-all-btn"
+onclick="return confirm('Ausgewählte Audit Einträge löschen?');">
+
+🗑️ Ausgewählte löschen
+
+</button>
+
+
+
+<table class="table">
+
+
+<thead>
+
+<tr>
+
+<th>
+<input type="checkbox" id="select-all" onclick="selectAllLogs()">
+</th>
+
+<th>Datum</th>
+<th>Benutzer</th>
+<th>Aktion</th>
+<th>Bereich</th>
+<th>Beschreibung</th>
+
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for log in logs %}
+
+<tr>
+
+
+<td>
+
+<input 
+type="checkbox"
+name="logs"
+value="{{ log.id }}"
+class="log-checkbox">
+
+</td>
+
+
+<td>
+{{ log.created_at|date:"d.m.Y H:i" }}
+</td>
+
+
+<td>
+{{ log.user.username|default:"System" }}
+</td>
+
+
+<td>
+{{ log.get_action_display }}
+</td>
+
+
+<td>
+{{ log.model_name }}
+</td>
+
+
+<td>
+{{ log.description }}
+</td>
+
+
+</tr>
+
+
+{% empty %}
+
+
+<tr>
+
+<td colspan="6">
+
+Keine Einträge vorhanden.
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</form>
+
+{% endif %}
+
+
+
+
+
+<script>
+
+function selectAllLogs(){
+
+let checkboxes = document.querySelectorAll(
+".log-checkbox"
+);
+
+let selectAll =
+document.getElementById(
+"select-all"
+);
+
+
+checkboxes.forEach(function(box){
+
+box.checked = !box.checked;
+
+});
+
+
+selectAll.checked = !selectAll.checked;
+
+}
+
+
+</script>
+
+
+
+
+
+<style>
+
+.select-btn{
+
+background:#2563eb;
+color:white;
+border:none;
+padding:10px 18px;
+border-radius:8px;
+cursor:pointer;
+margin-bottom:20px;
+
+}
+
+
+
+.delete-all-btn{
+
+background:#dc2626;
+color:white;
+border:none;
+padding:10px 18px;
+border-radius:8px;
+cursor:pointer;
+margin-left:10px;
+
+}
+
+
+.delete-all-btn:hover{
+
+background:#b91c1c;
+
+}
+
+
+.select-btn:hover{
+
+background:#1d4ed8;
+
+}
+
+
+
+.backup-card{
+
+background:white;
+padding:25px;
+border-radius:15px;
+margin-bottom:30px;
+box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+</style>
+
+
+
+{% endblock %}

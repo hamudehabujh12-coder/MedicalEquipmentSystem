@@ -1,0 +1,90 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>⚡ Fällige DGUV V3</h1>
+
+<table class="table">
+
+    <thead>
+        <tr>
+            <th>Inventarnummer</th>
+            <th>Gerätebezeichnung</th>
+            <th>Praxis</th>
+            <th>Nächste DGUV V3</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+
+    <tbody>
+
+
+    {% for device in devices %}
+
+
+        <tr
+            onclick="window.location='{% url 'device_detail' device.id %}'"
+            style="cursor:pointer;
+            {% if device.next_dguv < heute %}
+                background-color:#ffcccc;
+            {% else %}
+                background-color:#fff3cd;
+            {% endif %}
+            "
+        >
+
+            <td>
+                {{ device.inventory_number }}
+            </td>
+
+            <td>{{ device.name }}</td>
+
+            <td>{{ device.practice }}</td>
+
+            <td>{{ device.next_dguv|date:"d.m.Y" }}</td>
+
+            <td>
+                {% if device.next_dguv < heute %}
+                    🔴 DGUV überfällig
+
+                {% else %}
+                    🟡 DGUV fällig
+
+                {% endif %}
+
+            </td>
+
+        </tr>
+
+
+
+    {% empty %}
+
+
+        <tr>
+
+            <td colspan="5" style="text-align:center;">
+
+                Keine DGUV V3 in den nächsten 30 Tagen fällig.
+
+            </td>
+
+        </tr>
+
+
+    {% endfor %}
+
+
+    </tbody>
+
+
+</table>
+
+<style>
+
+.table tbody tr:hover {
+    background-color: #f2f2f2;
+}
+</style>
+{% endblock %}

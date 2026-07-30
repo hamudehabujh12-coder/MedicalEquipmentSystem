@@ -1,0 +1,170 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h1>📋 {{ category }}</h1>
+
+<form method="get" id="searchForm" style="margin-bottom:25px;">
+
+    <input
+        type="text"
+        name="search"
+        value="{{ search }}"
+        placeholder="Seriennummer, Inventarnummer oder Gerätebezeichnung eingeben..."
+        oninput="autoSearch()"
+        style="width:400px; padding:12px; border:1px solid #ccc; border-radius:6px; font-size:16px;"
+    >
+
+    <select
+        name="practice"
+        onchange="document.getElementById('searchForm').submit();"
+        style="padding:12px; margin-left:10px; border-radius:6px;"
+    >
+
+        <option value="">Alle Standorte</option>
+
+        <option value="Luebeck"
+        {% if practice == "Luebeck" %}selected{% endif %}>
+            Lübeck
+        </option>
+
+        <option value="Ratzeburg"
+        {% if practice == "Ratzeburg" %}selected{% endif %}>
+            Ratzeburg
+        </option>
+
+    </select>
+
+</form>
+
+<a href="{% url 'device_create_category' category %}">
+    <button style="
+    background:#007bff;
+    color:white;
+    border:none;
+    padding:10px 18px;
+    border-radius:6px;
+    margin-bottom:20px;
+    ">
+        + Neues Gerät hinzufügen
+    </button>
+</a>
+
+<table class="table table-hover">
+
+<thead>
+
+<tr>
+
+<th>Inventarnummer</th>
+
+<th>Seriennummer</th>
+
+<th>Gerätebezeichnung</th>
+
+<th>Standort</th>
+
+<th>Betriebsstunden</th>
+
+<th>Nächste Wartung</th>
+
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for device in devices %}
+
+<tr
+onclick="window.location='{% url 'device_detail' device.id %}'"
+style="cursor:pointer;"
+>
+
+<td>{{ device.inventory_number }}</td>
+
+<td>{{ device.serial_number }}</td>
+
+<td>{{ device.name }}</td>
+
+<td>{{ device.get_practice_display }}</td>
+
+<td>
+    {% if device.category == "Dialyse Maschinen" %}
+        {{ device.operating_hours|default:"—" }}
+    {% else %}
+        —
+    {% endif %}
+</td>
+
+<td>
+
+{% if device.next_stk %}
+STK: {{ device.next_stk|date:"d.m.Y" }}<br>
+{% endif %}
+
+{% if device.next_mtk %}
+MTK: {{ device.next_mtk|date:"d.m.Y" }}<br>
+{% endif %}
+
+{% if device.next_dguv %}
+DGUV V3: {{ device.next_dguv|date:"d.m.Y" }}
+{% endif %}
+
+{% if not device.next_stk and not device.next_mtk and not device.next_dguv %}
+—
+{% endif %}
+
+</td>
+
+<td>
+
+{% if device.status == "Aktiv" %}
+🟢 Aktiv
+{% else %}
+🔴 Nicht aktiv
+{% endif %}
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="7" style="text-align:center;padding:20px;">
+Keine Geräte gefunden.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+<script>
+
+let timer;
+
+function autoSearch(){
+
+    clearTimeout(timer);
+
+    timer = setTimeout(function(){
+
+        document.getElementById("searchForm").submit();
+
+    },400);
+
+}
+
+</script>
+
+{% endblock %}

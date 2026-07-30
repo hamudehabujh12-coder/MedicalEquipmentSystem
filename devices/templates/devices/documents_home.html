@@ -1,0 +1,93 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1 class="page-title">📁 Dokumente</h1>
+
+<div class="documents-grid">
+
+    {% for doc in document_types %}
+
+    <a href="{% url 'documents_by_type' doc.id %}" class="doc-card">
+
+        <div class="doc-icon">
+            📄
+        </div>
+
+        <div class="doc-info">
+
+            <h2>{{ doc.name }}</h2>
+
+            <p>{{ doc.devicedocument_set.count }} Dokumente</p>
+
+        </div>
+
+    </a>
+
+    {% empty %}
+
+    <p>Keine Dokumenttypen vorhanden.</p>
+
+    {% endfor %}
+
+</div>
+
+<style>
+
+.page-title{
+    text-align:center;
+    margin:20px 0 35px;
+    font-size:40px;
+    color:#1f2937;
+}
+
+.documents-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:25px;
+}
+
+.doc-card{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    text-decoration:none;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    padding:28px;
+    border-radius:20px;
+    transition:.3s;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+
+.doc-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 20px 40px rgba(0,0,0,.20);
+}
+
+.doc-icon{
+    width:70px;
+    height:70px;
+    border-radius:18px;
+    background:rgba(255,255,255,.18);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:34px;
+}
+
+.doc-info h2{
+    margin:0;
+    font-size:22px;
+    color:white;
+}
+
+.doc-info p{
+    margin-top:8px;
+    color:#e5e7eb;
+    font-size:16px;
+}
+
+</style>
+
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="documents-home">
+
+    <h1>📁 Medizingerätedokumente</h1>
+
+    <div class="document-menu">
+
+        {% for type in document_types %}
+
+        <a href="{% url 'documents_by_type' type.id %}" class="document-card">
+            <h2>{{ type.name }}</h2>
+        </a>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h2>✏️ Dokument umbenennen</h2>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <label>Neuer Name</label>
+
+    <input
+        type="text"
+        name="new_name"
+        value="{{ doc.title }}"
+        class="form-control"
+        required>
+
+    <br>
+
+    <button class="btn btn-success">
+        💾 Speichern
+    </button>
+
+    <a href="{% url 'technician_documents' %}" class="btn btn-secondary">
+        Abbrechen
+    </a>
+
+</form>
+
+{% endblock %}

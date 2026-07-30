@@ -1,0 +1,127 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>
+⚙️ Dashboard Einstellungen
+</h1>
+
+{% if messages %}
+
+{% for message in messages %}
+
+<div class="alert-success">
+
+{{ message }}
+
+</div>
+
+{% endfor %}
+
+{% endif %}
+<form method="post">
+
+{% csrf_token %}
+
+
+<label>
+<input type="checkbox"
+name="show_luebeck"
+{% if settings.show_luebeck %}checked{% endif %}>
+Gesamtgeräte Lübeck
+</label>
+
+<br>
+
+
+<label>
+<input type="checkbox"
+name="show_ratzeburg"
+{% if settings.show_ratzeburg %}checked{% endif %}>
+Gesamtgeräte Ratzeburg
+</label>
+
+<br>
+
+
+<label>
+<input type="checkbox"
+name="show_reparaturen"
+{% if settings.show_reparaturen %}checked{% endif %}>
+Reparaturen
+</label>
+
+<br>
+
+
+<label>
+<input type="checkbox"
+name="show_stk"
+{% if settings.show_stk %}checked{% endif %}>
+Fällige STK
+</label>
+
+<br>
+
+
+<label>
+<input type="checkbox"
+name="show_mtk"
+{% if settings.show_mtk %}checked{% endif %}>
+Fällige MTK
+</label>
+
+<br>
+
+
+<label>
+<input type="checkbox"
+name="show_dguv"
+{% if settings.show_dguv %}checked{% endif %}>
+Fällige DGUV V3
+</label>
+
+<br>
+
+
+<label>
+<input type="checkbox"
+name="show_geraete_uebersicht"
+{% if settings.show_geraete_uebersicht %}checked{% endif %}>
+Geräteübersicht nach Geräteart und Standort
+</label>
+
+
+<br><br>
+
+
+<button type="submit">
+💾 Speichern
+</button>
+
+
+<a href="{% url 'settings' %}">
+    ❌ Abbrechen
+</a>
+
+
+</form>
+<style>
+
+.alert-success{
+
+background:#22c55e;
+
+color:white;
+
+padding:15px;
+
+border-radius:10px;
+
+margin:20px 0;
+
+font-weight:600;
+
+}
+</style>
+{% endblock %}

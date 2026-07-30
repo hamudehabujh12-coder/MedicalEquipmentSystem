@@ -1,0 +1,41 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="settings-container">
+
+<h1>👤 Mein Profil ändern</h1>
+
+<div class="settings-cards">
+
+<div class="settings-card">
+
+<h2>📋 Kontaktdaten</h2>
+
+<a href="{% url 'contact_edit' %}">
+<button>
+Kontaktdaten ändern
+</button>
+</a>
+
+</div>
+
+
+<div class="settings-card">
+
+<h2>🔑 Zugangsdaten</h2>
+
+<a href="{% url 'password_change' %}">
+<button>
+Zugangsdaten ändern
+</button>
+</a>
+
+</div>
+
+
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h1>🧪 Filterwechsel</h1>
+
+
+<form method="post">
+
+    {% csrf_token %}
+
+
+    <p>
+        <label>Gerät suchen</label>
+
+        <input 
+            type="text"
+            id="device-search"
+            class="form-control"
+            placeholder="Inventarnummer, Seriennummer oder Standort">
+
+
+        <div id="device-results"
+             style="
+             border:1px solid #ccc;
+             display:none;
+             max-height:200px;
+             overflow:auto;">
+        </div>
+
+
+        <input type="hidden"
+               name="geraet"
+               id="id_geraet">
+    </p>
+
+
+
+    <p>
+        {{ form.anzahl_filter.label }}
+        {{ form.anzahl_filter }}
+    </p>
+
+
+    <p>
+        {{ form.filtercode.label }}
+        {{ form.filtercode }}
+    </p>
+
+
+    <p>
+        {{ form.datum.label }}
+        {{ form.datum }}
+    </p>
+
+
+    <p>
+        {{ form.durchgeführt_von.label }}
+        {{ form.durchgeführt_von }}
+    </p>
+
+
+    <p>
+        {{ form.bemerkung.label }}
+        {{ form.bemerkung }}
+    </p>
+
+
+
+    <button type="submit">
+        💾 Speichern
+    </button>
+
+
+    <a href="{% url 'home' %}">
+        ❌ Abbrechen
+    </a>
+
+
+</form>
+
+
+</div>
+
+
+
+<script>
+
+const search =
+document.getElementById("device-search");
+
+
+const results =
+document.getElementById("device-results");
+
+
+const deviceInput =
+document.getElementById("id_geraet");
+
+
+
+const devices = [
+
+{% for device in form.fields.geraet.queryset %}
+
+{
+id:"{{ device.id }}",
+text:
+"{{ device.inventory_number }} | {{ device.serial_number }} | {{ device.practice.name }}"
+},
+
+{% endfor %}
+
+];
+
+
+
+search.addEventListener(
+"keyup",
+function(){
+
+let value =
+search.value.toLowerCase();
+
+
+results.innerHTML="";
+
+
+if(value.length < 1){
+
+results.style.display="none";
+return;
+
+}
+
+
+
+devices
+.filter(
+d => d.text.toLowerCase().includes(value)
+)
+.forEach(
+function(device){
+
+
+let div =
+document.createElement("div");
+
+
+div.style.padding="8px";
+div.style.cursor="pointer";
+
+
+div.innerHTML =
+device.text;
+
+
+
+div.onclick=function(){
+
+search.value =
+device.text;
+
+
+deviceInput.value =
+device.id;
+
+
+results.style.display="none";
+
+};
+
+
+
+results.appendChild(div);
+
+
+});
+
+
+results.style.display =
+results.children.length
+? "block"
+: "none";
+
+
+});
+
+
+</script>
+
+
+{% endblock %}

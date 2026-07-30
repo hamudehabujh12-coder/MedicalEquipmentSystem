@@ -1,0 +1,114 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1 class="settings-title">
+    ⚙️ Einstellungen
+</h1>
+
+<div class="settings-grid">
+
+    <a href="{% url 'user_list' %}" class="settings-card">
+        👥
+        <h3>Benutzerverwaltung</h3>
+    </a>
+
+    <a href="{% url 'standort_list' %}" class="settings-card">
+    🏥
+    <h3>Standorte</h3>
+
+    </a>
+
+    <a href="{% url 'geraetarten' %}" class="settings-card">
+        🩺
+        <h3>Gerätearten</h3>
+    </a>
+
+    <a href="{% url 'document_types' %}" class="settings-card">
+        📁
+        <h3>Dokumenttypen</h3>
+    </a>
+
+
+    <a href="{% url 'dashboard_widgets' %}" class="settings-card">
+        📊
+        <h3>Dashboard Widgets</h3>
+    </a>
+
+    <a href="{% url 'backup' %}" class="settings-card">
+        💾
+        <h3>Backup</h3>
+    </a>
+
+    <a href="{% url 'export' %}" class="settings-card">
+        📤
+        <h3>Export</h3>
+    </a>
+
+    <a href="{% url 'firmeninformationen_manage' %}" class="settings-card">
+        🏢
+        <h3>Firmeninformationen</h3>
+    </a>
+
+    <a href="{% url 'kontakt_edit' %}" class="settings-card">
+        📞 
+        <h3>Kontakt</h3>
+    </a>
+
+
+    <a href="{% url 'home_edit' %}" class="settings-card">
+        🏠 
+        <h3>Home</h3>
+        
+    </a>
+
+    <a href="{% url 'audit_log' %}" class="settings-card">
+        📜
+        <h3>Audit Log</h3>
+    </a>
+
+</div>
+
+<style>
+
+.settings-title{
+    text-align:center;
+    margin-bottom:40px;
+    font-size:38px;
+}
+
+.settings-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:25px;
+}
+
+.settings-card{
+    background:white;
+    border-radius:18px;
+    padding:35px;
+    text-align:center;
+    text-decoration:none;
+    color:#1f2937;
+    box-shadow:0 5px 15px rgba(0,0,0,.10);
+    transition:.25s;
+}
+
+.settings-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+
+.settings-card{
+    font-size:48px;
+}
+
+.settings-card h3{
+    margin-top:15px;
+    color:#2563eb;
+    font-size:20px;
+}
+
+</style>
+
+{% endblock %}

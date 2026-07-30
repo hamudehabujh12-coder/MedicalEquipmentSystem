@@ -1,0 +1,51 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="delete-confirm">
+
+<h2>✏️ Datei umbenennen</h2>
+
+<p>
+Aktueller Name:
+</p>
+
+<strong>
+{{ document.file.name }}
+</strong>
+
+
+<form method="POST">
+
+{% csrf_token %}
+
+<br><br>
+
+<label>
+Neuer Name:
+</label>
+
+<input 
+type="text" 
+name="new_name"
+value="{{ document.file.name|cut:'device_documents/' }}"
+>
+
+
+<br><br>
+
+<button type="submit">
+Speichern
+</button>
+
+
+<a href="{% url 'device_detail' document.device.id %}">
+Abbrechen
+</a>
+
+
+</form>
+
+</div>
+
+{% endblock %}

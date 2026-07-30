@@ -1,0 +1,92 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h1>{{ title|default:"Reparaturübersicht" }}</h1>
+
+
+<br><br>
+
+<table class="table">
+
+    <thead>
+        <tr>
+            <th>Gerätebezeichnung</th>
+            <th>Inventarnummer</th>
+            <th>Seriennummer</th>
+            <th>Datum</th>
+            <th>Standort</th>
+            <th>Melder</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for r in reparaturen %}
+
+    <tr
+        onclick="window.location='{% url 'reparatur_detail' r.id %}'"
+        style="cursor:pointer;">
+
+        <td>{{ r.geraet.name }}</td>
+
+        <td>{{ r.geraet.inventory_number }}</td>
+
+        <td>{{ r.geraet.serial_number }}</td>
+
+        <td>{{ r.datum }}</td>
+
+        <td>{{ r.geraet.practice }}</td>
+
+        <td>{{ r.melder }}</td>
+
+        <td>
+
+            {% if r.status == "Erledigt" %}
+
+                <span style="background:#28a745; color:white; padding:6px 12px; border-radius:15px;">
+                    ✅ {{ r.status }}
+                </span>
+
+            {% elif r.status == "In Bearbeitung" %}
+
+                <span style="background:#ffc107; color:black; padding:6px 12px; border-radius:15px;">
+                    🔧 {{ r.status }}
+                </span>
+
+            {% elif r.status == "Offen" %}
+
+                <span style="background:#dc3545; color:white; padding:6px 12px; border-radius:15px;">
+                    ⚠️ {{ r.status }}
+                </span>
+
+            {% else %}
+
+                {{ r.status }}
+
+            {% endif %}
+
+        </td>
+
+    </tr>
+
+    {% empty %}
+
+    <tr>
+        <td colspan="7">
+            Keine Reparaturen vorhanden
+        </td>
+    </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+
+{% endblock %}

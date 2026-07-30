@@ -1,0 +1,243 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>➕ Neue Reparatur</h1>
+
+
+<form method="post">
+
+    {% csrf_token %}
+
+
+    <div class="form-group">
+
+        <label>Gerät</label>
+
+
+        {{ form.geraet }}
+
+
+        <input
+            type="text"
+            id="device-search"
+            class="form-control"
+            placeholder="Inventarnummer, Gerätebezeichnung oder Seriennummer..."
+            autocomplete="off"
+        >
+
+
+        <div id="device-results" class="search-results"></div>
+
+
+    </div>
+
+
+
+    <div class="form-group">
+
+        <label>Problembeschreibung</label>
+
+        {{ form.beschreibung }}
+
+    </div>
+
+
+
+    <div class="form-group">
+
+        <label>Melder</label>
+
+        {{ form.melder }}
+
+    </div>
+
+
+
+    <div class="form-buttons">
+
+
+        <button type="submit" class="btn btn-primary">
+            💾 Speichern
+        </button>
+
+
+        <a href="{% url 'reparatur' %}" class="btn btn-secondary">
+            ❌ Abbrechen
+        </a>
+
+
+    </div>
+
+
+</form>
+
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+
+    const searchInput = document.getElementById("device-search");
+    const hiddenInput = document.getElementById("id_geraet");
+    const resultBox = document.getElementById("device-results");
+
+
+    searchInput.addEventListener("input", function(){
+
+
+        let query = this.value.trim();
+
+
+        if(query.length < 1){
+
+            resultBox.innerHTML = "";
+            hiddenInput.value = "";
+
+            return;
+
+        }
+
+
+
+        fetch("{% url 'search_reparatur_device' %}?q=" + encodeURIComponent(query))
+
+
+        .then(response => response.json())
+
+
+        .then(data => {
+
+
+            resultBox.innerHTML = "";
+
+
+            if(data.length === 0){
+
+                resultBox.innerHTML =
+                "<div class='no-result'>Keine Geräte gefunden</div>";
+
+                return;
+
+            }
+
+
+
+            data.forEach(device => {
+
+
+
+                let item = document.createElement("div");
+
+
+                item.className = "search-item";
+
+
+
+                item.innerHTML =
+
+                `
+                <strong>${device.inventory}</strong>
+                <br>
+                Seriennummer: ${device.serial}
+                |
+                Standort: ${device.standort}
+                `;
+
+
+
+                item.onclick = function(){
+
+
+                    hiddenInput.value = device.id;
+
+
+                    searchInput.value =
+                    device.inventory;
+
+
+                    resultBox.innerHTML = "";
+
+                };
+
+
+
+                resultBox.appendChild(item);
+
+
+
+            });
+
+
+        });
+
+
+
+    });
+
+
+
+});
+
+</script>
+
+
+
+
+<style>
+
+
+.search-results{
+
+    margin-top:5px;
+
+    border:1px solid #ccc;
+
+    border-radius:8px;
+
+    background:white;
+
+    max-height:250px;
+
+    overflow-y:auto;
+
+}
+
+
+
+.search-item{
+
+    padding:12px;
+
+    cursor:pointer;
+
+    border-bottom:1px solid #eee;
+
+}
+
+
+
+.search-item:hover{
+
+    background:#f1f5f9;
+
+}
+
+
+
+.no-result{
+
+    padding:12px;
+
+    color:#777;
+
+}
+
+
+
+</style>
+
+
+
+{% endblock %}

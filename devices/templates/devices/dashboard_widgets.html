@@ -1,0 +1,161 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>📊 Dashboard Widgets</h1>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;">
+
+    <a href="{% url 'dashboard_widget_create' %}" class="add-btn">
+        ➕ Neues Widget
+    </a>
+
+</div>
+
+<table class="table">
+
+    <thead>
+
+        <tr>
+
+            <th>Typ</th>
+
+            <th>Standort</th>
+
+            <th>Geräteart</th>
+
+            <th>Sichtbar</th>
+
+            <th>Reihenfolge</th>
+
+            <th>Aktionen</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for widget in widgets %}
+
+        <tr>
+
+            <td>{{ widget.get_widget_type_display }}</td>
+
+            <td>{{ widget.standort|default:"-" }}</td>
+
+            <td>{{ widget.geraetart|default:"-" }}</td>
+
+            <td>
+
+                {% if widget.visible %}
+                    ✅
+                {% else %}
+                    ❌
+                {% endif %}
+
+            </td>
+
+            <td>{{ widget.order }}</td>
+
+            <td>
+
+                <a 
+                    href="{% url 'dashboard_widget_edit' widget.id %}"
+                    class="btn btn-warning btn-sm"
+                    title="Bearbeiten"
+                >
+                    ✏️ Bearbeiten
+                </a>
+
+                |
+                <a 
+                    href="{% url 'dashboard_widget_delete' widget.id %}"
+                    class="btn btn-danger btn-sm"
+                    title="Löschen"
+                    onclick="return confirm('Dashboard Widget wirklich löschen?');"
+                >
+                    <button class="delete-btn" type="submit">
+                        🗑️ Löschen
+                    </button>
+                </a>
+
+            </td>
+
+        </tr>
+
+    {% empty %}
+
+        <tr>
+
+            <td colspan="6">
+
+                Noch keine Widgets vorhanden.
+
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+<style>
+
+
+.delete-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.delete-btn:hover{
+    background:#b91c1c;
+}
+
+.add-btn{
+    background:#16a34a;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.table th{
+    background:#1f2937;
+    color:white;
+    padding:15px;
+}
+
+.table td{
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:center;
+}
+
+.table tr:hover{
+    background:#f8fafc;
+}
+
+.table a{
+    text-decoration:none;
+    font-weight:bold;
+    color:#2563eb;
+}
+
+</style>
+{% endblock %}

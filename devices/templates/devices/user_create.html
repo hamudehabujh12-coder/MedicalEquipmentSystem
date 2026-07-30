@@ -1,0 +1,178 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1 class="page-title">👥 Benutzer hinzufügen</h1>
+
+<div class="form-card">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="grid">
+
+            <div>
+                <label>Benutzername</label>
+                <input type="text" name="username" required>
+            </div>
+
+            <div>
+                <label>E-Mail</label>
+                <input type="email" name="email">
+            </div>
+
+            <div>
+                <label>Vorname</label>
+                <input type="text" name="first_name">
+            </div>
+
+            <div>
+                <label>Nachname</label>
+                <input type="text" name="last_name">
+            </div>
+
+            <div>
+                <label>Passwort</label>
+                <input type="password" name="password1" required>
+            </div>
+
+            <div>
+                <label>Passwort wiederholen</label>
+                <input type="password" name="password2" required>
+            </div>
+
+            <div>
+                <label>Rolle</label>
+
+                <select name="role">
+
+                    <option value="user">
+                        Benutzer
+                    </option>
+
+                    <option value="admin">
+                        Administrator
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+        <div class="buttons">
+
+            <button type="submit" class="save-btn">
+                💾 Benutzer speichern
+            </button>
+
+            <a href="{% url 'user_list' %}" class="cancel-btn">
+                ↩ Zurück
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+<style>
+
+.page-title{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.form-card{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:35px;
+    border-radius:18px;
+    box-shadow:0 5px 15px rgba(0,0,0,.12);
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
+}
+
+.grid label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:bold;
+}
+
+.grid input,
+.grid select{
+    width:100%;
+    padding:12px;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    font-size:15px;
+    box-sizing:border-box;
+}
+
+.buttons{
+    margin-top:30px;
+    display:flex;
+    gap:15px;
+}
+
+.save-btn{
+    background:#16a34a;
+    color:white;
+    border:none;
+    padding:12px 25px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+    font-weight:bold;
+}
+
+.save-btn:hover{
+    background:#15803d;
+}
+
+.cancel-btn{
+    background:#6b7280;
+    color:white;
+    text-decoration:none;
+    padding:12px 25px;
+    border-radius:10px;
+    font-weight:bold;
+}
+
+.cancel-btn:hover{
+    background:#4b5563;
+}
+
+.message{
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:20px;
+}
+
+.message.success{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.message.error{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+</style>
+
+{% endblock %}

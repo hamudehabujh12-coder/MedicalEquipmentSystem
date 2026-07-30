@@ -1,0 +1,155 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>🏥 Standorte</h1>
+
+<div style="margin-bottom:20px;">
+
+    <a href="{% url 'standort_create' %}" class="add-btn">
+        ➕ Neuer Standort
+    </a>
+
+</div>
+
+<table class="table">
+
+    <thead>
+
+        <tr>
+
+            <th>Name</th>
+            <th>Adresse</th>
+            <th>Telefon</th>
+            <th>E-Mail</th>
+            <th>Status</th>
+            <th>Aktionen</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for standort in standorte %}
+
+        <tr>
+
+            <td>{{ standort.name }}</td>
+
+            <td>{{ standort.address }}</td>
+
+            <td>{{ standort.phone }}</td>
+
+            <td>{{ standort.email }}</td>
+
+            <td>
+
+                {% if standort.active %}
+                    🟢 Aktiv
+                {% else %}
+                    🔴 Inaktiv
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                <a href="{% url 'standort_edit' standort.id %}">
+                    ✏️ Bearbeiten
+                </a>
+
+                |
+
+                <form method="POST"
+                      action="{% url 'standort_delete' standort.id %}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Standort wirklich löschen?');">
+
+                    {% csrf_token %}
+
+                    <button class="delete-btn" type="submit">
+                        🗑️ Löschen
+                    </button>
+
+                </form>
+
+            </td>
+
+        </tr>
+
+    {% empty %}
+
+        <tr>
+
+            <td colspan="6">
+                Keine Standorte vorhanden.
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+<style>
+
+
+.delete-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.delete-btn:hover{
+    background:#b91c1c;
+}
+
+.add-btn{
+    background:#16a34a;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.table th{
+    background:#1f2937;
+    color:white;
+    padding:15px;
+}
+
+.table td{
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:center;
+}
+
+.table tr:hover{
+    background:#f8fafc;
+}
+
+.table a{
+    text-decoration:none;
+    font-weight:bold;
+    color:#2563eb;
+}
+
+</style>
+
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="settings-container">
+
+    <h1>📋 Kontaktdaten ändern</h1>
+
+
+    <form method="POST" enctype="multipart/form-data" class="profile-form">
+
+        {% csrf_token %}
+
+
+        <div class="form-group">
+            <label>Name</label>
+
+            <input 
+                type="text"
+                name="practice_name"
+                value="{{ settings.practice_name }}"
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>E-Mail-Adresse</label>
+
+            <input 
+                type="email"
+                name="email"
+                value="{{ user.email }}"
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>Telefonnummer</label>
+
+            <input 
+                type="text"
+                name="phone"
+                value="{{ profile.phone }}"
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>Adresse</label>
+
+            <input 
+                type="text"
+                name="address"
+                value="{{ profile.address }}"
+            >
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Kontaktbild</label>
+
+            <input 
+                type="file"
+                name="contact_image"
+            >
+
+        </div>
+
+
+        <button type="submit">
+            💾 Speichern
+        </button>
+
+
+    </form>
+
+
+</div>
+
+
+{% endblock %}

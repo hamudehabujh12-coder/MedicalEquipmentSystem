@@ -1,0 +1,127 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h2>Neues medizinisches Gerät hinzufügen</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="form-grid">
+
+            {% for field in form %}
+
+            <div class="form-group">
+
+                <label>
+                    {{ field.label }}
+                </label>
+
+                {{ field }}
+
+                {% if field.errors %}
+                    <small style="color:red;">
+                        {{ field.errors }}
+                    </small>
+                {% endif %}
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <div class="form-buttons">
+
+            <button type="submit" class="save-btn">
+                 💾 Speichern
+            </button>
+
+            <button type="button" onclick="history.back()" class="cancel-btn">
+                  Abbrechen
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<style>
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+
+button {
+    margin-top: 25px;
+    padding: 12px 30px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+</style>
+<script>
+function toggleOperatingHours() {
+
+    const category = document.getElementById("id_category");
+    const operating = document.getElementById("id_operating_hours");
+
+    if (!category || !operating) return;
+
+    const group = operating.closest(".form-group");
+
+    if (category.value === "Dialyse Maschinen") {
+        group.style.display = "";
+    } else {
+        group.style.display = "none";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    toggleOperatingHours();
+
+    document.getElementById("id_category").addEventListener(
+        "change",
+        toggleOperatingHours
+    );
+
+});
+</script>
+{% endblock %}

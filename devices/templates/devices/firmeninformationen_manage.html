@@ -1,0 +1,251 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>🏢 Firmeninformationen Verwaltung</h1>
+
+
+<div class="backup-card">
+
+
+<form method="GET" id="search-form" style="margin-bottom:25px;">
+
+
+<input 
+
+type="text"
+
+id="search-input"
+
+name="search"
+
+value="{{ search|default:'' }}"
+
+placeholder="Suche nach Firma oder Adresse..."
+
+style="
+width:450px;
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+"
+
+
+>
+
+
+<button type="submit"
+
+style="
+padding:12px 20px;
+border-radius:8px;
+background:#1f2937;
+color:white;
+border:none;
+cursor:pointer;
+"
+>
+
+🔍 Suchen
+
+</button>
+
+</form>
+
+
+
+
+<a href="{% url 'firmeninformationen_create' %}" 
+class="backup-btn">
+
+➕ Neue Firma hinzufügen
+
+</a>
+
+
+</div>
+
+
+<table class="table">
+
+
+<thead>
+
+<tr>
+
+<th>Firmenname</th>
+<th>Adresse</th>
+<th>Telefon</th>
+<th>E-Mail</th>
+<th>Kundennummer</th>
+<th>Aktionen</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for company in companies %}
+
+
+<tr>
+
+
+<td>
+{{ company.company_name }}
+</td>
+
+
+<td>
+{{ company.address|default:"—" }}
+</td>
+
+
+<td>
+{{ company.phone|default:"—" }}
+</td>
+
+
+<td>
+{{ company.email|default:"—" }}
+</td>
+
+
+<td>
+{{ company.customer_number|default:"—" }}
+</td>
+
+
+
+<td>
+
+
+<a href="{% url 'firmeninformationen_edit' company.id %}">
+✏️ Bearbeiten
+</a>
+
+
+|
+
+
+<form method="POST"
+action="{% url 'firmeninformationen_delete' company.id %}"
+style="display:inline;"
+onsubmit="return confirm('Firma wirklich löschen?');">
+
+{% csrf_token %}
+
+<button type="submit" class="delete-btn">
+    🗑️ Löschen
+</button>
+
+</form>
+
+
+
+</td>
+
+
+</tr>
+
+
+{% empty %}
+
+
+<tr>
+
+<td colspan="6">
+
+Keine Firmen vorhanden.
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+
+
+<style>
+
+
+.backup-card{
+
+background:white;
+padding:25px;
+border-radius:15px;
+margin-bottom:30px;
+box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+
+.backup-card input{
+
+width:60%;
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+
+}
+
+
+
+.backup-btn{
+
+background:#2563eb;
+color:white;
+padding:12px 20px;
+border-radius:8px;
+text-decoration:none;
+border:none;
+cursor:pointer;
+
+}
+
+
+
+.delete-btn{
+
+background:#dc2626;
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:6px;
+cursor:pointer;
+
+}
+
+
+
+.backup-table{
+
+background:white;
+padding:25px;
+border-radius:15px;
+box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+</style>
+
+
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1 class="page-title">✏️ Benutzer bearbeiten</h1>
+
+<div class="form-card">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="grid">
+
+            <div>
+                <label>Benutzername</label>
+                <input
+                    type="text"
+                    name="username"
+                    value="{{ edit_user.username }}"
+                    required>
+            </div>
+
+            <div>
+                <label>E-Mail</label>
+                <input
+                    type="email"
+                    name="email"
+                    value="{{ edit_user.email }}">
+            </div>
+
+            <div>
+                <label>Vorname</label>
+                <input
+                    type="text"
+                    name="first_name"
+                    value="{{ edit_user.first_name }}">
+            </div>
+
+            <div>
+                <label>Nachname</label>
+                <input
+                    type="text"
+                    name="last_name"
+                    value="{{ edit_user.last_name }}">
+            </div>
+
+            <div>
+                <label>Rolle</label>
+
+                <select name="role">
+
+                    <option value="user"
+                    {% if not edit_user.is_superuser %}
+                    selected
+                    {% endif %}>
+                        Benutzer
+                    </option>
+
+                    <option value="admin"
+                    {% if edit_user.is_superuser %}
+                    selected
+                    {% endif %}>
+                        Administrator
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+
+            <button type="submit"
+                    class="btn btn-success">
+                💾 Änderungen speichern
+            </button>
+
+
+            <button type="button"
+                    class="btn btn-secondary"
+                    onclick="window.location.href='{% url 'user_list' %}'">
+                ↩️ Zurück
+            </button>
+
+
+            <button type="button"
+                    class="btn btn-warning"
+                    onclick="window.location.href='{% url 'user_password_reset' edit_user.id %}'">
+                🔑 Passwort zurücksetzen
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+<style>
+
+.page-title{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.form-card{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:35px;
+    border-radius:18px;
+    box-shadow:0 5px 15px rgba(0,0,0,.12);
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
+}
+
+.grid label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:bold;
+}
+
+.grid input,
+.grid select{
+    width:100%;
+    padding:12px;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    font-size:15px;
+    box-sizing:border-box;
+}
+
+.buttons{
+    margin-top:30px;
+    display:flex;
+    gap:15px;
+}
+
+.save-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:12px 25px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+    font-weight:bold;
+}
+
+.save-btn:hover{
+    background:#1d4ed8;
+}
+
+.cancel-btn{
+    background:#6b7280;
+    color:white;
+    text-decoration:none;
+    padding:12px 25px;
+    border-radius:10px;
+    font-weight:bold;
+}
+
+.cancel-btn:hover{
+    background:#4b5563;
+}
+
+.message{
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:20px;
+}
+
+.message.success{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.message.error{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+</style>
+
+{% endblock %}

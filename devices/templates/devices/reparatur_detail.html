@@ -1,0 +1,347 @@
+{% extends 'devices/base.html' %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1>🔧 Reparatur bearbeiten</h1>
+
+    <!-- معلومات البلاغ -->
+    <div class="card" style="padding:20px; margin-bottom:25px;">
+
+    <form method="post" enctype="multipart/form-data" id="reparatur-form">
+
+    {% csrf_token %}
+
+    <h2>📋 Meldung</h2>
+
+<table class="table">
+
+<tr>
+    <th>Gerät</th>
+    <td>{{ reparatur.geraet.name }}</td>
+</tr>
+
+
+<tr>
+    <th>Inventarnummer</th>
+    <td>{{ reparatur.geraet.inventory_number }}</td>
+</tr>
+
+
+<tr>
+    <th>Seriennummer</th>
+    <td>{{ reparatur.geraet.serial_number }}</td>
+</tr>
+
+
+<tr>
+    <th>Standort</th>
+    <td>{{ reparatur.geraet.practice }}</td>
+</tr>
+
+
+<tr>
+    <th>Status</th>
+    <td>
+
+<select name="status" id="status-select" class="form-control">
+
+<option value="Offen"
+{% if reparatur.status == "Offen" %}selected{% endif %}>
+🔴 Offen
+</option>
+
+
+<option value="In Bearbeitung"
+{% if reparatur.status == "In Bearbeitung" %}selected{% endif %}>
+🟡 In Bearbeitung
+</option>
+
+
+<option value="Erledigt"
+{% if reparatur.status == "Erledigt" %}selected{% endif %}>
+🟢 Erledigt
+</option>
+
+
+</select>
+
+    </td>
+</tr>
+
+
+</table>
+    
+<div class="card" style="padding:20px; margin-top:20px;">
+
+    <h2>📝 Problemmeldung</h2>
+
+    <div class="form-group" style="margin-bottom:20px;">
+        <label>Problembeschreibung</label>
+        <textarea class="form-control" rows="5" readonly>{{ reparatur.beschreibung }}</textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom:20px;">
+        <label>Melder</label>
+        <input
+            type="text"
+            class="form-control"
+            value="{{ reparatur.melder }}"
+            readonly>
+    </div>
+
+    <div class="form-group">
+        <label>Meldedatum</label>
+        <input
+            type="text"
+            class="form-control"
+            value="{{ reparatur.datum|date:'d.m.Y' }}"
+            readonly>
+    </div>
+
+</div>
+   
+
+   <div class="card" id="bearbeitung-section" style="padding:20px;
+    {% if reparatur.status == 'Offen' %}display:none;{% endif %}">
+
+    <h2>🛠 Bearbeitung</h2>
+        <div id="techniker-fields">
+
+
+            <div class="form-group" style="margin-bottom:20px;">
+
+                <label>Techniker</label>
+
+                {{ form.techniker }}
+
+                <div id="techniker-error" style="color:red; display:none;">
+                    Techniker muss eingegeben werden.
+                </div>
+
+            </div>
+
+
+
+            <div class="form-group" style="margin-bottom:20px;">
+
+                <label>Reparaturdatum</label>
+
+                {{ form.reparatur_datum }}
+
+                <div id="datum-error" style="color:red; display:none;">
+                    Reparaturdatum muss eingegeben werden.
+                </div>
+
+            </div>
+
+
+
+            <div class="form-group" style="margin-bottom:20px;">
+
+                <label>Ausführung</label>
+
+                {{ form.ausfuehrung }}
+
+                <div id="ausfuehrung-error" style="color:red; display:none;">
+                    Ausführung muss eingegeben werden.
+                </div>
+
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+
+                <label>📄 Reparaturbericht (PDF)</label>
+
+                {% if readonly %}
+
+                    {% if reparatur.reparaturbericht %}
+                        <a href="{{ reparatur.reparaturbericht.url }}" target="_blank">
+                             📄 Reparaturbericht.pdf
+                        </a>
+                    {% else %}
+                        <p>Kein Reparaturbericht vorhanden.</p>
+                    {% endif %}
+
+                {% else %}
+
+                    {{ form.reparaturbericht }}
+
+                {% endif %}
+
+            </div>
+            
+            <div class="form-group" style="margin-bottom:20px;">
+
+                <label>📷 Reparaturbild</label>
+
+            {% if readonly %}
+
+                {% if reparatur.reparaturbild %}
+                    <img src="{{ reparatur.reparaturbild.url }}"
+                         style="max-width:250px;">
+                {% else %}
+                   <p>Kein Bild vorhanden.</p>
+                {% endif %}
+
+            {% else %}
+
+                {% if reparatur.reparaturbild %}
+                    <img src="{{ reparatur.reparaturbild.url }}"
+                         style="max-width:200px; margin-bottom:10px;">
+                {% endif %}
+
+                {{ form.reparaturbild }}
+
+            {% endif %}
+
+        </div>
+
+        </div>
+
+
+        <div class="form-buttons" style="margin-top:25px;">
+
+            <button type="submit" class="btn btn-primary">
+                💾 Speichern
+            </button>
+
+
+            <a href="{% url 'reparatur' %}" class="btn btn-secondary">
+                ❌ Abbrechen
+            </a>
+
+            {% if readonly %}
+                {% if user.is_superuser %}
+                <a href="{% url 'repair_delete' reparatur.id %}"
+                   class="btn btn-danger"
+                   onclick="return confirm('Reparatur wirklich löschen?');">
+                    🗑️ Löschen
+                </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'repair_delete' reparatur.id %}"
+                    class="btn btn-danger"
+                    onclick="return confirm('Reparatur wirklich löschen?');">
+                     🗑️ Löschen
+                </a>
+            {% endif %}
+
+        </div>
+
+
+    </form>
+
+</div>
+
+
+
+<script>
+
+const statusSelect = document.getElementById("status-select");
+const bearbeitungSection = document.getElementById("bearbeitung-section");
+
+const form = document.getElementById("reparatur-form");
+
+const techniker = document.getElementById("id_techniker");
+const datum = document.getElementById("id_reparatur_datum");
+const ausfuehrung = document.getElementById("id_ausfuehrung");
+
+
+function toggleBearbeitung(){
+
+    if(
+        statusSelect.value === "In Bearbeitung" ||
+        statusSelect.value === "Erledigt"
+    ){
+
+        bearbeitungSection.style.display = "block";
+
+    } else {
+
+        bearbeitungSection.style.display = "none";
+
+    }
+
+}
+
+
+// عند تغيير Status
+statusSelect.addEventListener(
+    "change",
+    toggleBearbeitung
+);
+
+
+// عند فتح الصفحة
+toggleBearbeitung();
+
+
+
+form.addEventListener("submit", function(e){
+
+
+    if(
+        statusSelect.value === "In Bearbeitung" ||
+        statusSelect.value === "Erledigt"
+    ){
+
+
+        let valid = true;
+
+
+        if(techniker.value.trim() === ""){
+
+            techniker.style.border = "2px solid red";
+            valid = false;
+
+        } else {
+
+            techniker.style.border = "";
+
+        }
+
+
+
+        if(datum.value === ""){
+
+            datum.style.border = "2px solid red";
+            valid = false;
+
+        } else {
+
+            datum.style.border = "";
+
+        }
+
+
+
+        if(ausfuehrung.value.trim() === ""){
+
+            ausfuehrung.style.border = "2px solid red";
+            valid = false;
+
+        } else {
+
+            ausfuehrung.style.border = "";
+
+        }
+
+
+
+        if(!valid){
+
+            e.preventDefault();
+
+        }
+
+
+    }
+
+
+});
+
+
+</script>
+{% endblock %}

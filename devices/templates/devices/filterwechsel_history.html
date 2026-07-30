@@ -1,0 +1,384 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h1>📋 Filterwechsel Historie</h1>
+
+
+<!-- Suchfeld -->
+
+<form method="GET" id="search-form" style="margin-bottom:25px;">
+
+
+<input 
+
+type="text"
+
+id="search-input"
+
+name="search"
+
+value="{{ search|default:'' }}"
+
+placeholder="Suche nach Inventarnummer oder Filtercode..."
+
+style="
+width:450px;
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+"
+
+
+>
+
+
+<button type="submit"
+
+style="
+padding:12px 20px;
+border-radius:8px;
+background:#1f2937;
+color:white;
+border:none;
+cursor:pointer;
+"
+
+>
+
+🔍 Suchen
+
+</button>
+
+
+</form>
+
+
+
+
+
+<table class="table">
+
+
+<tr>
+
+<th>Inventarnummer</th>
+
+<th>Anzahl der Filter</th>
+
+<th>Filtercode</th>
+
+<th>Datum</th>
+
+<th>Durchgeführt von</th>
+
+<th>Aktion</th>
+
+</tr>
+
+
+
+{% for item in filterwechsel %}
+
+
+
+<tr>
+
+
+
+<td>
+{{ item.geraet.inventory_number }}
+</td>
+
+
+
+<td>
+{{ item.anzahl_filter }}
+</td>
+
+
+
+<td>
+{{ item.filtercode }}
+</td>
+
+
+
+<td>
+{{ item.datum }}
+</td>
+
+
+
+<td>
+{{ item.durchgeführt_von }}
+</td>
+
+
+
+
+<td>
+
+    <a href="{% url 'filterwechsel_update' item.id %}">
+        ✏️ Bearbeiten
+    </a>
+
+    |
+
+    {% if request.user.is_superuser %}
+
+    <form method="POST"
+          action="{% url 'filterwechsel_delete' item.id %}"
+          style="display:inline;"
+          onsubmit="return confirm('Filterwechsel wirklich löschen?');">
+
+        {% csrf_token %}
+
+        <button class="delete-btn" type="submit">
+            🗑️ Löschen
+        </button>
+
+    </form>
+
+    {% endif %}
+
+</td>
+
+
+
+
+</tr>
+
+
+
+
+{% empty %}
+
+
+
+<tr>
+
+<td colspan="6">
+
+Keine Filterwechsel vorhanden
+
+</td>
+
+</tr>
+
+
+
+{% endfor %}
+
+
+
+</table>
+
+
+
+</div>
+
+
+
+
+
+<script>
+
+
+const searchInput = document.getElementById("search-input");
+
+const searchForm = document.getElementById("search-form");
+
+
+let timer = null;
+
+
+
+searchInput.addEventListener("input", function(){
+
+
+clearTimeout(timer);
+
+
+
+timer = setTimeout(function(){
+
+
+
+if(searchInput.value.trim() === ""){
+
+
+window.location.href = "{% url 'filterwechsel_history' %}";
+
+
+}
+
+else{
+
+
+searchForm.submit();
+
+
+}
+
+
+
+},300);
+
+
+
+});
+
+
+
+</script>
+
+
+
+
+
+<style>
+
+.delete-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.delete-btn:hover{
+    background:#b91c1c;
+}
+mark {
+
+background:#ffd54f;
+
+color:black;
+
+font-weight:bold;
+
+padding:2px 4px;
+
+border-radius:4px;
+
+}
+
+
+</style>
+
+
+
+
+
+<script>
+
+
+document.addEventListener("DOMContentLoaded", function(){
+
+
+
+const input = document.getElementById("search-input");
+
+
+let searchText = input.value.trim();
+
+
+
+if(searchText === ""){
+
+return;
+
+}
+
+
+
+let cells = document.querySelectorAll(
+".table td"
+);
+
+
+
+cells.forEach(function(cell){
+
+
+
+let text = cell.textContent;
+
+
+
+let regex = new RegExp(
+
+"(" + searchText + ")",
+
+"gi"
+
+);
+
+
+
+cell.innerHTML = text.replace(
+
+regex,
+
+"<mark>$1</mark>"
+
+);
+
+
+
+});
+
+
+
+});
+
+
+
+</script>
+
+
+
+
+
+<script>
+
+
+document.addEventListener("DOMContentLoaded", function(){
+
+
+const input = document.getElementById("search-input");
+
+
+
+if(input && input.value.trim() !== ""){
+
+
+input.focus();
+
+
+input.setSelectionRange(
+
+input.value.length,
+
+input.value.length
+
+);
+
+
+}
+
+
+
+});
+
+
+
+</script>
+
+
+
+{% endblock %}
