@@ -34,6 +34,16 @@
 .form-group textarea {
     height: 100px;
 }
+.logout-btn{
+    background:none;
+    border:none;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    width:100%;
+    text-align:left;
+    padding:12px;
+}
 
 </style>
 <head>
@@ -403,6 +413,19 @@ details.menu-group ul li a:hover {
     padding: 15px;
 }
 
+.sidebar{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+}
+
+
+.sidebar-bottom{
+    margin-top:auto;
+    padding-top:20px;
+    padding-bottom:20px;
+}
+
 </style>
 
 </head>
@@ -544,7 +567,14 @@ details.menu-group ul li a:hover {
     <a href="{% url 'settings' %}">
         ⚙️ Einstellungen
     </a>
-
+    <div class="sidebar-bottom">
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+                🚪 Abmelden
+            </button>
+        </form>
+    </div>
 </div>
 
 

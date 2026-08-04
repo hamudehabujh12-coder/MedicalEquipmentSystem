@@ -120,7 +120,7 @@ def login_view(request):
         request,
         "login.html"
     )
-
+@login_required
 def home(request):
 
     create_daily_backup()
@@ -341,7 +341,7 @@ def device_list(request):
 
     )
 
-
+@login_required
 def device_detail(request, device_id):
 
     device = get_object_or_404(
@@ -432,6 +432,8 @@ def device_create(request):
         }
 
     )
+
+@login_required    
 def device_create_geraetart(request, geraetart_id):
 
     geraetart = get_object_or_404(
@@ -475,7 +477,8 @@ def device_create_geraetart(request, geraetart_id):
             "geraetart": geraetart,
         }
     )
-        
+
+@login_required        
 def device_geraetart(request, geraetart):
 
     
@@ -532,7 +535,7 @@ def contact(request):
         }
     )
 
-
+@login_required
 def faellige_stk(request):
 
     heute = date.today()
@@ -552,6 +555,8 @@ def faellige_stk(request):
             "heute": heute,
         }
     )
+
+@login_required
 def faellige_mtk(request):
 
     heute = date.today()
@@ -573,7 +578,7 @@ def faellige_mtk(request):
     )
 
 
-
+@login_required
 def faellige_dguv(request):
 
     heute = date.today()
@@ -1000,6 +1005,7 @@ def repair_delete(request, repair_id):
         "reparatur"
     )
 
+@login_required
 def device_search(request):
 
     query = request.GET.get("q", "")
@@ -1786,7 +1792,7 @@ def technician_document_delete(request, doc_id):
         }
     )
 
-
+@login_required
 def general_documents(request, category):
 
     documents = GeneralDocument.objects.filter(
@@ -1804,7 +1810,7 @@ def general_documents(request, category):
     )
 
 
-
+@login_required
 def general_document_upload(request):
     
     category = request.GET.get("category", "Zertifikat")
@@ -1871,6 +1877,7 @@ def general_document_rename(request, doc_id):
         }
     )
 
+@login_required
 def general_document_delete(request, doc_id):
 
     doc = get_object_or_404(
@@ -2330,7 +2337,7 @@ def standort_delete(request, standort_id):
 
     return redirect("standort_list")
 
-
+@login_required
 def login_view(request):
 
     if request.method == "POST":
@@ -2720,6 +2727,7 @@ def document_types(request):
         }
     )
 
+@login_required
 def add_document_type(request):
     if not request.user.is_superuser:
         return redirect("permission_denied")
@@ -2741,6 +2749,8 @@ def add_document_type(request):
         request,
         "devices/add_document_type.html"
     )
+
+@login_required
 def edit_document_type(request, id):
     if not request.user.is_superuser:
             return redirect("permission_denied")
@@ -2761,7 +2771,7 @@ def edit_document_type(request, id):
             "type": document_type
         }
     )
-
+@login_required
 def delete_document_type(request, id):
 
     document_type = DocumentType.objects.get(id=id)
@@ -2921,6 +2931,7 @@ def backup_restore(request, filename):
 
     return redirect("backup")
 
+@login_required
 def create_daily_backup():
 
     backup_dir = os.path.join(settings.BASE_DIR, "backups")
@@ -2948,6 +2959,7 @@ def create_daily_backup():
         )
         return filename
 
+@login_required
 def create_update_backup():
 
     backup_dir = os.path.join(
