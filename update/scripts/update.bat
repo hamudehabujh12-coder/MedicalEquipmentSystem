@@ -3,7 +3,7 @@ title Medical Equipment System Update
 
 cd /d "%~dp0\..\.."
 
-set PYTHON=venv\Scripts\python.exe
+set PYTHON=%~dp0..\..\venv\Scripts\python.exe
 
 echo ========================================
 echo Medical Equipment System Update
