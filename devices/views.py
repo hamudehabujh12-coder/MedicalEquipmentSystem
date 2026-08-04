@@ -3968,7 +3968,10 @@ def system_update(request):
 
     latest_version = None
     latest_description = None
-    update_available = False
+    update_available = request.session.get(
+    "update_available",
+    False
+)
 
 
     # قراءة معلومات التحديث
@@ -4102,7 +4105,7 @@ def check_update(request):
 
 
         if remote_commit != local_commit:
-
+            request.session["update_available"] = True
             messages.success(
                 request,
                 "New update available from GitHub."
