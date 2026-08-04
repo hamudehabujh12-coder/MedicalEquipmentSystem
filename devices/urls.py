@@ -5,15 +5,22 @@ from django.contrib.auth import views as auth_views
 from devices.views import login_view
 
 urlpatterns = [
-   
+
     path(
-    "accounts/login/",
-    login_view,
-    name="login"
-    ),
-    
+            "accounts/login/",
+            login_view,
+            name="login"
+        ),
 
     path("", views.login_view, name="login"),
+
+    
+
+    path(
+        "home/",
+        views.home,
+        name="home"
+    ),
 
     path(
     "password-reset/",
@@ -51,7 +58,7 @@ urlpatterns = [
     views.user_password_reset,
     name="user_password_reset"
     ),
-    path("home/", views.home, name="home"),
+   
 
     # إضافة جهاز يجب أن تكون قبل category
     path(

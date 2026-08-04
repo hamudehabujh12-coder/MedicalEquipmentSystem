@@ -6,8 +6,11 @@ cd /d "%~dp0\..\.."
 echo ========================================
 echo Medical Equipment System Update
 echo ========================================
-
 echo.
+
+:: --------------------------------------------------
+:: Create Backup
+:: --------------------------------------------------
 
 set BACKUP_DIR=update\backups
 
@@ -17,52 +20,124 @@ if not exist "%BACKUP_DIR%" (
 
 set BACKUP_FILE=%BACKUP_DIR%\update_backup_%date:~-4%-%date:~3,2%-%date:~0,2%_%time:~0,2%-%time:~3,2%.sqlite3
 
-
 echo Creating database backup...
 
 copy "db.sqlite3" "%BACKUP_FILE%" > nul
 
-
 if exist "%BACKUP_FILE%" (
-    echo Backup created:
+    echo Backup created successfully.
     echo %BACKUP_FILE%
 ) else (
     echo Backup failed!
+    pause
+    exit /b 1
 )
 
-
 echo.
 
-echo Update preparation finished.
+:: --------------------------------------------------
+:: Download latest version from GitHub
+:: --------------------------------------------------
+
+echo ========================================
+echo Downloading latest version from GitHub...
+echo ========================================
+
+git pull origin main
+
+if errorlevel 1 (
+    echo.
+    echo Git update failed.
+    pause
+    exit /b 1
+)
+
+echo Git update completed successfully.
 echo.
-echo Installing update files...
 
-xcopy "update\package\*" "." /E /Y /I
+:: --------------------------------------------------
+:: Database Migration
+:: --------------------------------------------------
 
+echo ========================================
+echo Running database migrations...
+echo ========================================
 
-if %errorlevel%==0 (
-    echo Update files copied successfully.
+python manage.py migrate
 
+if errorlevel 1 (
+    echo.
+    echo Database migration failed.
+    pause
+    exit /b 1
+)
 
-    echo Creating update history...
+echo Database migration completed successfully.
+echo.
 
+:: --------------------------------------------------
+:: Collect Static Files
+:: --------------------------------------------------
 
-    powershell -Command ^
-    "$file='update\logs\update_history.json';" ^
-    "$json=Get-Content 'update\version.json' -Raw | ConvertFrom-Json;" ^
-    "if (Test-Path $file) { $data=Get-Content $file -Raw | ConvertFrom-Json } else { $data=@() };" ^
-    "$exists=$data | Where-Object {$_.version -eq $json.version};" ^
-    "if (-not $exists) {" ^
-    "$new=[PSCustomObject]@{version=$json.version;date=(Get-Date -Format 'yyyy-MM-dd');description=$json.description;status='Installed'};" ^
-    "$result=@($new)+@($data);" ^
-    "$result | ConvertTo-Json -Depth 10 | Set-Content $file -Encoding UTF8" ^
-    "}"
+echo ========================================
+echo Collecting static files...
+echo ========================================
 
-    echo Update history updated successfully.
+python manage.py collectstatic --noinput
 
+if errorlevel 1 (
+    echo.
+    echo collectstatic failed.
+    pause
+    exit /b 1
+)
+
+echo Static files updated successfully.
+echo.
+
+:: --------------------------------------------------
+:: Update History
+:: --------------------------------------------------
+
+echo Creating update history...
+
+powershell -Command ^
+"$file='update\logs\update_history.json';" ^
+"$json=Get-Content 'update\version.json' -Raw | ConvertFrom-Json;" ^
+"if (Test-Path $file) { $data=Get-Content $file -Raw | ConvertFrom-Json } else { $data=@() };" ^
+"$exists=$data | Where-Object {$_.version -eq $json.version};" ^
+"if (-not $exists) {" ^
+"$new=[PSCustomObject]@{version=$json.version;date=(Get-Date -Format 'yyyy-MM-dd HH:mm:ss');description=$json.description;status='Installed'};" ^
+"$result=@($new)+@($data);" ^
+"$result | ConvertTo-Json -Depth 10 | Set-Content $file -Encoding UTF8" ^
+"}"
+
+echo Update history updated successfully.
+echo.
+
+echo ========================================
+echo Update completed successfully.
+echo ========================================
+
+echo Restarting MedicalEquipmentSystem...
+
+net stop MedicalEquipmentSystem
+net start MedicalEquipmentSystem
+
+if errorlevel 1 (
+    echo Failed to restart the service.
 ) else (
-    echo Update files copy failed.
+    echo Service restarted successfully.
 )
 
+echo.
+echo Update completed successfully.
 
-pause
+echo.
+echo ========================================
+echo Update completed successfully.
+echo ========================================
+
+timeout /t 2 /nobreak >nul
+exit
+

@@ -2931,7 +2931,7 @@ def backup_restore(request, filename):
 
     return redirect("backup")
 
-@login_required
+
 def create_daily_backup():
 
     backup_dir = os.path.join(settings.BASE_DIR, "backups")
@@ -2959,7 +2959,7 @@ def create_daily_backup():
         )
         return filename
 
-@login_required
+
 def create_update_backup():
 
     backup_dir = os.path.join(
@@ -4026,9 +4026,31 @@ def system_update(request):
             latest_description = data.get("description")
 
 
-        # مقارنة النسخ
-        if latest_version and latest_version != settings.APP_VERSION:
-            update_available = True
+        try:
+            subprocess.run(
+                ["git", "fetch", "origin"],
+                cwd=settings.BASE_DIR,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            local_commit = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"],
+                cwd=settings.BASE_DIR,
+                text=True,
+            ).strip()
+
+            remote_commit = subprocess.check_output(
+                ["git", "rev-parse", "origin/main"],
+                cwd=settings.BASE_DIR,
+                text=True,
+            ).strip()
+
+            update_available = (local_commit != remote_commit)
+
+        except Exception:
+            update_available = False
 
 
 
@@ -4101,46 +4123,55 @@ def system_update(request):
 @login_required
 def check_update(request):
 
-    update_file = Path(settings.BASE_DIR) / "update_version.json"
+    if not request.user.is_superuser:
+        return redirect("permission_denied")
 
-    if not update_file.exists():
+    try:
+        # تحديث معلومات المستودع من GitHub
+        subprocess.run(
+            ["git", "fetch", "origin"],
+            cwd=settings.BASE_DIR,
+            check=True,
+            capture_output=True,
+            text=True
+        )
+
+        # الحصول على آخر Commit محلي
+        local_commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=settings.BASE_DIR,
+            text=True
+        ).strip()
+
+        # الحصول على آخر Commit على GitHub
+        remote_commit = subprocess.check_output(
+            ["git", "rev-parse", "origin/main"],
+            cwd=settings.BASE_DIR,
+            text=True
+        ).strip()
+
+        if local_commit != remote_commit:
+
+            backup_file = create_update_backup()
+
+            messages.success(
+                request,
+                f"New update available.\nBackup created:\n{backup_file}"
+            )
+
+        else:
+
+            messages.info(
+                request,
+                "Your system is already up to date."
+            )
+
+    except Exception as e:
 
         messages.error(
             request,
-            "Update server not found."
+            f"Update check failed: {e}"
         )
-
-        return redirect("system_update")
-
-
-    with open(update_file, "r", encoding="utf-8") as f:
-
-        data = json.load(f)
-
-
-    latest_version = data.get("version")
-
-
-    if latest_version != settings.APP_VERSION:
-
-        # إنشاء نسخة احتياطية قبل التحديث
-        backup_file = create_update_backup()
-
-
-        messages.success(
-            request,
-            f"New update available: {latest_version}. "
-            f"Backup created: {backup_file}"
-        )
-
-
-    else:
-
-        messages.info(
-            request,
-            "Your system is already up to date."
-        )
-
 
     return redirect("system_update")
 
