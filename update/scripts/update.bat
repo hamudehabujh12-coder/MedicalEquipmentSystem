@@ -149,11 +149,11 @@ echo ========================================
 echo Restarting MedicalEquipmentSystem...
 echo ========================================
 
-net stop MedicalEquipmentSystem
+net stop "MedicalEquipmentSystem"
 
 timeout /t 3 /nobreak >nul
 
-net start MedicalEquipmentSystem
+net start "MedicalEquipmentSystem"
 
 if errorlevel 1 (
     echo Failed to restart the service.
