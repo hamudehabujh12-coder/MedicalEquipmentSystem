@@ -84,12 +84,10 @@ from .forms import (
 
 def login_view(request):
 
-
     if request.method == "POST":
 
         username = request.POST.get("username")
         password = request.POST.get("password")
-
 
         user = authenticate(
             request,
@@ -97,33 +95,25 @@ def login_view(request):
             password=password
         )
 
-
-        if user:
-
+        if user is not None:
             login(request, user)
-
             return redirect("home")
 
-
         else:
-
             return render(
                 request,
-                "login.html",
-                {
-                    "error": "Benutzername oder Passwort falsch"
-                }
+                "registration/login.html",
+                {"error": "Benutzername oder Passwort falsch"}
             )
-
 
     return render(
         request,
-        "login.html"
+        "registration/login.html"
     )
 @login_required
 def home(request):
 
-    create_daily_backup(request)
+    create_daily_backup()
 
     home, created = HomeInformation.objects.get_or_create(
         id=1
@@ -432,8 +422,7 @@ def device_create(request):
         }
 
     )
-
-@login_required    
+@login_required
 def device_create_geraetart(request, geraetart_id):
 
     geraetart = get_object_or_404(
@@ -477,8 +466,7 @@ def device_create_geraetart(request, geraetart_id):
             "geraetart": geraetart,
         }
     )
-
-@login_required        
+@login_required       
 def device_geraetart(request, geraetart):
 
     
@@ -1004,7 +992,6 @@ def repair_delete(request, repair_id):
     return redirect(
         "reparatur"
     )
-
 @login_required
 def device_search(request):
 
@@ -1027,6 +1014,8 @@ def device_search(request):
             "query": query,
         }
     )
+
+@login_required
 def settings_view(request):
     return render(
         request,
@@ -1640,7 +1629,7 @@ def document_rename(request, document_id):
             "document": document
         }
     )
-
+@login_required
 def documents(request):
 
     return render(
@@ -1876,7 +1865,6 @@ def general_document_rename(request, doc_id):
             "doc": doc
         }
     )
-
 @login_required
 def general_document_delete(request, doc_id):
 
@@ -2337,35 +2325,6 @@ def standort_delete(request, standort_id):
 
     return redirect("standort_list")
 
-@login_required
-def login_view(request):
-
-    if request.method == "POST":
-
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-
-        user = authenticate(
-            request,
-            username=username,
-            password=password
-        )
-
-        if user is not None:
-            login(request, user)
-            return redirect("home")
-
-        else:
-            return render(
-                request,
-                "registration/login.html",
-                {"error": "Benutzername oder Passwort falsch"}
-            )
-
-    return render(
-        request,
-        "registration/login.html"
-    )
 
 
 
@@ -2726,7 +2685,6 @@ def document_types(request):
             "types": types
         }
     )
-
 @login_required
 def add_document_type(request):
     if not request.user.is_superuser:
@@ -2931,8 +2889,7 @@ def backup_restore(request, filename):
 
     return redirect("backup")
 
-
-def create_daily_backup(request=None):
+def create_daily_backup():
 
     backup_dir = os.path.join(settings.BASE_DIR, "backups")
     os.makedirs(backup_dir, exist_ok=True)
@@ -2958,7 +2915,6 @@ def create_daily_backup(request=None):
             destination
         )
         return filename
-
 
 def create_update_backup():
 
@@ -4026,31 +3982,9 @@ def system_update(request):
             latest_description = data.get("description")
 
 
-        try:
-            subprocess.run(
-                ["git", "fetch", "origin"],
-                cwd=settings.BASE_DIR,
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-
-            local_commit = subprocess.check_output(
-                ["git", "rev-parse", "HEAD"],
-                cwd=settings.BASE_DIR,
-                text=True,
-            ).strip()
-
-            remote_commit = subprocess.check_output(
-                ["git", "rev-parse", "origin/main"],
-                cwd=settings.BASE_DIR,
-                text=True,
-            ).strip()
-
-            update_available = (local_commit != remote_commit)
-
-        except Exception:
-            update_available = False
+        # مقارنة النسخ
+        if latest_version and latest_version != settings.APP_VERSION:
+            update_available = True
 
 
 
@@ -4123,55 +4057,46 @@ def system_update(request):
 @login_required
 def check_update(request):
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
+    update_file = Path(settings.BASE_DIR) / "update_version.json"
 
-    try:
-        # تحديث معلومات المستودع من GitHub
-        subprocess.run(
-            ["git", "fetch", "origin"],
-            cwd=settings.BASE_DIR,
-            check=True,
-            capture_output=True,
-            text=True
-        )
-
-        # الحصول على آخر Commit محلي
-        local_commit = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            cwd=settings.BASE_DIR,
-            text=True
-        ).strip()
-
-        # الحصول على آخر Commit على GitHub
-        remote_commit = subprocess.check_output(
-            ["git", "rev-parse", "origin/main"],
-            cwd=settings.BASE_DIR,
-            text=True
-        ).strip()
-
-        if local_commit != remote_commit:
-
-            backup_file = create_update_backup()
-
-            messages.success(
-                request,
-                f"New update available.\nBackup created:\n{backup_file}"
-            )
-
-        else:
-
-            messages.info(
-                request,
-                "Your system is already up to date."
-            )
-
-    except Exception as e:
+    if not update_file.exists():
 
         messages.error(
             request,
-            f"Update check failed: {e}"
+            "Update server not found."
         )
+
+        return redirect("system_update")
+
+
+    with open(update_file, "r", encoding="utf-8") as f:
+
+        data = json.load(f)
+
+
+    latest_version = data.get("version")
+
+
+    if latest_version != settings.APP_VERSION:
+
+        # إنشاء نسخة احتياطية قبل التحديث
+        backup_file = create_update_backup()
+
+
+        messages.success(
+            request,
+            f"New update available: {latest_version}. "
+            f"Backup created: {backup_file}"
+        )
+
+
+    else:
+
+        messages.info(
+            request,
+            "Your system is already up to date."
+        )
+
 
     return redirect("system_update")
 
@@ -4246,9 +4171,9 @@ def run_update(request):
             "/c",
             update_script
         ],
-        cwd=settings.BASE_DIR
+        cwd=settings.BASE_DIR,
+        creationflags=subprocess.CREATE_NEW_CONSOLE
     )
-
 
     messages.success(
         request,
