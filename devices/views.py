@@ -4057,7 +4057,7 @@ def system_update(request):
 @login_required
 def check_update(request):
 
-    update_file = Path(settings.BASE_DIR) / "update_version.json"
+    update_file = Path(settings.BASE_DIR) / "update" / "version.json"
 
     if not update_file.exists():
 
