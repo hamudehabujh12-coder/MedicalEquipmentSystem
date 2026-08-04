@@ -43,7 +43,7 @@ echo.
 echo ========================================
 echo Downloading latest version from GitHub...
 echo ========================================
-
+git config --system --add safe.directory "%CD%"
 git fetch origin
 
 if errorlevel 1 (
