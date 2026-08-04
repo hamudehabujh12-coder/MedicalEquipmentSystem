@@ -123,7 +123,7 @@ def login_view(request):
 @login_required
 def home(request):
 
-    create_daily_backup()
+    create_daily_backup(request)
 
     home, created = HomeInformation.objects.get_or_create(
         id=1
@@ -2932,7 +2932,7 @@ def backup_restore(request, filename):
     return redirect("backup")
 
 
-def create_daily_backup():
+def create_daily_backup(request=None):
 
     backup_dir = os.path.join(settings.BASE_DIR, "backups")
     os.makedirs(backup_dir, exist_ok=True)
