@@ -4057,50 +4057,74 @@ def system_update(request):
 @login_required
 def check_update(request):
 
-    update_file = Path(settings.BASE_DIR) / "update" / "version.json"
+    import subprocess
 
-    if not update_file.exists():
+    try:
+        # جلب آخر تحديث من GitHub
+        result = subprocess.run(
+            [
+                "git",
+                "fetch",
+                "origin",
+            ],
+            cwd=settings.BASE_DIR,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        if result.returncode != 0:
+            raise Exception(result.stderr)
+
+
+        # معرفة آخر commit على GitHub
+        remote_commit = subprocess.check_output(
+            [
+                "git",
+                "rev-parse",
+                "origin/main",
+            ],
+            cwd=settings.BASE_DIR,
+            text=True
+        ).strip()
+
+
+        # معرفة النسخة الحالية على السيرفر
+        local_commit = subprocess.check_output(
+            [
+                "git",
+                "rev-parse",
+                "HEAD",
+            ],
+            cwd=settings.BASE_DIR,
+            text=True
+        ).strip()
+
+
+        if remote_commit != local_commit:
+
+            messages.success(
+                request,
+                "New update available from GitHub."
+            )
+
+        else:
+
+            messages.info(
+                request,
+                "Your system is already up to date."
+            )
+
+
+    except Exception as e:
 
         messages.error(
             request,
-            "Update server not found."
-        )
-
-        return redirect("system_update")
-
-
-    with open(update_file, "r", encoding="utf-8") as f:
-
-        data = json.load(f)
-
-
-    latest_version = data.get("version")
-
-
-    if latest_version != settings.APP_VERSION:
-
-        # إنشاء نسخة احتياطية قبل التحديث
-        backup_file = create_update_backup()
-
-
-        messages.success(
-            request,
-            f"New update available: {latest_version}. "
-            f"Backup created: {backup_file}"
-        )
-
-
-    else:
-
-        messages.info(
-            request,
-            "Your system is already up to date."
+            f"Update server not found: {e}"
         )
 
 
     return redirect("system_update")
-
-
 @login_required
 def run_update(request):
 
