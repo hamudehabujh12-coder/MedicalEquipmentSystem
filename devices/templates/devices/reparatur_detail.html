@@ -78,17 +78,20 @@
     <h2>📝 Problemmeldung</h2>
 
     <div class="form-group" style="margin-bottom:20px;">
+
         <label>Problembeschreibung</label>
-        <textarea class="form-control" rows="5" readonly>{{ reparatur.beschreibung }}</textarea>
+
+        {{ form.beschreibung }}
+
     </div>
 
+
     <div class="form-group" style="margin-bottom:20px;">
+
         <label>Melder</label>
-        <input
-            type="text"
-            class="form-control"
-            value="{{ reparatur.melder }}"
-            readonly>
+
+        {{ form.melder }}
+
     </div>
 
     <div class="form-group">
@@ -99,6 +102,8 @@
             value="{{ reparatur.datum|date:'d.m.Y' }}"
             readonly>
     </div>
+
+</div>
 
 </div>
    
@@ -201,7 +206,11 @@
         </div>
 
 
-        <div class="form-buttons" style="margin-top:25px;">
+        </div> <!-- نهاية bearbeitung-section -->
+
+
+        <div class="form-buttons" 
+            style="margin-top:25px; display:flex; gap:10px; align-items:center;">
 
             <button type="submit" class="btn btn-primary">
                 💾 Speichern
@@ -212,27 +221,18 @@
                 ❌ Abbrechen
             </a>
 
-            {% if readonly %}
-                {% if user.is_superuser %}
-                <a href="{% url 'repair_delete' reparatur.id %}"
-                   class="btn btn-danger"
-                   onclick="return confirm('Reparatur wirklich löschen?');">
-                    🗑️ Löschen
-                </a>
-                {% endif %}
-            {% else %}
-                <a href="{% url 'repair_delete' reparatur.id %}"
+
+            <button type="submit"
+                    name="delete"
+                    value="1"
                     class="btn btn-danger"
                     onclick="return confirm('Reparatur wirklich löschen?');">
-                     🗑️ Löschen
-                </a>
-            {% endif %}
+
+                🗑️ Löschen
+
+            </button>
 
         </div>
-
-
-    </form>
-
 </div>
 
 

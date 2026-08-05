@@ -281,7 +281,6 @@ class ReparaturForm(forms.ModelForm):
         self.fields["beschreibung"].required = True
         self.fields["melder"].required = True
 
-
 class ReparaturBearbeitenForm(forms.ModelForm):
 
     class Meta:
@@ -289,6 +288,8 @@ class ReparaturBearbeitenForm(forms.ModelForm):
         model = Reparatur
 
         fields = [
+            "beschreibung",
+            "melder",
             "status",
             "techniker",
             "reparatur_datum",
@@ -298,6 +299,19 @@ class ReparaturBearbeitenForm(forms.ModelForm):
         ]
 
         widgets = {
+
+            "beschreibung": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 5
+                }
+            ),
+
+            "melder": forms.TextInput(
+                attrs={
+                    "class": "form-control"
+                }
+            ),
 
             "status": forms.Select(
                 attrs={
@@ -316,7 +330,7 @@ class ReparaturBearbeitenForm(forms.ModelForm):
 
 
             "reparatur_datum": forms.DateInput(
-                 format="%Y-%m-%d",
+                format="%Y-%m-%d",
                 attrs={
                     "class": "form-control",
                     "type": "date",
@@ -334,11 +348,13 @@ class ReparaturBearbeitenForm(forms.ModelForm):
             ),
         }
 
+
     def __init__(self, *args, **kwargs):
+
         super().__init__(*args, **kwargs)
 
         if self.instance and self.instance.pk:
-             self.initial["reparatur_datum"] = self.instance.reparatur_datum
+            self.initial["reparatur_datum"] = self.instance.reparatur_datum
 
 
 from django import forms

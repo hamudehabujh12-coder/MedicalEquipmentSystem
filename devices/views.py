@@ -727,6 +727,7 @@ def reparatur_detail(request, pk):
     )
 
 
+    # وضع العرض فقط
     readonly = request.GET.get("readonly") == "1"
 
 
@@ -737,23 +738,65 @@ def reparatur_detail(request, pk):
         )
 
         return render(
-
             request,
-
             "devices/reparatur_detail.html",
-
             {
                 "reparatur": reparatur,
                 "form": form,
                 "readonly": True,
             }
-
         )
-
 
 
     if request.method == "POST":
 
+
+        # =========================
+        # حذف Reparatur
+        # =========================
+
+        if request.POST.get("delete") == "1":
+
+
+            AuditLog.objects.create(
+
+                user=request.user,
+
+                action="DELETE",
+
+                model_name="Reparatur",
+
+                object_id=reparatur.id,
+
+                description=(
+
+                    f"Reparatur für Gerät "
+                    f"{reparatur.geraet.name} "
+                    f"(Inventarnummer: {reparatur.geraet.inventory_number}) "
+                    "gelöscht."
+
+                )
+
+            )
+
+
+            reparatur.delete()
+
+
+            messages.success(
+                request,
+                "Reparatur gelöscht."
+            )
+
+
+            return redirect(
+                "reparatur"
+            )
+
+
+        # =========================
+        # Speichern
+        # =========================
 
         form = ReparaturBearbeitenForm(
 
@@ -765,49 +808,11 @@ def reparatur_detail(request, pk):
 
         )
 
-
+        print(request.POST)
         if form.is_valid():
 
 
-            reparatur = form.save(
-                commit=False
-            )
-
-
-            if request.POST.get(
-                "reparaturbericht-clear"
-            ):
-
-                if reparatur.reparaturbericht:
-
-                    reparatur.reparaturbericht.delete(
-                        save=False
-                    )
-
-                reparatur.reparaturbericht = None
-
-
-
-            if request.POST.get(
-                "reparaturbild-clear"
-            ):
-
-                if reparatur.reparaturbild:
-
-                    reparatur.reparaturbild.delete(
-                        save=False
-                    )
-
-                reparatur.reparaturbild = None
-
-
-
-            reparatur.status = request.POST.get(
-                "status"
-            )
-
-
-            reparatur.save()
+            reparatur = form.save()
 
 
 
@@ -831,7 +836,6 @@ def reparatur_detail(request, pk):
                 )
 
             )
-
 
 
             messages.success(
@@ -869,6 +873,7 @@ def reparatur_detail(request, pk):
         }
 
     )
+
 @login_required
 def reparatur_uebersicht(request):
 
@@ -918,13 +923,87 @@ def reparatur_historie(request):
         )
 
 
+    # حذف متعدد - فقط Admin
+    if request.method == "POST":
+
+
+        if not request.user.is_superuser:
+
+            messages.error(
+                request,
+                "Keine Berechtigung."
+            )
+
+            return redirect(
+                "reparatur_historie"
+            )
+
+
+        ids = request.POST.getlist(
+            "selected_repairs"
+        )
+
+
+        for repair_id in ids:
+
+
+            reparatur = Reparatur.objects.filter(
+                id=repair_id
+            ).first()
+
+
+            if reparatur:
+
+
+                AuditLog.objects.create(
+
+                    user=request.user,
+
+                    action="DELETE",
+
+                    model_name="Reparatur",
+
+                    object_id=reparatur.id,
+
+                    description=(
+
+                        f"Reparatur gelöscht: "
+                        f"{reparatur.geraet.name} "
+                        f"(Inventarnummer: "
+                        f"{reparatur.geraet.inventory_number})"
+
+                    )
+
+                )
+
+
+                reparatur.delete()
+
+
+
+        messages.success(
+            request,
+            "Ausgewählte Reparaturen gelöscht."
+        )
+
+
+        return redirect(
+            "reparatur_historie"
+        )
+
+
+
     return render(
+
         request,
+
         "devices/reparatur_historie.html",
+
         {
             "reparaturen": reparaturen,
             "search": search
         }
+
     )
 @login_required
 def reparatur_historie_detail(request, pk):

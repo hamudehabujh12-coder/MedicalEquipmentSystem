@@ -39,6 +39,10 @@ cursor:pointer;
 
 
 
+<form method="post">
+
+{% csrf_token %}
+
 <table class="table">
 
 <tr>
@@ -49,61 +53,116 @@ cursor:pointer;
     <th>Reparaturausführung</th>
     <th>Datum</th>
     <th>Status</th>
+
+    {% if user.is_superuser %}
+        <th>Auswahl</th>
+    {% endif %}
+
 </tr>
+
 
 {% for reparatur in reparaturen %}
 
 <tr onclick="window.location.href='{% url 'reparatur_detail' reparatur.id %}?readonly=1';"
     style="cursor:pointer;">
 
+
     <td>
         {{ reparatur.geraet.name }}
     </td>
+
 
     <td>
         {{ reparatur.geraet.inventory_number }}
     </td>
 
+
     <td>
         {{ reparatur.geraet.serial_number }}
     </td>
+
 
     <td>
         {{ reparatur.beschreibung }}
     </td>
 
+
     <td>
         {{ reparatur.ausfuehrung }}
     </td>
+
 
     <td>
         {{ reparatur.datum }}
     </td>
 
+
     <td>
+
         {% if reparatur.status == "Offen" %}
             <span class="badge bg-danger">🔴 Offen</span>
+
         {% elif reparatur.status == "In Bearbeitung" %}
-            <span class="badge bg-warning text-dark">🟡 In Bearbeitung</span>
+            <span class="badge bg-warning text-dark">
+                🟡 In Bearbeitung
+            </span>
+
         {% elif reparatur.status == "Erledigt" %}
-            <span class="badge bg-success">🟢 Erledigt</span>
+            <span class="badge bg-success">
+                🟢 Erledigt
+            </span>
+
         {% endif %}
+
     </td>
 
+
+    {% if user.is_superuser %}
+
+    <td onclick="event.stopPropagation();">
+
+        <input 
+            type="checkbox"
+            name="selected_repairs"
+            value="{{ reparatur.id }}">
+
+    </td>
+
+    {% endif %}
+
+
 </tr>
+
 
 {% empty %}
 
 <tr>
-    <td colspan="7">
+    <td colspan="8">
         Keine Reparaturen vorhanden
     </td>
 </tr>
 
+
 {% endfor %}
+
 
 </table>
 
+
+{% if user.is_superuser %}
+
+<button type="submit"
+        class="btn btn-danger"
+        onclick="return confirm('Ausgewählte Reparaturen wirklich löschen?');">
+
+    🗑️ Ausgewählte löschen
+
+</button>
+
+{% endif %}
+
+
+</form>
 </div>
 <script>
 
