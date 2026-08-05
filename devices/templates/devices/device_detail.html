@@ -70,34 +70,22 @@
 
    
 
-    {% if device.last_stk %}
+    {% if device.geraetart and device.geraetart.braucht_pruefung %}
 
-    <div class="info-card">
-        <h4>Nächste STK</h4>
-        <p>{{ device.next_stk|date:"d.m.Y"|default:"—" }}</p>
-    </div>
+        <div class="info-card">
+            <h4>Nächste STK</h4>
+            <p>{{ device.next_stk|date:"d.m.Y"|default:"—" }}</p>
+        </div>
 
-    {% endif %}
+        <div class="info-card">
+            <h4>Nächste MTK</h4>
+            <p>{{ device.next_mtk|date:"d.m.Y"|default:"—" }}</p>
+        </div>
 
-
-
-    {% if device.last_mtk %}
-
-    <div class="info-card">
-        <h4>Nächste MTK</h4>
-        <p>{{ device.next_mtk|date:"d.m.Y"|default:"—" }}</p>
-    </div>
-
-    {% endif %}
-
-
-
-    {% if device.last_dguv %}
-
-    <div class="info-card">
-        <h4>Nächste DGUV V3</h4>
-        <p>{{ device.next_dguv|date:"d.m.Y"|default:"—" }}</p>
-    </div>
+        <div class="info-card">
+            <h4>Nächste DGUV V3</h4>
+            <p>{{ device.next_dguv|date:"d.m.Y"|default:"—" }}</p>
+        </div>
 
     {% endif %}
 

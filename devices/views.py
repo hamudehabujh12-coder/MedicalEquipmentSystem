@@ -357,58 +357,42 @@ def device_create(request):
             request.FILES
         )
 
-
         if form.is_valid():
 
             device = form.save()
 
-
             AuditLog.objects.create(
-
                 user=request.user,
-
                 action="CREATE",
-
                 model_name="Gerät",
-
                 object_id=device.id,
-
                 description=(
                     f"Gerät {device.name} "
                     f"({device.inventory_number}) "
                     "hinzugefügt."
                 )
-
             )
-
 
             messages.success(
                 request,
                 "Gerät erfolgreich hinzugefügt."
             )
 
-
-            return redirect(
-                "device_list"
-            )
-
+            return redirect("device_list")
 
     else:
 
         form = DeviceForm()
 
-
     return render(
-
         request,
-
         "devices/device_form.html",
-
         {
-            "form": form
+            "form": form,
+            "geraetarten": Geraetart.objects.all(),
         }
-
     )
+
 @login_required
 def device_create_geraetart(request, geraetart_id):
 

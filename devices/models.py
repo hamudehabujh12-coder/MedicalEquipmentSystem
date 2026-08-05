@@ -8,6 +8,18 @@ class Geraetart(models.Model):
         unique=True
     )
 
+    aktiv = models.BooleanField(
+        default=True
+    )
+
+    braucht_pruefung = models.BooleanField(
+        "Benötigt STK / MTK / DGUV",
+        default=True
+    )
+
+    def __str__(self):
+        return self.name
+
 
     aktiv = models.BooleanField(
         default=True

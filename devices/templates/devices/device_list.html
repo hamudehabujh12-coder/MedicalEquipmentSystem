@@ -255,26 +255,29 @@ style="cursor:pointer;"
 
 <td>
 
+{% if device.geraetart and device.geraetart.braucht_pruefung %}
 
-{% if device.next_stk %}
-STK: {{ device.next_stk|date:"d.m.Y" }}<br>
+    {% if device.next_stk %}
+        STK: {{ device.next_stk|date:"d.m.Y" }}<br>
+    {% endif %}
+
+    {% if device.next_mtk %}
+        MTK: {{ device.next_mtk|date:"d.m.Y" }}<br>
+    {% endif %}
+
+    {% if device.next_dguv %}
+        DGUV: {{ device.next_dguv|date:"d.m.Y" }}
+    {% endif %}
+
+    {% if not device.next_stk and not device.next_mtk and not device.next_dguv %}
+        -
+    {% endif %}
+
+{% else %}
+
+    -
+
 {% endif %}
-
-
-{% if device.next_mtk %}
-MTK: {{ device.next_mtk|date:"d.m.Y" }}<br>
-{% endif %}
-
-
-{% if device.next_dguv %}
-DGUV: {{ device.next_dguv|date:"d.m.Y" }}
-{% endif %}
-
-
-{% if not device.next_stk and not device.next_mtk and not device.next_dguv %}
--
-{% endif %}
-
 
 </td>
 

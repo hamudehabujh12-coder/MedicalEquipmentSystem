@@ -130,11 +130,16 @@ class DeviceForm(forms.ModelForm):
         last_mtk = cleaned_data.get("last_mtk")
         last_dguv = cleaned_data.get("last_dguv")
 
-        if not last_stk and not last_mtk and not last_dguv:
+        if (
+            geraetart
+            and geraetart.braucht_pruefung
+            and not last_stk
+            and not last_mtk
+            and not last_dguv
+        ):
             raise forms.ValidationError(
                 "Bitte mindestens eine Prüfung eingeben: STK, MTK oder DGUV V3."
             )
-
         if geraetart == "Dialyse Betten" and not room:
             self.add_error(
                 "room",
@@ -416,6 +421,7 @@ class GeraetartForm(forms.ModelForm):
         fields = [
             "name",
             "aktiv",
+            "braucht_pruefung",
         ] 
 
 class TechnicianDocumentForm(forms.ModelForm):

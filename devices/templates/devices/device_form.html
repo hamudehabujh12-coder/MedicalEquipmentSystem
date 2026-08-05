@@ -97,31 +97,62 @@ button:hover {
 
 </style>
 <script>
-function toggleOperatingHours() {
 
-    const category = document.getElementById("id_category");
+const brauchtPruefung = {
+{% for g in geraetarten %}
+    "{{ g.id }}": {{ g.braucht_pruefung|yesno:"true,false" }},
+{% endfor %}
+};
+
+function toggleFields() {
+
+    const geraetart = document.getElementById("id_geraetart");
+
+    if (!geraetart) return;
+
+    const selectedOption = geraetart.options[geraetart.selectedIndex];
     const operating = document.getElementById("id_operating_hours");
 
-    if (!category || !operating) return;
+    // Betriebsstunden
+    if (operating) {
 
-    const group = operating.closest(".form-group");
+        const operatingGroup = operating.closest(".form-group");
 
-    if (category.value === "Dialyse Maschinen") {
-        group.style.display = "";
-    } else {
-        group.style.display = "none";
+        if (selectedOption.text === "Dialyse Maschinen") {
+            operatingGroup.style.display = "";
+        } else {
+            operatingGroup.style.display = "none";
+        }
     }
+
+    // STK / MTK / DGUV
+    const showPruefung = brauchtPruefung[geraetart.value];
+
+    [
+        "id_last_stk",
+        "id_last_mtk",
+        "id_last_dguv"
+    ].forEach(function(id){
+
+        const field = document.getElementById(id);
+
+        if (!field) return;
+
+        field.closest(".form-group").style.display =
+            showPruefung ? "" : "none";
+    });
+
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function(){
 
-    toggleOperatingHours();
+    toggleFields();
 
-    document.getElementById("id_category").addEventListener(
-        "change",
-        toggleOperatingHours
-    );
+    document
+        .getElementById("id_geraetart")
+        .addEventListener("change", toggleFields);
 
 });
+
 </script>
 {% endblock %}
