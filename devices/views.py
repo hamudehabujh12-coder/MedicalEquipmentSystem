@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import re
 import json
 import shutil
 import subprocess
@@ -188,6 +189,14 @@ def home_edit(request):
             "home": home,
         },
     )
+
+
+def natural_key(value):
+    return [
+        int(part) if part.isdigit() else part.lower()
+        for part in re.split(r'(\d+)', value or "")
+    ]
+
 @login_required
 def device_list(request):
 
@@ -199,31 +208,23 @@ def device_list(request):
 
     devices = Device.objects.all()
 
-
-
     # =====================
     # Suche
     # =====================
 
     if search:
-
         devices = devices.filter(
-
             Q(name__icontains=search) |
             Q(inventory_number__icontains=search) |
             Q(serial_number__icontains=search) |
             Q(practice__name__icontains=search)
-
         )
-
-
 
     # =====================
     # Standort Filter
     # =====================
 
     if practice:
-
         devices = devices.filter(
             practice_id=practice
         )
@@ -233,7 +234,6 @@ def device_list(request):
     # =====================
 
     if geraetart:
-
         devices = devices.filter(
             geraetart_id=geraetart
         )
@@ -243,74 +243,59 @@ def device_list(request):
     # =====================
 
     if status:
-
         devices = devices.filter(
             status=status
         )
-
-
 
     # =====================
     # Sortierung
     # =====================
 
     if sort == "operating_hours":
-
-        devices = devices.order_by(
-            "operating_hours"
-        )
-
+        devices = devices.order_by("operating_hours")
 
     elif sort == "-operating_hours":
-
-        devices = devices.order_by(
-            "-operating_hours"
-        )
-
-
+        devices = devices.order_by("-operating_hours")
 
     elif sort == "next_stk":
-
-        devices = devices.order_by(
-            "next_stk"
-        )
-
-
+        devices = devices.order_by("next_stk")
 
     elif sort == "-next_stk":
-
-        devices = devices.order_by(
-            "-next_stk"
-        )
-
-
+        devices = devices.order_by("-next_stk")
 
     elif sort == "practice":
-
-        devices = devices.order_by(
-            "practice__name"
-        )
-
-
+        devices = devices.order_by("practice__name")
 
     elif sort == "-practice":
-
-        devices = devices.order_by(
-            "-practice__name"
-        )
-
-
+        devices = devices.order_by("-practice__name")
 
     else:
-
         devices = sorted(
             devices,
-            key=lambda d:(
-                d.practice.name if d.practice else "",
-                d.geraetart.name if d.geraetart else "",
-                d.inventory_number
-            )
+            key=lambda d: (
+                d.practice.name.lower() if d.practice else "",
+                natural_key(d.inventory_number),
+            ),
         )
+
+    standorte = Standort.objects.filter(active=True).order_by("name")
+    geraetarten = Geraetart.objects.filter(aktiv=True).order_by("name")
+
+    return render(
+        request,
+        "devices/device_list.html",
+        {
+            "devices": devices,
+            "search": search,
+            "practice": practice,
+            "status": status,
+            "geraetart": geraetart,
+            "standorte": standorte,
+            "geraetarten": geraetarten,
+        },
+    )
+
+
     standorte = Standort.objects.filter(active=True).order_by("name")
     geraetarten= Geraetart.objects.filter(aktiv=True).order_by("name")
     return render(

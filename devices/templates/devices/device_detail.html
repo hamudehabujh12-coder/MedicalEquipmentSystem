@@ -55,78 +55,73 @@
     </div>
 
     {% endif %}
-
-    <div class="info-card">
-        <h4>Raum</h4>
-        <p>{{ device.room }}</p>
+    
+     <div class="info-card">
+        <h4>EC-Nummer</h4>
+        <p>{{ device.ec_number }}</p>
     </div>
+
+
 
     <div class="info-card">
         <h4>Standort</h4>
         <p>{{ device.practice.name }}</p>
     </div>
+
+   
+
     {% if device.last_stk %}
-<!--
-<div class="info-card">
-    <h4>Letzte STK</h4>
-    <p>{{ device.last_stk|date:"d.m.Y" }}</p>
-</div>
--->
 
-<div class="info-card">
-    <h4>Nächste STK</h4>
-    <p>{{ device.next_stk|date:"d.m.Y"|default:"—" }}</p>
-</div>
-
-{% endif %}
-
-
-
-{% if device.last_mtk %}
-<!--
-<div class="info-card">
-    <h4>Letzte MTK</h4>
-    <p>{{ device.last_mtk|date:"d.m.Y" }}</p>
-</div>
--->
-
-<div class="info-card">
-    <h4>Nächste MTK</h4>
-    <p>{{ device.next_mtk|date:"d.m.Y"|default:"—" }}</p>
-</div>
-
-{% endif %}
-
-
-
-{% if device.last_dguv %}
-<!--
-<div class="info-card">
-    <h4>Letzte DGUV V3</h4>
-    <p>{{ device.last_dguv|date:"d.m.Y" }}</p>
-</div>
--->
-
-<div class="info-card">
-    <h4>Nächste DGUV V3</h4>
-    <p>{{ device.next_dguv|date:"d.m.Y"|default:"—" }}</p>
-</div>
-
-{% endif %}
     <div class="info-card">
-        <h4>Status</h4>
-
-        {% if device.status == "Aktiv" %}
-            <span class="status-active">🟢 Aktiv</span>
-        {% else %}
-            <span class="status-inactive">🔴 Nicht aktiv</span>
-        {% endif %}
-
-    </div>
+        <h4>Nächste STK</h4>
+        <p>{{ device.next_stk|date:"d.m.Y"|default:"—" }}</p>
     </div>
 
+    {% endif %}
+
+
+
+    {% if device.last_mtk %}
+
+    <div class="info-card">
+        <h4>Nächste MTK</h4>
+        <p>{{ device.next_mtk|date:"d.m.Y"|default:"—" }}</p>
+    </div>
+
+    {% endif %}
+
+
+
+    {% if device.last_dguv %}
+
+    <div class="info-card">
+        <h4>Nächste DGUV V3</h4>
+        <p>{{ device.next_dguv|date:"d.m.Y"|default:"—" }}</p>
+    </div>
+
+    {% endif %}
+
+     {% if device.geraetart and device.geraetart.name != "Dialyse Machine" %}
+    <div class="info-card">
+        <h4>Raum<h4>
+        <p>{{ device.room|default:"-" }}</p>
+    </div>
+    {% endif %}
     
-{% if request.user.is_superuser %}
+        <div class="info-card">
+            <h4>Status</h4>
+
+            {% if device.status == "Aktiv" %}
+                <span class="status-active">🟢 Aktiv</span>
+            {% else %}
+                <span class="status-inactive">🔴 Nicht aktiv</span>
+            {% endif %}
+
+        </div>
+        </div>
+
+        
+    {% if request.user.is_superuser %}
 
 <div class="action-buttons">
 
