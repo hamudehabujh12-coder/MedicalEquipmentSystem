@@ -3,6 +3,8 @@ import os
 import json
 import shutil
 import subprocess
+from devices.services.git_service import GitService
+from devices.services.update_service import UpdateService
 
 from datetime import datetime, date, timedelta
 
@@ -3963,35 +3965,35 @@ def dashboard_widget_delete(request, id):
 @login_required
 def system_update(request):
 
-    # ملف آخر إصدار متوفر
-    update_file = Path(settings.BASE_DIR) / "update" / "version.json"
+    import json
+
+    update_file = (
+        Path(settings.BASE_DIR)
+        / "update"
+        / "version.json"
+    )
 
     latest_version = None
     latest_description = None
+
     update_available = request.session.get(
-    "update_available",
-    False
-)
+        "update_available",
+        False
+    )
 
-
-    # قراءة معلومات التحديث
     if update_file.exists():
 
-        with open(update_file, "r", encoding="utf-8") as f:
+        with open(
+            update_file,
+            "r",
+            encoding="utf-8"
+        ) as f:
 
             data = json.load(f)
 
             latest_version = data.get("version")
             latest_description = data.get("description")
 
-
-        # مقارنة النسخ
-        if latest_version and latest_version != settings.APP_VERSION:
-            update_available = True
-
-
-
-    # قراءة سجل التحديثات
     history_file = (
         Path(settings.BASE_DIR)
         / "update"
@@ -4000,7 +4002,6 @@ def system_update(request):
     )
 
     update_history = []
-
 
     if history_file.exists():
 
@@ -4012,10 +4013,6 @@ def system_update(request):
 
             update_history = json.load(f)
 
-
-
-    # قراءة Update Log
-
     log_file = (
         Path(settings.BASE_DIR)
         / "update"
@@ -4024,7 +4021,6 @@ def system_update(request):
     )
 
     update_log = ""
-
 
     if log_file.exists():
 
@@ -4036,13 +4032,25 @@ def system_update(request):
 
             update_log = f.read()
 
+    local_commit = request.session.get(
+        "local_commit",
+        "-"
+    )
 
+    remote_commit = request.session.get(
+        "remote_commit",
+        "-"
+    )
 
-    print("Current Version:", settings.APP_VERSION)
-    print("Latest Version:", latest_version)
-    print("Update Available:", update_available)
+    branch = request.session.get(
+        "branch",
+        "-"
+    )
 
-
+    last_commit = request.session.get(
+        "last_commit",
+        "-"
+    )
 
     return render(
         request,
@@ -4054,61 +4062,33 @@ def system_update(request):
             "update_available": update_available,
             "update_history": update_history,
             "update_log": update_log,
+            "local_commit": local_commit,
+            "remote_commit": remote_commit,
+            "branch": branch,
+            "last_commit": last_commit,
         }
     )
 
 @login_required
 def check_update(request):
 
-    import subprocess
+    from devices.services.git_service import GitService
 
     try:
-        # جلب آخر تحديث من GitHub
-        result = subprocess.run(
-            [
-                "git",
-                "fetch",
-                "origin",
-            ],
-            cwd=settings.BASE_DIR,
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
 
-        if result.returncode != 0:
-            raise Exception(result.stderr)
+        git = GitService.get_status()
 
+        request.session["update_available"] = git["update_available"]
+        request.session["local_commit"] = git["local_commit"]
+        request.session["remote_commit"] = git["remote_commit"]
+        request.session["branch"] = git["branch"]
+        request.session["last_commit"] = git["last_commit"]
 
-        # معرفة آخر commit على GitHub
-        remote_commit = subprocess.check_output(
-            [
-                "git",
-                "rev-parse",
-                "origin/main",
-            ],
-            cwd=settings.BASE_DIR,
-            text=True
-        ).strip()
+        if git["update_available"]:
 
-
-        # معرفة النسخة الحالية على السيرفر
-        local_commit = subprocess.check_output(
-            [
-                "git",
-                "rev-parse",
-                "HEAD",
-            ],
-            cwd=settings.BASE_DIR,
-            text=True
-        ).strip()
-
-
-        if remote_commit != local_commit:
-            request.session["update_available"] = True
             messages.success(
                 request,
-                "New update available from GitHub."
+                "New update is available."
             )
 
         else:
@@ -4118,94 +4098,38 @@ def check_update(request):
                 "Your system is already up to date."
             )
 
-
     except Exception as e:
 
         messages.error(
             request,
-            f"Update server not found: {e}"
+            str(e)
         )
 
-
     return redirect("system_update")
+
+
 @login_required
 def run_update(request):
 
     if not request.user.is_superuser:
         return redirect("permission_denied")
 
-
     if request.method != "POST":
         return redirect("system_update")
 
+    try:
+        UpdateService.run(request.user)
 
-    update_script = os.path.join(
-        settings.BASE_DIR,
-        "update",
-        "scripts",
-        "update.bat"
-    )
+        messages.success(
+            request,
+            "Update process started successfully."
+        )
 
-
-    if not os.path.exists(update_script):
+    except Exception as e:
 
         messages.error(
             request,
-            "Update script not found."
+            str(e)
         )
-
-        return redirect("system_update")
-
-
-
-    # كتابة Log قبل بدء التحديث
-
-    log_dir = os.path.join(
-        settings.BASE_DIR,
-        "update",
-        "logs"
-    )
-
-    os.makedirs(
-        log_dir,
-        exist_ok=True
-    )
-
-
-    log_file = os.path.join(
-        log_dir,
-        "update.log"
-    )
-
-
-    with open(
-        log_file,
-        "a",
-        encoding="utf-8"
-    ) as f:
-
-        f.write(
-            f"\n[{datetime.now()}] Update started from System Update page\n"
-        )
-
-
-
-    # تشغيل ملف التحديث
-
-    subprocess.Popen(
-        [
-            "cmd",
-            "/c",
-            update_script
-        ],
-        cwd=settings.BASE_DIR,
-        creationflags=subprocess.CREATE_NEW_CONSOLE
-    )
-
-    messages.success(
-        request,
-        "Update process started successfully."
-    )
-
 
     return redirect("system_update")

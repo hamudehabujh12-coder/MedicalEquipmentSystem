@@ -986,23 +986,66 @@ class DashboardWidget(models.Model):
 
 
 class SystemUpdate(models.Model):
+
+    STATUS_CHOICES = [
+        ("IDLE", "Idle"),
+        ("RUNNING", "Running"),
+        ("SUCCESS", "Success"),
+        ("FAILED", "Failed"),
+    ]
+
     version = models.CharField(
-        max_length=20,
-        verbose_name="Version"
+        max_length=50,
+        blank=True
     )
 
-    release_date = models.DateField(
-        auto_now_add=True
+    local_commit = models.CharField(
+        max_length=40,
+        blank=True
+    )
+
+    remote_commit = models.CharField(
+        max_length=40,
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="IDLE"
     )
 
     description = models.TextField(
-        blank=True,
-        verbose_name="Update Notes"
+        blank=True
     )
 
-    installed = models.BooleanField(
-        default=False
+    started_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
     )
+
+    started_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    finished_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    error = models.TextField(
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self):
-        return self.version
+        return f"{self.version} - {self.status}"

@@ -2,179 +2,184 @@
 
 {% block content %}
 
-<h1>⚙ System Update</h1>
-
+<h1>⚙️ System Update</h1>
 
 <div class="card">
 
-
     <h3>Installed Version</h3>
 
-    <p>
-        Medical System Version {{ current_version }}
-    </p>
+    <table style="width:100%; border-collapse:collapse;">
 
+        <tr>
+            <td style="padding:8px;"><strong>Application Version</strong></td>
+            <td style="padding:8px;">{{ current_version }}</td>
+        </tr>
 
+        <tr>
+            <td style="padding:8px;"><strong>Current Commit</strong></td>
+            <td style="padding:8px;">{{ local_commit }}</td>
+        </tr>
 
-    <h3>Available Updates</h3>
+        <tr>
+            <td style="padding:8px;"><strong>Latest Commit</strong></td>
+            <td style="padding:8px;">{{ remote_commit }}</td>
+        </tr>
 
+        <tr>
+            <td style="padding:8px;"><strong>Branch</strong></td>
+            <td style="padding:8px;">{{ branch }}</td>
+        </tr>
+
+        <tr>
+            <td style="padding:8px;"><strong>Last Commit Message</strong></td>
+            <td style="padding:8px;">{{ last_commit }}</td>
+        </tr>
+
+    </table>
+
+    <hr>
+
+    <h3>Available Update</h3>
 
     {% if update_available %}
 
-        <p>
-            🚀 New version available:
-            {{ latest_version }}
-        </p>
+        <div style="color:green;font-weight:bold;">
+            🚀 A new update is available.
+        </div>
+
+        <br>
+
+        <table style="width:100%; border-collapse:collapse;">
+
+            <tr>
+                <td style="padding:8px;">
+                    <strong>New Version</strong>
+                </td>
+
+                <td style="padding:8px;">
+                    {{ latest_version }}
+                </td>
+            </tr>
 
 
-        <p>
-            {{ latest_description }}
-        </p>
+            <tr>
+                <td style="padding:8px;">
+                    <strong>Description</strong>
+                </td>
+
+                <td style="padding:8px;">
+                    {{ latest_description }}
+                </td>
+            </tr>
+
+        </table>
 
 
     {% else %}
 
-        <p>
-            ✅ Your system is up to date.
-        </p>
-
+        <div style="color:green;">
+            ✅ Your system is already up to date.
+        </div>
 
     {% endif %}
+    <br>
 
-
-
-    <!-- Update Buttons -->
-
-    <div style="
-        display:flex;
-        gap:15px;
-        align-items:center;
-        margin-top:20px;
-    ">
-
-
-        <!-- Check Update Button -->
+    <div style="display:flex;gap:15px;">
 
         <form method="post" action="{% url 'check_update' %}">
-
             {% csrf_token %}
-
             <button type="submit">
                 🔍 Check Update
             </button>
-
         </form>
 
-
-
-        <!-- Install Update Button -->
-
         {% if update_available %}
-
         <form method="post" action="{% url 'run_update' %}">
-
             {% csrf_token %}
-
             <button type="submit">
                 🔄 Install Update
             </button>
-
         </form>
-
         {% endif %}
-
-
 
     </div>
 
-
 </div>
 
-<div class="card" style="margin-top:20px;">
+
+<div class="card" style="margin-top:25px;">
 
     <h3>📜 Update History</h3>
 
-    <table style="width:100%; border-collapse: collapse;">
+    <table style="width:100%;border-collapse:collapse;">
+
+        <thead>
 
         <tr>
 
-            <th style="text-align:left; padding:8px;">
-                Version
-            </th>
+            <th style="padding:8px;text-align:left;">Version</th>
 
-            <th style="text-align:left; padding:8px;">
-                Date
-            </th>
+            <th style="padding:8px;text-align:left;">Date</th>
 
-            <th style="text-align:left; padding:8px;">
-                Description
-            </th>
+            <th style="padding:8px;text-align:left;">Description</th>
 
-            <th style="text-align:left; padding:8px;">
-                Status
-            </th>
+            <th style="padding:8px;text-align:left;">Status</th>
 
         </tr>
 
+        </thead>
+
+        <tbody>
 
         {% for item in update_history %}
 
         <tr>
 
-            <td style="padding:8px;">
-                {{ item.version }}
-            </td>
+            <td style="padding:8px;">{{ item.version }}</td>
 
-            <td style="padding:8px;">
-                {{ item.date }}
-            </td>
+            <td style="padding:8px;">{{ item.date }}</td>
 
-            <td style="padding:8px;">
-                {{ item.description }}
-            </td>
+            <td style="padding:8px;">{{ item.description }}</td>
 
-            <td style="padding:8px;">
-                {{ item.status }}
-            </td>
+            <td style="padding:8px;">{{ item.status }}</td>
 
         </tr>
-
 
         {% empty %}
 
         <tr>
-            <td colspan="4">
+
+            <td colspan="4" style="padding:10px;">
                 No update history available.
             </td>
-        </tr>
 
+        </tr>
 
         {% endfor %}
 
+        </tbody>
 
     </table>
 
 </div>
 
 
-
-<div class="card" style="margin-top:20px;">
+<div class="card" style="margin-top:25px;">
 
     <h3>📄 Update Log</h3>
-
 
     <textarea
         readonly
         style="
-        width:100%;
-        height:200px;
-        padding:10px;
-        border-radius:8px;
+            width:100%;
+            height:300px;
+            padding:10px;
+            border-radius:8px;
+            font-family:Consolas,monospace;
+            resize:vertical;
         "
     >{{ update_log }}</textarea>
 
-
 </div>
-
 
 {% endblock %}

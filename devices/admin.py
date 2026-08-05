@@ -89,6 +89,27 @@ from .models import SystemUpdate
 class SystemUpdateAdmin(admin.ModelAdmin):
     list_display = (
         "version",
-        "release_date",
-        "installed",
+        "status",
+        "local_commit",
+        "remote_commit",
+        "started_by",
+        "started_at",
+        "finished_at",
+    )
+
+    list_filter = (
+        "status",
+        "started_at",
+    )
+
+    search_fields = (
+        "version",
+        "local_commit",
+        "remote_commit",
+    )
+
+    readonly_fields = (
+        "started_at",
+        "finished_at",
+        "created_at",
     )

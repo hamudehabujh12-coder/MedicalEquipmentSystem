@@ -1,17 +1,29 @@
 @echo off
+setlocal EnableDelayedExpansion
 title Medical Equipment System Update
 
 cd /d "%~dp0\..\.."
 
 set PYTHON=%CD%\venv\Scripts\python.exe
+set LOG=update\logs\update.log
 
+if not exist "update\logs" (
+    mkdir "update\logs"
+)
+
+echo.>>"%LOG%"
+echo =====================================================>>"%LOG%"
+echo [%date% %time%] Update Started>>"%LOG%"
+echo =====================================================>>"%LOG%"
+
+echo.
 echo ========================================
 echo Medical Equipment System Update
 echo ========================================
 echo.
 
 :: --------------------------------------------------
-:: Create Backup
+:: Backup Database
 :: --------------------------------------------------
 
 set BACKUP_DIR=update\backups
@@ -20,153 +32,160 @@ if not exist "%BACKUP_DIR%" (
     mkdir "%BACKUP_DIR%"
 )
 
-set BACKUP_FILE=%BACKUP_DIR%\update_backup_%date:~-4%-%date:~3,2%-%date:~0,2%_%time:~0,2%-%time:~3,2%.sqlite3
+set BACKUP_FILE=%BACKUP_DIR%\backup_%date:~-4%-%date:~3,2%-%date:~0,2%_%time:~0,2%-%time:~3,2%.sqlite3
+set BACKUP_FILE=%BACKUP_FILE: =0%
 
 echo Creating database backup...
+echo Creating database backup...>>"%LOG%"
 
 copy "db.sqlite3" "%BACKUP_FILE%" >nul
 
 if errorlevel 1 (
-    echo Backup failed!
-    pause
-    exit /b 1
+    echo ERROR: Backup failed>>"%LOG%"
+    goto ERROR
 )
 
-echo Backup created successfully.
-echo %BACKUP_FILE%
-echo.
+echo Backup completed.>>"%LOG%"
 
 :: --------------------------------------------------
-:: Download latest version from GitHub
+:: Stop Service
 :: --------------------------------------------------
 
-echo ========================================
-echo Downloading latest version from GitHub...
-echo ========================================
-git config --system --add safe.directory "%CD%"
-git fetch origin
+echo Stopping service...
+echo Stopping service...>>"%LOG%"
+
+net stop "MedicalEquipmentSystem" >>"%LOG%" 2>&1
+
+timeout /t 3 /nobreak >nul
+
+:: --------------------------------------------------
+:: Git Update
+:: --------------------------------------------------
+
+echo Updating from GitHub...
+echo Updating from GitHub...>>"%LOG%"
+
+git config --global --add safe.directory "%CD%" >>"%LOG%" 2>&1
+
+git fetch origin >>"%LOG%" 2>&1
 
 if errorlevel 1 (
-    echo Git fetch failed.
-    pause
-    exit /b 1
+    echo ERROR: Git Fetch failed>>"%LOG%"
+    goto ERROR
 )
 
-git pull origin main
+git pull origin main >>"%LOG%" 2>&1
 
 if errorlevel 1 (
-    echo Git update failed.
-    pause
-    exit /b 1
+    echo ERROR: Git Pull failed>>"%LOG%"
+    goto ERROR
 )
 
-echo Git update completed successfully.
-echo.
+for /f %%i in ('git rev-parse HEAD') do set COMMIT=%%i
+
+echo Installed Commit: !COMMIT!>>"%LOG%"
 
 :: --------------------------------------------------
 :: Install Requirements
 :: --------------------------------------------------
 
-echo ========================================
-echo Installing requirements...
-echo ========================================
+if exist requirements.txt (
 
-"%PYTHON%" -m pip install -r requirements.txt
+    echo Installing requirements...
+    echo Installing requirements...>>"%LOG%"
 
-if errorlevel 1 (
-    echo Requirements installation failed.
-    pause
-    exit /b 1
+    "%PYTHON%" -m pip install -r requirements.txt >>"%LOG%" 2>&1
+
+    if errorlevel 1 (
+        echo ERROR: Requirements installation failed>>"%LOG%"
+        goto ERROR
+    )
 )
-
-echo Requirements installed successfully.
-echo.
 
 :: --------------------------------------------------
 :: Database Migration
 :: --------------------------------------------------
 
-echo ========================================
-echo Running database migrations...
-echo ========================================
+echo Running migrations...
+echo Running migrations...>>"%LOG%"
 
-"%PYTHON%" manage.py migrate
+"%PYTHON%" manage.py migrate >>"%LOG%" 2>&1
 
 if errorlevel 1 (
-    echo Database migration failed.
-    pause
-    exit /b 1
+    echo ERROR: Migration failed>>"%LOG%"
+    goto ERROR
 )
-
-echo Database migration completed successfully.
-echo.
 
 :: --------------------------------------------------
 :: Collect Static Files
 :: --------------------------------------------------
 
-echo ========================================
 echo Collecting static files...
-echo ========================================
+echo Collecting static files...>>"%LOG%"
 
-"%PYTHON%" manage.py collectstatic --noinput
-
-if errorlevel 1 (
-    echo Collectstatic failed.
-    pause
-    exit /b 1
-)
-
-echo Static files updated successfully.
-echo.
-
-:: --------------------------------------------------
-:: Update History
-:: --------------------------------------------------
-
-echo Creating update history...
-
-if not exist "update\logs" (
-    mkdir "update\logs"
-)
-
-"%PYTHON%" -c "import json,pathlib,datetime; p=pathlib.Path('update'); v=json.loads((p/'version.json').read_text(encoding='utf-8')); h=p/'logs'/'update_history.json'; data=[]; data=json.loads(h.read_text(encoding='utf-8')) if h.exists() else []; data.insert(0,{'version':v['version'],'date':datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),'description':v.get('description',''),'status':'Installed'}); h.write_text(json.dumps(data,ensure_ascii=False,indent=4),encoding='utf-8')"
+"%PYTHON%" manage.py collectstatic --noinput >>"%LOG%" 2>&1
 
 if errorlevel 1 (
-    echo Failed to update history.
-    pause
-    exit /b 1
+    echo ERROR: Collectstatic failed>>"%LOG%"
+    goto ERROR
 )
 
-echo Update history updated successfully.
-echo.
+:: --------------------------------------------------
+:: Django Check
+:: --------------------------------------------------
+
+echo Checking Django project...
+echo Checking Django project...>>"%LOG%"
+
+"%PYTHON%" manage.py check >>"%LOG%" 2>&1
+
+if errorlevel 1 (
+    echo ERROR: Django check failed>>"%LOG%"
+    goto ERROR
+)
+
+:: --------------------------------------------------
+:: Update Database Status
+:: --------------------------------------------------
+
+"%PYTHON%" manage.py shell -c "from devices.models import SystemUpdate; from django.utils import timezone; u=SystemUpdate.objects.filter(status='RUNNING').order_by('-id').first(); u.status='SUCCESS'; u.local_commit='!COMMIT!'; u.finished_at=timezone.now(); u.save() if u else None"
 
 :: --------------------------------------------------
 :: Restart Service
 :: --------------------------------------------------
 
-echo ========================================
-echo Restarting MedicalEquipmentSystem...
-echo ========================================
+echo Starting service...
+echo Starting service...>>"%LOG%"
 
-net stop "MedicalEquipmentSystem"
-
-timeout /t 3 /nobreak >nul
-
-net start "MedicalEquipmentSystem"
+net start "MedicalEquipmentSystem" >>"%LOG%" 2>&1
 
 if errorlevel 1 (
-    echo Failed to restart the service.
-    pause
+    echo ERROR: Service failed to start>>"%LOG%"
     exit /b 1
 )
 
-echo Service restarted successfully.
 echo.
-
 echo ========================================
 echo UPDATE COMPLETED SUCCESSFULLY
 echo ========================================
 
-timeout /t 5 /nobreak >nul
-exit
+echo Update completed successfully.>>"%LOG%"
+echo Installed Commit: !COMMIT!>>"%LOG%"
+echo [%date% %time%] Finished>>"%LOG%"
+
+exit /b 0
+
+:ERROR
+
+echo.
+echo Update failed.
+echo Restarting service...
+
+net start "MedicalEquipmentSystem" >>"%LOG%" 2>&1
+
+"%PYTHON%" manage.py shell -c "from devices.models import SystemUpdate; from django.utils import timezone; u=SystemUpdate.objects.filter(status='RUNNING').order_by('-id').first(); u.status='FAILED'; u.finished_at=timezone.now(); u.save() if u else None"
+
+echo ERROR: Update failed.>>"%LOG%"
+echo [%date% %time%] Finished with ERROR>>"%LOG%"
+
+exit /b 1
