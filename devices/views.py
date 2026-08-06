@@ -3436,10 +3436,6 @@ def firmeninformationen_manage(request):
 @login_required
 def firmeninformationen_create(request):
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
-
-
     if request.method == "POST":
 
         company = CompanyInformation.objects.create(
