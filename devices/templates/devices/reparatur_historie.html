@@ -82,13 +82,12 @@ cursor:pointer;
     </td>
 
 
-    <td>
-        {{ reparatur.beschreibung }}
+    <td class="text-truncate">
+        {{ reparatur.beschreibung|truncatechars:50 }}
     </td>
 
-
-    <td>
-        {{ reparatur.ausfuehrung }}
+    <td class="text-truncate">
+        {{ reparatur.ausfuehrung|truncatechars:60 }}
     </td>
 
 
@@ -208,7 +207,12 @@ mark {
     padding:2px 4px;
     border-radius:4px;
 }
-
+.text-truncate {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 </style>
 
 
