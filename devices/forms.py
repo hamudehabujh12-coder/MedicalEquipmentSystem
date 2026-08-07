@@ -140,7 +140,7 @@ class DeviceForm(forms.ModelForm):
             raise forms.ValidationError(
                 "Bitte mindestens eine Prüfung eingeben: STK, MTK oder DGUV V3."
             )
-        if geraetart == "Dialyse Betten" and not room:
+        if geraetart and geraetart.name == "Dialyse Betten" and not room:
             self.add_error(
                 "room",
                 "Bei Dialyse Betten muss der Raum angegeben werden."

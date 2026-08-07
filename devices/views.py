@@ -199,88 +199,166 @@ def natural_key(value):
 
 @login_required
 def device_list(request):
-
     search = request.GET.get("search", "")
     practice = request.GET.get("practice", "")
     status = request.GET.get("status", "")
     sort = request.GET.get("sort", "")
     geraetart = request.GET.get("geraetart", "")
-
+    # =====================
+    # Alle Geräte
+    # =====================
     devices = Device.objects.all()
-
     # =====================
     # Suche
     # =====================
-
     if search:
         devices = devices.filter(
-            Q(name__icontains=search) |
-            Q(inventory_number__icontains=search) |
-            Q(serial_number__icontains=search) |
-            Q(practice__name__icontains=search)
+            Q(name__icontains=search)
+            | Q(inventory_number__icontains=search)
+            | Q(serial_number__icontains=search)
+            | Q(practice__name__icontains=search)
+            | Q(geraetart__name__icontains=search)
         )
-
     # =====================
     # Standort Filter
     # =====================
-
     if practice:
         devices = devices.filter(
             practice_id=practice
         )
-
     # =====================
     # Geräteart Filter
     # =====================
-
     if geraetart:
         devices = devices.filter(
             geraetart_id=geraetart
         )
-
     # =====================
     # Status Filter
     # =====================
-
     if status:
         devices = devices.filter(
             status=status
         )
-
     # =====================
     # Sortierung
     # =====================
-
     if sort == "operating_hours":
-        devices = devices.order_by("operating_hours")
-
+        devices = devices.order_by(
+            "operating_hours"
+        )
     elif sort == "-operating_hours":
-        devices = devices.order_by("-operating_hours")
-
+        devices = devices.order_by(
+            "-operating_hours"
+        )
     elif sort == "next_stk":
-        devices = devices.order_by("next_stk")
-
+        devices = devices.order_by(
+            "next_stk"
+        )
     elif sort == "-next_stk":
-        devices = devices.order_by("-next_stk")
-
+        devices = devices.order_by(
+            "-next_stk"
+        )
     elif sort == "practice":
-        devices = devices.order_by("practice__name")
-
+        devices = devices.order_by(
+            "practice__name"
+        )
     elif sort == "-practice":
-        devices = devices.order_by("-practice__name")
-
+        devices = devices.order_by(
+            "-practice__name"
+        )
     else:
+        # ==========================================
+        # Standard-Reihenfolge
+        #
+        # 1. Gerätart
+        # 2. Standort
+        # 3. Inventarnummer
+        # ==========================================
+        def device_group_priority(device):
+            geraetart_name = (
+                device.geraetart.name.strip()
+                if device.geraetart
+                else ""
+            )
+            standort_name = (
+                device.practice.name.strip()
+                if device.practice
+                else ""
+            )
+            # --------------------------------------
+            # 1. Dialyse Maschinen – Lübeck
+            # --------------------------------------
+            if (
+                geraetart_name == "Dialyse Maschinen"
+                and standort_name == "Lübeck"
+            ):
+                return 1
+            # --------------------------------------
+            # 2. Dialyse Maschinen – Ratzeburg
+            # --------------------------------------
+            if (
+                geraetart_name == "Dialyse Maschinen"
+                and standort_name == "Ratzeburg"
+            ):
+                return 2
+            # --------------------------------------
+            # 3. Dialyse Betten – Lübeck
+            # --------------------------------------
+            if (
+                geraetart_name == "Dialyse Betten"
+                and standort_name == "Lübeck"
+            ):
+                return 3
+            # --------------------------------------
+            # 4. Dialyse Betten Mechanische – Lübeck
+            # --------------------------------------
+            if (
+                geraetart_name == "Dialyse Betten Mechanische"
+                and standort_name == "Lübeck"
+            ):
+                return 4
+            # --------------------------------------
+            # 5. Dialyse Betten – Ratzeburg
+            # --------------------------------------
+            if (
+                geraetart_name == "Dialyse Betten"
+                and standort_name == "Ratzeburg"
+            ):
+                return 5
+            # --------------------------------------
+            # Alle anderen Geräte danach
+            # --------------------------------------
+            return 99
+        # ==========================================
+        # Sortieren
+        # ==========================================
         devices = sorted(
             devices,
             key=lambda d: (
-                d.practice.name.lower() if d.practice else "",
+                device_group_priority(d),
                 natural_key(d.inventory_number),
             ),
         )
-
-    standorte = Standort.objects.filter(active=True).order_by("name")
-    geraetarten = Geraetart.objects.filter(aktiv=True).order_by("name")
-
+    # =====================
+    # Dropdown: Standorte
+    # =====================
+    standorte = (
+        Standort.objects
+        .filter(active=True)
+        .order_by("name")
+    )
+    # =====================
+    # Dropdown: Gerätearten
+    # =====================
+    geraetarten = (
+        Geraetart.objects
+        .filter(aktiv=True)
+        .order_by("name")
+    )
+    # =====================
+    # Render
+    # =====================
     return render(
         request,
         "devices/device_list.html",
@@ -293,29 +371,6 @@ def device_list(request):
             "standorte": standorte,
             "geraetarten": geraetarten,
         },
-    )
-
-
-    standorte = Standort.objects.filter(active=True).order_by("name")
-    geraetarten= Geraetart.objects.filter(aktiv=True).order_by("name")
-    return render(
-
-        request,
-
-        "devices/device_list.html",
-
-        {
-
-            "devices": devices,
-            "search": search,
-            "practice": practice,
-            "status": status,
-            "geraetart": geraetart,
-            "standorte": standorte,
-            "geraetarten": geraetarten,
-
-        }
-
     )
 
 @login_required
@@ -1528,85 +1583,54 @@ def device_delete(request, device_id):
     )
 @login_required
 def device_edit(request, device_id):
-
     if not request.user.is_superuser:
         return redirect("permission_denied")
-
-
     device = get_object_or_404(
         Device,
         id=device_id
     )
-
-
     if request.method == "POST":
-
-
         form = DeviceForm(
             request.POST,
             request.FILES,
             instance=device,
         )
-
-
         if form.is_valid():
-
-
             device = form.save()
-
-
             AuditLog.objects.create(
-
                 user=request.user,
-
                 action="UPDATE",
-
                 model_name="Gerät",
-
                 object_id=device.id,
-
                 description=(
                     f"Gerät {device.name} "
                     f"(Inventarnummer: {device.inventory_number}, "
                     f"Seriennummer: {device.serial_number}) "
                     "geändert."
                 )
-
             )
-
-
             messages.success(
                 request,
                 "Gerät erfolgreich geändert."
             )
-
-
             return redirect(
                 "device_detail",
                 device_id=device.id
             )
-
-
     else:
-
-
         form = DeviceForm(
             instance=device,
         )
-
-
     return render(
-
         request,
-
         "devices/device_form.html",
-
         {
             "form": form,
             "device": device,
+            "geraetarten": Geraetart.objects.filter(aktiv=True),
         }
-
     )
+
 @login_required
 def document_delete(request, document_id):
 

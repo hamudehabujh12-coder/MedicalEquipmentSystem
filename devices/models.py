@@ -20,13 +20,6 @@ class Geraetart(models.Model):
     def __str__(self):
         return self.name
 
-
-    aktiv = models.BooleanField(
-        default=True
-    )
-    def __str__(self):
-        return self.name
-
 class Device(models.Model):
     
 
