@@ -1,0 +1,31 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1>Prüfart löschen</h1>
+
+    <p>
+        Möchten Sie die Prüfart
+        <strong>{{ pruefart.name }}</strong>
+        wirklich löschen?
+    </p>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <button type="submit">
+            🗑️ Ja, löschen
+        </button>
+
+        <a href="{% url 'pruefarten' %}">
+            ❌ Abbrechen
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

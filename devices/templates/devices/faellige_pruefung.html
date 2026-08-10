@@ -1,0 +1,143 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+<h1>
+    📋 Fällige {{ pruefart.name }}
+</h1>
+<p style="margin-bottom:20px;">
+    Prüfungen, deren Termin innerhalb der nächsten 30 Tage liegt.
+</p>
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Inventarnummer</th>
+            <th>Seriennummer</th>
+            <th>Gerätebezeichnung</th>
+            <th>Geräteart</th>
+            <th>Standort</th>
+            <th>Nächste Prüfung</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for pruefung in pruefungen %}
+        <tr
+            onclick="window.location='{% url 'device_detail' pruefung.device.id %}'"
+            style="cursor:pointer;"
+        >
+            <!-- Inventarnummer -->
+            <td>
+                {{ pruefung.device.inventory_number }}
+            </td>
+            <!-- Seriennummer -->
+            <td>
+                {{ pruefung.device.serial_number }}
+            </td>
+            <!-- Gerätebezeichnung -->
+            <td>
+                {{ pruefung.device.name }}
+            </td>
+            <!-- Geräteart -->
+            <td>
+                {% if pruefung.device.geraetart %}
+                    {{ pruefung.device.geraetart.name }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <!-- Standort -->
+            <td>
+                {% if pruefung.device.practice %}
+                    {{ pruefung.device.practice.name }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <!-- Nächste Prüfung -->
+            <td>
+                {% if pruefung.naechstes_datum %}
+                    <strong>
+                        {{ pruefung.naechstes_datum|date:"d.m.Y" }}
+                    </strong>
+                
+                {% endif %}
+            </td>
+            <!-- Status -->
+            <td>
+                {% if pruefung.naechstes_datum < heute %}
+
+                    <span style="
+                        color:#dc2626;
+                        font-weight:bold;
+                    ">
+                        🔴 Überfällig
+                    </span>
+
+                {% else %}
+
+                    <span style="
+                        color:#d97706;
+                        font-weight:bold;
+                    ">
+                        🟡 Fällig
+                    </span>
+
+                {% endif %}
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td
+                colspan="7"
+                style="
+                    text-align:center;
+                    padding:30px;
+                "
+            >
+                ✅ Keine fälligen
+                {{ pruefart.name }}-Prüfungen
+                innerhalb der nächsten 30 Tage.
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+<style>
+/* ========================================================= */
+/* CONTAINER */
+/* ========================================================= */
+.container {
+    position: relative;
+    overflow: visible;
+}
+/* ========================================================= */
+/* TABLE */
+/* ========================================================= */
+.table {
+    width: 100%;
+    overflow: visible;
+}
+/* ========================================================= */
+/* TABLE HEADER */
+/* ========================================================= */
+.table th {
+    white-space: nowrap;
+}
+/* ========================================================= */
+/* TABLE CELLS */
+/* ========================================================= */
+.table td {
+    vertical-align: middle;
+}
+/* ========================================================= */
+/* HOVER */
+/* ========================================================= */
+.table tbody tr:hover {
+    background-color: #f3f4f6;
+}
+</style>
+
+{% endblock %}

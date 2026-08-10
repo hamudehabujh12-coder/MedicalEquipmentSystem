@@ -1,11 +1,10 @@
 from django import forms
-from .models import Reparatur, TechnicianDocument
 from django.db.models import Q
-
-
-
+from django.forms import inlineformset_factory
 from .models import (
     Device,
+    DevicePruefung,
+    Pruefart,
     PracticeSettings,
     DeviceDocument,
     DocumentType,
@@ -14,20 +13,25 @@ from .models import (
     Geraetart,
     HomeInformation,
     HomeImage,
-
+    Reparatur,
+    TechnicianDocument,
+    DashboardWidget,
 )
 
 
 class DeviceForm(forms.ModelForm):
+
     year_built = forms.CharField(
         label="Baujahr",
         required=False,
         widget=forms.TextInput(
             attrs={
-                 "placeholder": "z.B. 2024"
+                "placeholder": "z.B. 2024",
+                "class": "form-control"
             }
-        ) 
+        )
     )
+
     class Meta:
 
         model = Device
@@ -45,9 +49,6 @@ class DeviceForm(forms.ModelForm):
             "practice",
             "area",
             "room",
-            "last_stk",
-            "last_mtk",
-            "last_dguv",
             "status",
             "image",
             "notes",
@@ -55,39 +56,71 @@ class DeviceForm(forms.ModelForm):
 
         widgets = {
 
-            "name": forms.TextInput(),
-
-            "last_stk": forms.DateInput(
-                format="%Y-%m-%d",
-                attrs={"type": "date"},
+            "name": forms.TextInput(
+                attrs={"class": "form-control"}
             ),
 
-            "last_mtk": forms.DateInput(
-                format="%Y-%m-%d",
-                attrs={"type": "date"},
+            "geraetart": forms.Select(
+                attrs={"class": "form-control"}
             ),
 
-            "last_dguv": forms.DateInput(
-                format="%Y-%m-%d",
-                attrs={"type": "date"},
+            "inventory_number": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+
+            "serial_number": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+
+            "ec_number": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+
+            "software_version": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+
+            "operating_hours": forms.NumberInput(
+                attrs={"class": "form-control"}
+            ),
+
+            "manufacturer": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+
+            "practice": forms.Select(
+                attrs={"class": "form-control"}
+            ),
+
+            "area": forms.Select(
+                attrs={"class": "form-control"}
+            ),
+
+            "room": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+
+            "status": forms.Select(
+                attrs={"class": "form-control"}
+            ),
+
+            "notes": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 4
+                }
             ),
         }
 
     def __init__(self, *args, **kwargs):
 
-        geraetart= kwargs.pop("geraetart", None)
+        geraetart = kwargs.pop("geraetart", None)
 
         super().__init__(*args, **kwargs)
 
-        if geraetart and geraetart.name!= "Dialyse Maschinen":
-             self.fields.pop("operating_hours", None)
-
-  
-
-        if self.instance and self.instance.pk:
-            self.initial["last_stk"] = self.instance.last_stk
-            self.initial["last_mtk"] = self.instance.last_mtk
-            self.initial["last_dguv"] = self.instance.last_dguv
+        # Betriebsstunden nur bei Dialyse Maschinen
+        if geraetart and geraetart.name != "Dialyse Maschinen":
+            self.fields.pop("operating_hours", None)
 
         required_fields = [
             "geraetart",
@@ -101,74 +134,148 @@ class DeviceForm(forms.ModelForm):
         ]
 
         for field in required_fields:
-            self.fields[field].required = True
+            if field in self.fields:
+                self.fields[field].required = True
 
-        if "next_stk" in self.fields:
-           self.fields["next_stk"].required = False
+        if "room" in self.fields:
+            self.fields["room"].required = False
 
-        if "next_mtk" in self.fields:
-           self.fields["next_mtk"].required = False
-
-        if "next_dguv" in self.fields:
-           self.fields["next_dguv"].required = False
-
-        self.fields["room"].required = False
         if "operating_hours" in self.fields:
             self.fields["operating_hours"].required = False
-
-        
 
     def clean(self):
 
         cleaned_data = super().clean()
 
         geraetart = cleaned_data.get("geraetart")
-
         room = cleaned_data.get("room")
 
-        last_stk = cleaned_data.get("last_stk")
-        last_mtk = cleaned_data.get("last_mtk")
-        last_dguv = cleaned_data.get("last_dguv")
-
+        # Dialyse Betten brauchen einen Raum
         if (
             geraetart
-            and geraetart.braucht_pruefung
-            and not last_stk
-            and not last_mtk
-            and not last_dguv
+            and geraetart.name == "Dialyse Betten"
+            and not room
         ):
-            raise forms.ValidationError(
-                "Bitte mindestens eine Prüfung eingeben: STK, MTK oder DGUV V3."
-            )
-        if geraetart and geraetart.name == "Dialyse Betten" and not room:
             self.add_error(
                 "room",
                 "Bei Dialyse Betten muss der Raum angegeben werden."
             )
 
+        # Dialyse Maschinen
         if geraetart and geraetart.name == "Dialyse Maschinen":
 
             if not cleaned_data.get("ec_number"):
                 self.add_error(
-                        "ec_number",
-                        "Bei Dialyse Maschinen ist die EC-Nummer erforderlich."
+                    "ec_number",
+                    "Bei Dialyse Maschinen ist die EC-Nummer erforderlich."
                 )
 
             if not cleaned_data.get("software_version"):
-                 self.add_error(
-                      "software_version",
-                      "Bei Dialyse Maschinen ist die Software-Version erforderlich."
-            )
+                self.add_error(
+                    "software_version",
+                    "Bei Dialyse Maschinen ist die Software-Version erforderlich."
+                )
 
             if "operating_hours" in self.fields:
-                 if not cleaned_data.get("operating_hours"):
-                     self.add_error(
-                          "operating_hours",
-                           "Bei Dialyse Maschinen sind die Betriebsstunden erforderlich."
+
+                if not cleaned_data.get("operating_hours"):
+                    self.add_error(
+                        "operating_hours",
+                        "Bei Dialyse Maschinen sind die Betriebsstunden erforderlich."
                     )
 
         return cleaned_data
 
+
+
+
+class DevicePruefungForm(forms.ModelForm):
+
+    class Meta:
+        model = DevicePruefung
+
+        fields = [
+            "pruefart",
+            "letztes_datum",
+        ]
+
+        widgets = {
+
+            "pruefart": forms.Select(
+                attrs={
+                    "class": "form-control pruefart-select",
+                }
+            ),
+
+            "letztes_datum": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "type": "date",
+                    "class": "form-control pruefung-date",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.fields["pruefart"].queryset = (
+            Pruefart.objects
+            .filter(aktiv=True)
+            .order_by("order", "name")
+        )
+
+        self.fields["letztes_datum"].input_formats = [
+            "%Y-%m-%d"
+        ]
+DevicePruefungFormSet = forms.inlineformset_factory(
+    Device,
+    DevicePruefung,
+    form=DevicePruefungForm,
+    extra=0,
+    can_delete=True
+)
+
+class PruefartForm(forms.ModelForm):
+
+    class Meta:
+        model = Pruefart
+
+        fields = [
+            "name",
+            "intervall_jahre",
+            "aktiv",
+            "order",
+        ]
+
+        widgets = {
+
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "z.B. STK, MTK, UVV"
+                }
+            ),
+
+            "intervall_jahre": forms.Select(
+                attrs={
+                    "class": "form-control"
+                }
+            ),
+
+            "aktiv": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input"
+                }
+            ),
+
+            "order": forms.NumberInput(
+                attrs={
+                    "class": "form-control"
+                }
+            ),
+        }
 
 class PracticeSettingsForm(forms.ModelForm):
 
@@ -421,8 +528,23 @@ class GeraetartForm(forms.ModelForm):
         fields = [
             "name",
             "aktiv",
-            "braucht_pruefung",
-        ] 
+        ]
+
+        widgets = {
+
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Geräteart"
+                }
+            ),
+
+            "aktiv": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input"
+                }
+            ),
+        }
 
 class TechnicianDocumentForm(forms.ModelForm):
 

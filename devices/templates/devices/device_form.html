@@ -3,156 +3,956 @@
 {% block content %}
 
 <div class="container">
-
-    <h2>Neues medizinisches Gerät hinzufügen</h2>
-
-    <form method="POST" enctype="multipart/form-data">
-
-        {% csrf_token %}
-
-        <div class="form-grid">
-
-            {% for field in form %}
-
+<h2>
+    {% if device %}
+        Gerät bearbeiten
+    {% else %}
+        Neues medizinisches Gerät hinzufügen
+    {% endif %}
+</h2>
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ pruefung_formset.management_form }}
+    <!-- ===================================================== -->
+    <!-- GERÄTEDATEN -->
+    <!-- ===================================================== -->
+    <h3 class="section-title">
+        🏥 Gerätedaten
+    </h3>
+    <div class="form-grid">
+        {% for field in form %}
             <div class="form-group">
-
-                <label>
+                <label for="{{ field.id_for_label }}">
                     {{ field.label }}
                 </label>
-
                 {{ field }}
-
                 {% if field.errors %}
-                    <small style="color:red;">
+                    <small class="error">
                         {{ field.errors }}
                     </small>
                 {% endif %}
-
             </div>
+            <!-- ================================================= -->
+            <!-- PRÜFART DIREKT NACH BEREICH -->
+            <!-- ================================================= -->
+            {% if field.name == "area" or field.name == "bereich" %}
+                <div class="form-group">
+                    <label for="pruefart-select">
+                        Prüfart
+                    </label>
+                    <select
+                        id="pruefart-select"
+                        class="form-control">
 
-            {% endfor %}
+                        <option value="">
+                            Prüfart auswählen
+                        </option>
 
-        </div>
+                        {% for pruefart in pruefarten %}
 
+                            <option
+                                value="{{ pruefart.id }}"
+                                data-name="{{ pruefart.name }}">
 
-        <div class="form-buttons">
+                                {{ pruefart.name }}
 
-            <button type="submit" class="save-btn">
-                 💾 Speichern
-            </button>
+                            </option>
 
-            <button type="button" onclick="history.back()" class="cancel-btn">
-                  Abbrechen
-            </button>
+                        {% endfor %}
 
-        </div>
-
-    </form>
-
+                    </select>
+                </div>
+                <!-- ================================================= -->
+                <!-- SICHTBARE PRÜFUNGEN -->
+                <!-- ================================================= -->
+                <div
+                    id="selected-pruefungen"
+                    class="selected-pruefungen">
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <!-- ===================================================== -->
+    <!-- VERSTECKTES FORMSET -->
+    <!-- ===================================================== -->
+    <div
+        id="pruefung-formset-container"
+        style="display:none;">
+        {% for pruefung_form in pruefung_formset %}
+            <div
+                class="pruefung-form"
+                data-index="{{ forloop.counter0 }}">
+                {{ pruefung_form.id }}
+                {{ pruefung_form.pruefart }}
+                {{ pruefung_form.letztes_datum }}
+                {% if pruefung_form.DELETE %}
+                    {{ pruefung_form.DELETE }}
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    <!-- ===================================================== -->
+    <!-- EMPTY FORM -->
+    <!-- ===================================================== -->
+    <div
+        id="empty-pruefung-form"
+        style="display:none;">
+        {{ pruefung_formset.empty_form.id }}
+        {{ pruefung_formset.empty_form.pruefart }}
+        {{ pruefung_formset.empty_form.letztes_datum }}
+        {% if pruefung_formset.empty_form.DELETE %}
+            {{ pruefung_formset.empty_form.DELETE }}
+        {% endif %}
+    </div>
+    <!-- ===================================================== -->
+    <!-- BUTTONS -->
+    <!-- ===================================================== -->
+    <div class="form-buttons">
+        <button
+            type="submit"
+            class="save-btn">
+            💾 Speichern
+        </button>
+        <button
+            type="button"
+            onclick="history.back()"
+            class="cancel-btn">
+            ❌ Abbrechen
+        </button>
+    </div>
+</form>
 </div>
-
-
 <style>
-
+/* ========================================================= */
+/* CONTAINER */
+/* ========================================================= */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+/* ========================================================= */
+/* SECTION TITLE */
+/* ========================================================= */
+.section-title {
+    margin-top: 25px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #ddd;
+}
+/* ========================================================= */
+/* FORM GRID */
+/* ========================================================= */
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
-
-
+/* ========================================================= */
+/* FORM GROUP */
+/* ========================================================= */
 .form-group {
     display: flex;
     flex-direction: column;
 }
-
-
 .form-group label {
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
-
-
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 6px;
     border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
 }
-
-
-button {
-    margin-top: 25px;
+/* ========================================================= */
+/* ERROR */
+/* ========================================================= */
+.error {
+    color: #dc2626;
+    margin-top: 5px;
+}
+/* ========================================================= */
+/* PRÜFUNGEN */
+/* ========================================================= */
+.selected-pruefungen {
+    display: contents;
+}
+.pruefung-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.pruefung-item label {
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+.pruefung-item input {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
+}
+/* ========================================================= */
+/* REMOVE BUTTON */
+/* ========================================================= */
+.remove-pruefung {
+    position: absolute;
+    right: 8px;
+    top: 31px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 5px;
+    background: #dc3545;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+.remove-pruefung:hover {
+    background: #bb2d3b;
+}
+/* ========================================================= */
+/* BUTTONS */
+/* ========================================================= */
+.form-buttons {
+    margin-top: 30px;
+    display: flex;
+    gap: 10px;
+}
+.save-btn {
     padding: 12px 30px;
     background: #007bff;
     color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
+    font-weight: bold;
 }
-
-button:hover {
+.save-btn:hover {
     background: #0056b3;
 }
-
+.cancel-btn {
+    padding: 12px 30px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.cancel-btn:hover {
+    background: #5c636a;
+}
+/* ========================================================= */
+/* MOBILE */
+/* ========================================================= */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
 <script>
+document.addEventListener("DOMContentLoaded", function () {
 
-const brauchtPruefung = {
-{% for g in geraetarten %}
-    "{{ g.id }}": {{ g.braucht_pruefung|yesno:"true,false" }},
-{% endfor %}
-};
+    /* =========================================================
+       ELEMENTE
+       ========================================================= */
 
-function toggleFields() {
+    const pruefartSelect =
+        document.getElementById("pruefart-select");
 
-    const geraetart = document.getElementById("id_geraetart");
+    const selectedContainer =
+        document.getElementById("selected-pruefungen");
 
-    if (!geraetart) return;
+    const formsetContainer =
+        document.getElementById("pruefung-formset-container");
 
-    const selectedOption = geraetart.options[geraetart.selectedIndex];
-    const operating = document.getElementById("id_operating_hours");
+    const totalForms =
+        document.getElementById(
+            "id_pruefungen-TOTAL_FORMS"
+        );
 
-    // Betriebsstunden
-    if (operating) {
+    const emptyFormElement =
+        document.getElementById(
+            "empty-pruefung-form"
+        );
 
-        const operatingGroup = operating.closest(".form-group");
 
-        if (selectedOption.text === "Dialyse Maschinen") {
-            operatingGroup.style.display = "";
-        } else {
-            operatingGroup.style.display = "none";
-        }
+    /* =========================================================
+       PRÜFEN
+       ========================================================= */
+
+    if (
+        !pruefartSelect ||
+        !selectedContainer ||
+        !formsetContainer ||
+        !totalForms ||
+        !emptyFormElement
+    ) {
+
+        console.error(
+            "Prüfung Formset konnte nicht initialisiert werden."
+        );
+
+        return;
     }
 
-    // STK / MTK / DGUV
-    const showPruefung = brauchtPruefung[geraetart.value];
 
-    [
-        "id_last_stk",
-        "id_last_mtk",
-        "id_last_dguv"
-    ].forEach(function(id){
+    const emptyForm =
+        emptyFormElement.innerHTML;
 
-        const field = document.getElementById(id);
 
-        if (!field) return;
+    /*
+     * Hier werden die aktuell sichtbaren Prüfarten
+     * gespeichert.
+     *
+     * Beispiel:
+     *
+     * {
+     *     "1": true,
+     *     "3": true
+     * }
+     */
 
-        field.closest(".form-group").style.display =
-            showPruefung ? "" : "none";
-    });
+    const selectedPruefungen = {};
 
-}
 
-document.addEventListener("DOMContentLoaded", function(){
+    /* =========================================================
+       PRÜFART-NAME HOLEN
+       ========================================================= */
 
-    toggleFields();
+    function getPruefartName(pruefartId) {
 
-    document
-        .getElementById("id_geraetart")
-        .addEventListener("change", toggleFields);
+        const option =
+            pruefartSelect.querySelector(
+                'option[value="' +
+                pruefartId +
+                '"]'
+            );
+
+        if (option) {
+
+            return (
+                option.dataset.name ||
+                option.textContent.trim()
+            );
+
+        }
+
+        return "Prüfung";
+    }
+
+
+    /* =========================================================
+       DROPDOWN AUF PRÜFART SETZEN
+       ========================================================= */
+
+    function selectPruefartInDropdown(
+        pruefartId
+    ) {
+
+        if (!pruefartId) {
+            return;
+        }
+
+        const option =
+            pruefartSelect.querySelector(
+                'option[value="' +
+                pruefartId +
+                '"]'
+            );
+
+        if (option) {
+
+            pruefartSelect.value =
+                pruefartId;
+
+        }
+
+    }
+
+
+    /* =========================================================
+       SICHTBARES PRÜFUNGSFELD ERSTELLEN
+       ========================================================= */
+
+    function createVisiblePruefung(
+        pruefartId,
+        pruefartName,
+        dateValue,
+        hiddenForm,
+        isExisting
+    ) {
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "pruefung-item";
+
+        item.dataset.pruefartId =
+            pruefartId;
+
+
+        /* -----------------------------------------------------
+           LABEL
+           ----------------------------------------------------- */
+
+        const label =
+            document.createElement("label");
+
+        label.textContent =
+            "Letzte " +
+            pruefartName;
+
+
+        /* -----------------------------------------------------
+           DATUM
+           ----------------------------------------------------- */
+
+        const visibleDate =
+            document.createElement("input");
+
+        visibleDate.type =
+            "date";
+
+        visibleDate.className =
+            "form-control";
+
+        visibleDate.value =
+            dateValue || "";
+
+
+        /* -----------------------------------------------------
+           LÖSCHEN BUTTON
+           ----------------------------------------------------- */
+
+        const removeButton =
+            document.createElement("button");
+
+        removeButton.type =
+            "button";
+
+        removeButton.className =
+            "remove-pruefung";
+
+        removeButton.innerHTML =
+            "×";
+
+        removeButton.title =
+            "Prüfung entfernen";
+
+
+        /* -----------------------------------------------------
+           ELEMENTE EINFÜGEN
+           ----------------------------------------------------- */
+
+        item.appendChild(label);
+
+        item.appendChild(visibleDate);
+
+        item.appendChild(removeButton);
+
+        selectedContainer.appendChild(item);
+
+
+        /* =====================================================
+           DATUM MIT FORMSET SYNCHRONISIEREN
+           ===================================================== */
+
+        const dateField =
+            hiddenForm.querySelector(
+                '[name$="-letztes_datum"]'
+            );
+
+        if (dateField) {
+
+            /*
+             * Bereits vorhandenes Datum
+             */
+            visibleDate.value =
+                dateField.value || dateValue || "";
+
+
+            /*
+             * Änderungen übernehmen
+             */
+            visibleDate.addEventListener(
+                "change",
+                function () {
+
+                    dateField.value =
+                        this.value;
+
+                }
+            );
+
+        }
+
+
+        /* =====================================================
+           PRÜFUNG ENTFERNEN
+           ===================================================== */
+
+        removeButton.addEventListener(
+            "click",
+            function () {
+
+                /*
+                 * Aus der Liste entfernen
+                 */
+                delete selectedPruefungen[
+                    pruefartId
+                ];
+
+
+                /* =============================================
+                   FALL 1:
+                   PRÜFUNG EXISTIERT BEREITS IN DER DATENBANK
+                   ============================================= */
+
+                if (isExisting) {
+
+                    /*
+                     * ID-Feld vorhanden?
+                     */
+                    const idField =
+                        hiddenForm.querySelector(
+                            '[name$="-id"]'
+                        );
+
+
+                    /*
+                     * DELETE-Feld suchen
+                     */
+                    const deleteField =
+                        hiddenForm.querySelector(
+                            '[name$="-DELETE"]'
+                        );
+
+
+                    if (deleteField) {
+
+                        /*
+                         * Django bekommt:
+                         *
+                         * form-X-DELETE = on
+                         *
+                         */
+                        deleteField.checked =
+                            true;
+
+
+                        /*
+                         * Form NICHT löschen!
+                         *
+                         * Es muss beim POST weiterhin
+                         * vorhanden sein.
+                         */
+                        hiddenForm.style.display =
+                            "none";
+
+
+                        /*
+                         * Sichtbares Feld entfernen
+                         */
+                        item.remove();
+
+
+                    } else {
+
+                        console.error(
+                            "DELETE-Feld für bestehende Prüfung nicht gefunden."
+                        );
+
+                    }
+
+                }
+
+
+                /* =============================================
+                   FALL 2:
+                   PRÜFUNG WURDE ERST NEU HINZUGEFÜGT
+                   ============================================= */
+
+                else {
+
+                    /*
+                     * Noch nicht gespeichert.
+                     * Deshalb kann das Form komplett
+                     * entfernt werden.
+                     */
+                    hiddenForm.remove();
+
+                    item.remove();
+
+                }
+
+
+                /* =============================================
+                   DROPDOWN ZURÜCKSETZEN
+                   ============================================= */
+
+                /*
+                 * Wenn die gerade gelöschte Prüfung
+                 * noch im Dropdown angezeigt wird,
+                 * zurücksetzen.
+                 */
+
+                if (
+                    pruefartSelect.value ===
+                    String(pruefartId)
+                ) {
+
+                    pruefartSelect.value = "";
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       GESPEICHERTE PRÜFUNGEN LADEN
+       ========================================================= */
+
+    const existingForms =
+        formsetContainer.querySelectorAll(
+            ".pruefung-form"
+        );
+
+
+    existingForms.forEach(
+        function (hiddenForm) {
+
+            const pruefartField =
+                hiddenForm.querySelector(
+                    '[name$="-pruefart"]'
+                );
+
+            const dateField =
+                hiddenForm.querySelector(
+                    '[name$="-letztes_datum"]'
+                );
+
+
+            if (
+                !pruefartField ||
+                !dateField
+            ) {
+
+                return;
+
+            }
+
+
+            const pruefartId =
+                pruefartField.value;
+
+
+            if (!pruefartId) {
+
+                return;
+
+            }
+
+
+            const pruefartName =
+                getPruefartName(
+                    pruefartId
+                );
+
+
+            /*
+             * Als ausgewählt markieren
+             */
+            selectedPruefungen[
+                pruefartId
+            ] = true;
+
+
+            /*
+             * Gespeicherte Prüfart im Dropdown anzeigen
+             */
+            selectPruefartInDropdown(
+                pruefartId
+            );
+
+
+            /*
+             * Prüfen, ob diese Form eine ID besitzt.
+             *
+             * Wenn ja:
+             * Datensatz existiert bereits.
+             */
+
+            const idField =
+                hiddenForm.querySelector(
+                    '[name$="-id"]'
+                );
+
+
+            const isExisting =
+                idField &&
+                idField.value;
+
+
+            /*
+             * Sichtbares Prüfungsfeld erstellen
+             */
+            createVisiblePruefung(
+                pruefartId,
+                pruefartName,
+                dateField.value,
+                hiddenForm,
+                Boolean(isExisting)
+            );
+
+        }
+    );
+
+
+    /* =========================================================
+       NEUE PRÜFART AUSWÄHLEN
+       ========================================================= */
+
+    pruefartSelect.addEventListener(
+        "change",
+        function () {
+
+            const option =
+                this.options[
+                    this.selectedIndex
+                ];
+
+
+            if (
+                !option ||
+                !option.value
+            ) {
+
+                return;
+
+            }
+
+
+            const pruefartId =
+                option.value;
+
+
+            const pruefartName =
+                option.dataset.name ||
+                option.textContent.trim();
+
+
+            /* =================================================
+               BEREITS VORHANDEN?
+               ================================================= */
+
+            if (
+                selectedPruefungen[
+                    pruefartId
+                ]
+            ) {
+
+                /*
+                 * Bereits vorhanden.
+                 */
+                this.value =
+                    pruefartId;
+
+                return;
+
+            }
+
+
+            /* =================================================
+               NEUEN FORMSET INDEX ERMITTELN
+               ================================================= */
+
+            const index =
+                parseInt(
+                    totalForms.value,
+                    10
+                );
+
+
+            /* =================================================
+               EMPTY FORM KLONEN
+               ================================================= */
+
+            const newForm =
+                emptyForm.replace(
+                    /__prefix__/g,
+                    index
+                );
+
+
+            const wrapper =
+                document.createElement("div");
+
+
+            wrapper.innerHTML =
+                newForm;
+
+
+            /* =================================================
+               FELDER HOLEN
+               ================================================= */
+
+            const pruefartField =
+                wrapper.querySelector(
+                    '[name$="-pruefart"]'
+                );
+
+            const dateField =
+                wrapper.querySelector(
+                    '[name$="-letztes_datum"]'
+                );
+
+
+            if (
+                !pruefartField ||
+                !dateField
+            ) {
+
+                console.error(
+                    "Prüfungsfelder konnten nicht gefunden werden."
+                );
+
+                return;
+
+            }
+
+
+            /* =================================================
+               PRÜFART SETZEN
+               ================================================= */
+
+            pruefartField.value =
+                pruefartId;
+
+
+            /* =================================================
+               VERSTECKTES FORM ERSTELLEN
+               ================================================= */
+
+            const hiddenForm =
+                document.createElement("div");
+
+
+            hiddenForm.className =
+                "pruefung-form";
+
+
+            hiddenForm.style.display =
+                "none";
+
+
+            hiddenForm.appendChild(
+                pruefartField
+            );
+
+
+            hiddenForm.appendChild(
+                dateField
+            );
+
+
+            /* =================================================
+               ID-FELD
+               ================================================= */
+
+            const idField =
+                wrapper.querySelector(
+                    '[name$="-id"]'
+                );
+
+
+            if (idField) {
+
+                hiddenForm.appendChild(
+                    idField
+                );
+
+            }
+
+
+            /* =================================================
+               DELETE-FELD
+               ================================================= */
+
+            const deleteField =
+                wrapper.querySelector(
+                    '[name$="-DELETE"]'
+                );
+
+
+            if (deleteField) {
+
+                hiddenForm.appendChild(
+                    deleteField
+                );
+
+            }
+
+
+            /* =================================================
+               FORMSET CONTAINER
+               ================================================= */
+
+            formsetContainer.appendChild(
+                hiddenForm
+            );
+
+
+            /* =================================================
+               ALS AUSGEWÄHLT MARKIEREN
+               ================================================= */
+
+            selectedPruefungen[
+                pruefartId
+            ] = true;
+
+
+            /* =================================================
+               SICHTBARES DATUM ERSTELLEN
+               ================================================= */
+
+            createVisiblePruefung(
+                pruefartId,
+                pruefartName,
+                "",
+                hiddenForm,
+                false
+            );
+
+
+            /* =================================================
+               TOTAL FORMS ERHÖHEN
+               ================================================= */
+
+            totalForms.value =
+                index + 1;
+
+
+            /* =================================================
+               AUSGEWÄHLTE PRÜFART SICHTBAR LASSEN
+               ================================================= */
+
+            pruefartSelect.value =
+                pruefartId;
+
+        }
+    );
+
 
 });
-
 </script>
 {% endblock %}

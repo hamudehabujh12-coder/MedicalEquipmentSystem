@@ -502,35 +502,33 @@ details.menu-group ul li a:hover {
     </details>
 
     <!-- Wartung -->
-<details class="menu-group" id="wartung-menu">
+    <details class="menu-group" id="wartung-menu">
 
-    <summary>🔧 Wartung</summary>
+        <summary>🔧 Wartung</summary>
 
-    <ul>
+        <ul>
 
-        <li>
-            <a href="{% url 'faellige_stk' %}">
-                📅 Fällige STK
-            </a>
-        </li>
+            {% for pruefart in wartung_pruefarten %}
 
+                <li>
+                    <a href="{% url 'faellige_pruefung' pruefart.id %}">
+                        📅 Fällige {{ pruefart.name }}
+                    </a>
+                </li>
 
-        <li>
-            <a href="{% url 'faellige_mtk' %}">
-                ❤️ Fällige MTK
-            </a>
-        </li>
+            {% empty %}
 
+                <li>
+                    <span style="color:#888;">
+                        Keine Prüfarten vorhanden
+                    </span>
+                </li>
 
-        <li>
-            <a href="{% url 'faellige_dguv' %}">
-                ⚡ Fällige DGUV V3
-            </a>
-        </li>
+            {% endfor %}
 
-    </ul>
+        </ul>
 
-</details>
+    </details>
 
 
     <details class="menu-group" id="documents-menu">

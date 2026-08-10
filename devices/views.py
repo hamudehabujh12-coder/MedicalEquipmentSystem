@@ -50,6 +50,8 @@ from openpyxl.utils import get_column_letter
 
 from .models import (
     Device,
+    DevicePruefung,
+    Pruefart,
     Reparatur,
     PracticeSettings,
     DeviceDocument,
@@ -73,6 +75,9 @@ from .models import (
 
 from .forms import (
     DeviceForm,
+    DevicePruefungForm,
+    DevicePruefungFormSet,
+    PruefartForm,
     PracticeSettingsForm,
     DeviceDocumentForm,
     GeneralDocumentForm,
@@ -199,50 +204,65 @@ def natural_key(value):
 
 @login_required
 def device_list(request):
+
     search = request.GET.get("search", "")
     practice = request.GET.get("practice", "")
     status = request.GET.get("status", "")
     sort = request.GET.get("sort", "")
     geraetart = request.GET.get("geraetart", "")
-    # =====================
-    # Alle Geräte
-    # =====================
-    devices = Device.objects.all()
-    # =====================
-    # Suche
-    # =====================
+    # =========================================================
+    # ALLE GERÄTE
+    # =========================================================
+    devices = (
+        Device.objects
+        .prefetch_related(
+            "pruefungen__pruefart"
+        )
+        .all()
+    )
+    # =========================================================
+    # SUCHE
+    # =========================================================
     if search:
         devices = devices.filter(
             Q(name__icontains=search)
-            | Q(inventory_number__icontains=search)
-            | Q(serial_number__icontains=search)
-            | Q(practice__name__icontains=search)
-            | Q(geraetart__name__icontains=search)
+            | Q(
+                inventory_number__icontains=search
+            )
+            | Q(
+                serial_number__icontains=search
+            )
+            | Q(
+                practice__name__icontains=search
+            )
+            | Q(
+                geraetart__name__icontains=search
+            )
         )
-    # =====================
-    # Standort Filter
-    # =====================
+    # =========================================================
+    # STANDORT FILTER
+    # =========================================================
     if practice:
         devices = devices.filter(
             practice_id=practice
         )
-    # =====================
-    # Geräteart Filter
-    # =====================
+    # =========================================================
+    # GERÄTEART FILTER
+    # =========================================================
     if geraetart:
         devices = devices.filter(
             geraetart_id=geraetart
         )
-    # =====================
-    # Status Filter
-    # =====================
+    # =========================================================
+    # STATUS FILTER
+    # =========================================================
     if status:
         devices = devices.filter(
             status=status
         )
-    # =====================
-    # Sortierung
-    # =====================
+    # =========================================================
+    # SORTIERUNG
+    # =========================================================
     if sort == "operating_hours":
         devices = devices.order_by(
             "operating_hours"
@@ -251,6 +271,31 @@ def device_list(request):
         devices = devices.order_by(
             "-operating_hours"
         )
+    # =========================================================
+    # NÄCHSTE ÜBERPRÜFUNG – FRÜHESTE
+    # =========================================================
+    elif sort == "next_pruefung":
+        devices = (
+            devices
+            .order_by(
+                "pruefungen__naechstes_datum"
+            )
+            .distinct()
+        )
+    # =========================================================
+    # NÄCHSTE ÜBERPRÜFUNG – SPÄTESTE
+    # =========================================================
+    elif sort == "-next_pruefung":
+        devices = (
+            devices
+            .order_by(
+                "-pruefungen__naechstes_datum"
+            )
+            .distinct()
+        )
+    # =========================================================
+    # ALTE STK SORTIERUNG
+    # =========================================================
     elif sort == "next_stk":
         devices = devices.order_by(
             "next_stk"
@@ -259,6 +304,9 @@ def device_list(request):
         devices = devices.order_by(
             "-next_stk"
         )
+    # =========================================================
+    # STANDORT SORTIERUNG
+    # =========================================================
     elif sort == "practice":
         devices = devices.order_by(
             "practice__name"
@@ -267,98 +315,129 @@ def device_list(request):
         devices = devices.order_by(
             "-practice__name"
         )
+    # =========================================================
+    # STANDARD-REIHENFOLGE
+    #
+    # 1. Gerätart
+    # 2. Standort
+    # 3. Inventarnummer
+    # =========================================================
     else:
-        # ==========================================
-        # Standard-Reihenfolge
-        #
-        # 1. Gerätart
-        # 2. Standort
-        # 3. Inventarnummer
-        # ==========================================
         def device_group_priority(device):
+            # -------------------------------------------------
+            # GERÄTEART
+            # -------------------------------------------------
             geraetart_name = (
                 device.geraetart.name.strip()
                 if device.geraetart
                 else ""
             )
+            # -------------------------------------------------
+            # STANDORT
+            # -------------------------------------------------
             standort_name = (
                 device.practice.name.strip()
                 if device.practice
                 else ""
             )
-            # --------------------------------------
+            # -------------------------------------------------
             # 1. Dialyse Maschinen – Lübeck
-            # --------------------------------------
+            # -------------------------------------------------
             if (
-                geraetart_name == "Dialyse Maschinen"
-                and standort_name == "Lübeck"
+                geraetart_name
+                == "Dialyse Maschinen"
+                and
+                standort_name
+                == "Lübeck"
             ):
                 return 1
-            # --------------------------------------
+            # -------------------------------------------------
             # 2. Dialyse Maschinen – Ratzeburg
-            # --------------------------------------
+            # -------------------------------------------------
             if (
-                geraetart_name == "Dialyse Maschinen"
-                and standort_name == "Ratzeburg"
+                geraetart_name
+                == "Dialyse Maschinen"
+                and
+                standort_name
+                == "Ratzeburg"
             ):
                 return 2
-            # --------------------------------------
+            # -------------------------------------------------
             # 3. Dialyse Betten – Lübeck
-            # --------------------------------------
+            # -------------------------------------------------
             if (
-                geraetart_name == "Dialyse Betten"
-                and standort_name == "Lübeck"
+                geraetart_name
+                == "Dialyse Betten"
+                and
+                standort_name
+                == "Lübeck"
             ):
                 return 3
-            # --------------------------------------
+            # -------------------------------------------------
             # 4. Dialyse Betten Mechanische – Lübeck
-            # --------------------------------------
+            # -------------------------------------------------
             if (
-                geraetart_name == "Dialyse Betten Mechanische"
-                and standort_name == "Lübeck"
+                geraetart_name
+                == "Dialyse Betten Mechanische"
+                and
+                standort_name
+                == "Lübeck"
             ):
                 return 4
-            # --------------------------------------
+            # -------------------------------------------------
             # 5. Dialyse Betten – Ratzeburg
-            # --------------------------------------
+            # -------------------------------------------------
             if (
-                geraetart_name == "Dialyse Betten"
-                and standort_name == "Ratzeburg"
+                geraetart_name
+                == "Dialyse Betten"
+                and
+                standort_name
+                == "Ratzeburg"
             ):
                 return 5
-            # --------------------------------------
-            # Alle anderen Geräte danach
-            # --------------------------------------
+            # -------------------------------------------------
+            # ALLE ANDEREN GERÄTE
+            # -------------------------------------------------
             return 99
-        # ==========================================
-        # Sortieren
-        # ==========================================
+        # =====================================================
+        # SORTIEREN
+        # =====================================================
         devices = sorted(
             devices,
             key=lambda d: (
                 device_group_priority(d),
-                natural_key(d.inventory_number),
+                natural_key(
+                    d.inventory_number
+                ),
             ),
         )
-    # =====================
-    # Dropdown: Standorte
-    # =====================
+    # =========================================================
+    # DROPDOWN – STANDORTE
+    # =========================================================
     standorte = (
         Standort.objects
-        .filter(active=True)
-        .order_by("name")
+        .filter(
+            active=True
+        )
+        .order_by(
+            "name"
+        )
     )
-    # =====================
-    # Dropdown: Gerätearten
-    # =====================
+    # =========================================================
+    # DROPDOWN – GERÄTEARTEN
+    # =========================================================
     geraetarten = (
         Geraetart.objects
-        .filter(aktiv=True)
-        .order_by("name")
+        .filter(
+            aktiv=True
+        )
+        .order_by(
+            "name"
+        )
     )
-    # =====================
-    # Render
-    # =====================
+    # =========================================================
+    # RENDER
+    # =========================================================
     return render(
         request,
         "devices/device_list.html",
@@ -412,9 +491,20 @@ def device_create(request):
             request.FILES
         )
 
-        if form.is_valid():
+        pruefung_formset = DevicePruefungFormSet(
+            request.POST,
+            prefix="pruefungen"
+        )
+
+        print("DEVICE FORM:", form.is_valid())
+        print("PRUEFUNG FORMSET:", pruefung_formset.is_valid())
+
+        if form.is_valid() and pruefung_formset.is_valid():
 
             device = form.save()
+
+            pruefung_formset.instance = device
+            pruefung_formset.save()
 
             AuditLog.objects.create(
                 user=request.user,
@@ -439,12 +529,18 @@ def device_create(request):
 
         form = DeviceForm()
 
+        pruefung_formset = DevicePruefungFormSet(prefix="pruefungen")
+
     return render(
         request,
         "devices/device_form.html",
         {
             "form": form,
+            "pruefung_formset": pruefung_formset,
             "geraetarten": Geraetart.objects.all(),
+            "pruefarten": Pruefart.objects.filter(
+                aktiv=True
+            ).order_by("order", "name"),
         }
     )
 
@@ -464,7 +560,11 @@ def device_create_geraetart(request, geraetart_id):
             geraetart=geraetart
         )
 
-        if form.is_valid():
+        pruefung_formset = DevicePruefungFormSet(
+            request.POST
+        )
+
+        if form.is_valid() and pruefung_formset.is_valid():
 
             device = form.save(commit=False)
 
@@ -472,6 +572,26 @@ def device_create_geraetart(request, geraetart_id):
             device.name = geraetart.name
 
             device.save()
+
+            pruefung_formset.instance = device
+            pruefung_formset.save()
+
+            AuditLog.objects.create(
+                user=request.user,
+                action="CREATE",
+                model_name="Gerät",
+                object_id=device.id,
+                description=(
+                    f"Gerät {device.name} "
+                    f"({device.inventory_number}) "
+                    "hinzugefügt."
+                )
+            )
+
+            messages.success(
+                request,
+                "Gerät erfolgreich hinzugefügt."
+            )
 
             return redirect(
                 "device_geraetart",
@@ -484,14 +604,18 @@ def device_create_geraetart(request, geraetart_id):
             geraetart=geraetart
         )
 
+        pruefung_formset = DevicePruefungFormSet()
+
     return render(
         request,
         "devices/device_form.html",
         {
             "form": form,
+            "pruefung_formset": pruefung_formset,
             "geraetart": geraetart,
         }
     )
+
 @login_required       
 def device_geraetart(request, geraetart):
 
@@ -532,6 +656,128 @@ def device_geraetart(request, geraetart):
             "practice": practice,
         }
     )
+
+@login_required
+def pruefarten(request):
+
+    pruefarten = Pruefart.objects.all().order_by(
+        "order",
+        "name"
+    )
+
+    return render(
+        request,
+        "devices/pruefarten.html",
+        {
+            "pruefarten": pruefarten,
+        }
+    ) 
+
+@login_required
+def pruefart_create(request):
+    if not request.user.is_superuser:
+            return redirect("permission_denied")
+    if request.method == "POST":
+
+        form = PruefartForm(request.POST)
+
+        if form.is_valid():
+
+            form.save()
+
+            messages.success(
+                request,
+                "Prüfart erfolgreich hinzugefügt."
+            )
+
+            return redirect("pruefarten")
+
+    else:
+
+        form = PruefartForm()
+
+    return render(
+        request,
+        "devices/pruefart_form.html",
+        {
+            "form": form,
+            "title": "Neue Prüfart hinzufügen",
+        }
+    )
+
+
+@login_required
+def pruefart_edit(request, id):
+    if not request.user.is_superuser:
+            return redirect("permission_denied")
+    pruefart = get_object_or_404(
+        Pruefart,
+        id=id
+    )
+
+    if request.method == "POST":
+
+        form = PruefartForm(
+            request.POST,
+            instance=pruefart
+        )
+
+        if form.is_valid():
+
+            form.save()
+
+            messages.success(
+                request,
+                "Prüfart erfolgreich geändert."
+            )
+
+            return redirect("pruefarten")
+
+    else:
+
+        form = PruefartForm(
+            instance=pruefart
+        )
+
+    return render(
+        request,
+        "devices/pruefart_form.html",
+        {
+            "form": form,
+            "title": "Prüfart bearbeiten",
+            "pruefart": pruefart,
+        }
+    )
+
+
+@login_required
+def pruefart_delete(request, id):
+    if not request.user.is_superuser:
+            return redirect("permission_denied")
+    pruefart = get_object_or_404(
+        Pruefart,
+        id=id
+    )
+
+    if request.method == "POST":
+
+        pruefart.delete()
+
+        messages.success(
+            request,
+            "Prüfart erfolgreich gelöscht."
+        )
+
+        return redirect("pruefarten")
+
+    return render(
+        request,
+        "devices/pruefart_delete.html",
+        {
+            "pruefart": pruefart,
+        }
+    )
+
 @login_required
 def contact(request):
 
@@ -612,6 +858,40 @@ def faellige_dguv(request):
             "heute": heute,
         }
     )
+
+@login_required
+def faellige_pruefung(request, pruefart_id):
+
+    heute = date.today()
+    grenze = heute + timedelta(days=30)
+    pruefart = get_object_or_404(
+        Pruefart,
+        id=pruefart_id
+    )
+    pruefungen = (
+        DevicePruefung.objects
+        .filter(
+            pruefart=pruefart,
+            aktiv=True,
+            naechstes_datum__isnull=False,
+            naechstes_datum__lte=grenze
+        )
+        .select_related(
+            "device",
+            "pruefart"
+        )
+        .order_by("naechstes_datum")
+    )
+    return render(
+        request,
+        "devices/faellige_pruefung.html",
+        {
+            "pruefart": pruefart,
+            "pruefungen": pruefungen,
+            "heute": heute,
+        }
+    )
+
 
 @login_required
 def reparatur(request):
@@ -1583,20 +1863,35 @@ def device_delete(request, device_id):
     )
 @login_required
 def device_edit(request, device_id):
+
     if not request.user.is_superuser:
         return redirect("permission_denied")
+
     device = get_object_or_404(
         Device,
         id=device_id
     )
+
     if request.method == "POST":
+
         form = DeviceForm(
             request.POST,
             request.FILES,
-            instance=device,
+            instance=device
         )
-        if form.is_valid():
+
+        pruefung_formset = DevicePruefungFormSet(
+            request.POST,
+            instance=device
+        )
+
+        if form.is_valid() and pruefung_formset.is_valid():
+
             device = form.save()
+
+            pruefung_formset.instance = device
+            pruefung_formset.save()
+
             AuditLog.objects.create(
                 user=request.user,
                 action="UPDATE",
@@ -1609,28 +1904,47 @@ def device_edit(request, device_id):
                     "geändert."
                 )
             )
+
             messages.success(
                 request,
                 "Gerät erfolgreich geändert."
             )
+
             return redirect(
                 "device_detail",
                 device_id=device.id
             )
+
     else:
+
         form = DeviceForm(
-            instance=device,
+            instance=device
         )
+
+        pruefung_formset = DevicePruefungFormSet(
+            instance=device
+        )
+
     return render(
         request,
         "devices/device_form.html",
         {
             "form": form,
             "device": device,
-            "geraetarten": Geraetart.objects.filter(aktiv=True),
+            "pruefung_formset": pruefung_formset,
+
+            "geraetarten": Geraetart.objects.filter(
+                aktiv=True
+            ),
+
+            "pruefarten": Pruefart.objects.filter(
+                aktiv=True
+            ).order_by(
+                "order",
+                "name"
+            ),
         }
     )
-
 @login_required
 def document_delete(request, document_id):
 

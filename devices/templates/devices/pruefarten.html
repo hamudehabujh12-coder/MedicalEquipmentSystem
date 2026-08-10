@@ -1,0 +1,190 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h1>🩺 Prüfarten</h1>
+
+<div style="margin-bottom:20px;">
+
+    <a href="{% url 'pruefart_create' %}" class="add-btn">
+        ➕ Prüfart hinzufügen
+    </a>
+
+</div>
+
+<table class="table">
+
+    <thead>
+
+        <tr>
+
+            <th>Prüfart</th>
+
+            <th>Intervall</th>
+
+            <th>Aktiv</th>
+
+            <th>Reihenfolge</th>
+
+            <th>Aktionen</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for art in pruefarten %}
+
+        <tr>
+
+            <td>
+                {{ art.name }}
+            </td>
+
+            <td>
+                {{ art.intervall_jahre }} Jahr{{ art.intervall_jahre|pluralize }}
+            </td>
+
+            <td>
+
+                {% if art.aktiv %}
+
+                    <span class="aktiv">
+                        Aktiv
+                    </span>
+
+                {% else %}
+
+                    <span class="inaktiv">
+                        Inaktiv
+                    </span>
+
+                {% endif %}
+
+            </td>
+
+            <td>
+                {{ art.order }}
+            </td>
+
+            <td>
+
+                <a href="{% url 'pruefart_edit' art.id %}">
+                    ✏️ Bearbeiten
+                </a>
+
+                |
+
+                <form method="POST"
+                      action="{% url 'pruefart_delete' art.id %}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Prüfart wirklich löschen?');">
+
+                    {% csrf_token %}
+
+                    <button class="delete-btn" type="submit">
+                        🗑️ Löschen
+                    </button>
+
+                </form>
+
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+
+            <td colspan="5">
+                Keine Prüfarten vorhanden.
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+
+
+<style>
+
+.delete-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.delete-btn:hover{
+    background:#b91c1c;
+}
+
+.add-btn{
+    background:#16a34a;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.table th{
+    background:#1f2937;
+    color:white;
+    padding:15px;
+}
+
+.table td{
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:center;
+}
+
+.table tr:hover{
+    background:#f8fafc;
+}
+
+.table a{
+    text-decoration:none;
+    font-weight:bold;
+    color:#2563eb;
+}
+
+.aktiv{
+    background:#16a34a;
+    color:white;
+    padding:5px 10px;
+    border-radius:6px;
+    font-weight:bold;
+}
+
+.inaktiv{
+    background:#6b7280;
+    color:white;
+    padding:5px 10px;
+    border-radius:6px;
+    font-weight:bold;
+}
+
+</style>
+
+{% endblock %}

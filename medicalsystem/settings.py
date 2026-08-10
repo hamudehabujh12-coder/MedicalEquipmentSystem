@@ -70,6 +70,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'devices.context_processors.app_version',
+                'devices.context_processors.wartung_pruefarten',
             ],
         },
     },

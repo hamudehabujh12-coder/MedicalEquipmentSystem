@@ -130,6 +130,29 @@ urlpatterns = [
         name="device_geraetart"
     ),
   
+    path(
+        "settings/pruefarten/",
+        views.pruefarten,
+        name="pruefarten",
+    ),
+
+    path(
+        "settings/pruefarten/create/",
+        views.pruefart_create,
+        name="pruefart_create",
+    ),
+
+    path(
+        "settings/pruefarten/<int:id>/edit/",
+        views.pruefart_edit,
+        name="pruefart_edit",
+    ),
+
+    path(
+        "settings/pruefarten/<int:id>/delete/",
+        views.pruefart_delete,
+        name="pruefart_delete",
+    ),
 
     path(
         "devices/",
@@ -159,6 +182,12 @@ urlpatterns = [
     "wartung/dguv/",
     views.faellige_dguv,
     name="faellige_dguv"
+    ),
+
+    path(
+    "faellige-pruefung/<int:pruefart_id>/",
+    views.faellige_pruefung,
+    name="faellige_pruefung",
     ),
    path(
     "settings/",

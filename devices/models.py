@@ -12,14 +12,51 @@ class Geraetart(models.Model):
         default=True
     )
 
-    braucht_pruefung = models.BooleanField(
-        "Benötigt STK / MTK / DGUV",
-        default=True
-    )
-
     def __str__(self):
         return self.name
 
+
+class Pruefart(models.Model):
+
+    INTERVALL_CHOICES = [
+        (1, "Jährlich"),
+        (2, "Alle 2 Jahre"),
+        (3, "Alle 3 Jahre"),
+        (4, "Alle 4 Jahre"),
+        (5, "Alle 5 Jahre"),
+        (0, "Kein Intervall"),
+    ]
+
+    name = models.CharField(
+        "Prüfart",
+        max_length=100,
+        unique=True
+    )
+
+    aktiv = models.BooleanField(
+        "Aktiv",
+        default=True
+    )
+
+    intervall_jahre = models.PositiveIntegerField(
+        "Prüfintervall",
+        choices=INTERVALL_CHOICES,
+        default=1
+    )
+
+    order = models.PositiveIntegerField(
+        "Reihenfolge",
+        default=0
+    )
+
+    class Meta:
+        ordering = ["order", "name"]
+        verbose_name = "Prüfart"
+        verbose_name_plural = "Prüfarten"
+
+    def __str__(self):
+        return self.name
+    
 class Device(models.Model):
     
 
@@ -204,6 +241,90 @@ class Device(models.Model):
 
         super().save(*args, **kwargs)
 
+
+class DevicePruefung(models.Model):
+
+    device = models.ForeignKey(
+        Device,
+        on_delete=models.CASCADE,
+        related_name="pruefungen"
+    )
+
+    pruefart = models.ForeignKey(
+        Pruefart,
+        on_delete=models.PROTECT,
+        related_name="geraete_pruefungen"
+    )
+
+    letztes_datum = models.DateField(
+        "Letzte Prüfung",
+        null=True,
+        blank=True
+    )
+
+    naechstes_datum = models.DateField(
+        "Nächste Prüfung",
+        null=True,
+        blank=True
+    )
+
+    bemerkung = models.TextField(
+        "Bemerkung",
+        blank=True
+    )
+
+    aktiv = models.BooleanField(
+        "Aktiv",
+        default=True
+    )
+
+    class Meta:
+        ordering = ["pruefart__order", "pruefart__name"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["device", "pruefart"],
+                name="unique_device_pruefart"
+            )
+        ]
+
+        verbose_name = "Geräteprüfung"
+        verbose_name_plural = "Geräteprüfungen"
+
+    def save(self, *args, **kwargs):
+
+        # ==========================================
+        # NÄCHSTE PRÜFUNG AUTOMATISCH BERECHNEN
+        # ==========================================
+
+        if (
+            self.letztes_datum
+            and self.pruefart
+            and self.pruefart.intervall_jahre
+        ):
+
+            self.naechstes_datum = (
+                self.letztes_datum.replace(
+                    year=
+                        self.letztes_datum.year
+                        + self.pruefart.intervall_jahre
+                )
+            )
+
+        else:
+
+            self.naechstes_datum = None
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+
+        return (
+            f"{self.device} - "
+            f"{self.pruefart.name}"
+        )
+
+    
 class PracticeSettings(models.Model):
 
     practice_name = models.CharField(
