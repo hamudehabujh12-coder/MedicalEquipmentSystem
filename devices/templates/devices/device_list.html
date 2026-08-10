@@ -231,56 +231,103 @@
 /* ========================================================= */
 /* FILTER */
 /* ========================================================= */
+
 .filter {
-    position:relative;
-    cursor:pointer;
-    white-space:nowrap;
-    height:40px;
+    position: relative;
+    cursor: pointer;
+    white-space: nowrap;
+    height: 40px;
 }
+
 .filter-menu {
-    display:none;
-    position:absolute;
-    top:100%;
-    left:0;
-    background:white;
-    width:200px;
-    padding:10px;
-    border-radius:8px;
-    box-shadow:0 5px 15px rgba(0,0,0,.25);
-    z-index:9999;
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    min-width: 180px;
+    width: max-content;
+    max-width: 250px;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.25);
+    z-index: 9999;
 }
+
 .filter-menu.show {
-    display:block;
+    display: block;
 }
+
 .filter-menu a {
-    display:block;
-    padding:6px 8px;
-    font-size:14px;
-    text-decoration:none;
-    color:#1f2937;
-    white-space:nowrap;
+    display: block;
+    padding: 6px 8px;
+    font-size: 14px;
+    text-decoration: none;
+    color: #1f2937;
+    white-space: nowrap;
 }
+
 .filter-menu a:hover {
-    background:#e5e7eb;
+    background: #e5e7eb;
 }
+
+
 /* ========================================================= */
 /* CONTAINER */
 /* ========================================================= */
+
 .container {
-    position:relative;
-    overflow:visible;
+    position: relative;
+    overflow: visible;
 }
+
+
+/* ========================================================= */
+/* TABLE COMPACT */
+/* ========================================================= */
+
 .table {
-    overflow:visible;
+    width: 100%;
+    overflow: visible;
+    table-layout: auto;
+    font-size: 14px;
 }
+
+.table th,
+.table td {
+    padding: 8px 10px;
+}
+
+
+/* ========================================================= */
+/* STATUS SPALTE */
+/* ========================================================= */
+
+.table th:last-child,
+.table td:last-child {
+    min-width: 105px;
+    white-space: nowrap;
+}
+
+
+/* ========================================================= */
+/* FILTER MENÜ DARF ÜBER DIE TABELLE HINAUSGEHEN */
+/* ========================================================= */
+
+.table th.filter {
+    position: relative;
+}
+
+
 /* ========================================================= */
 /* SEARCH HIGHLIGHT */
 /* ========================================================= */
+
 .highlight {
-    background:yellow;
-    font-weight:bold;
-    padding:2px 4px;
-    border-radius:3px;
+    background: yellow;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
 }
 </style>
 <!-- ========================================================= -->
