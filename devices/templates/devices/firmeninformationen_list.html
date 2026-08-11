@@ -59,14 +59,17 @@ cursor:pointer;
 <th>Adresse</th>
 <th>Telefon</th>
 <th>E-Mail</th>
-<th>Ansprechpartner</th>
 <th>Kundennummer</th>
+<th>Ansprechpartner</th>
+
+
 
 </tr>
 
 {% for company in companies %}
 
-<tr>
+<tr onclick="window.location.href='{% url 'firmeninformationen_detail' company.id %}'"
+    style="cursor:pointer;">
 
 <td>
 {{ company.company_name }}
@@ -88,12 +91,13 @@ cursor:pointer;
 </td>
 
 <td>
-{{ company.ansprechpartner|default:"—" }}
+{{ company.customer_number|default:"—" }}
 </td>
 
 <td>
-{{ company.customer_number|default:"—" }}
+{{ company.ansprechpartner|default:"—" }}
 </td>
+
 
 
 </tr>
@@ -103,7 +107,7 @@ cursor:pointer;
 
 <tr>
 
-<td colspan="5">
+<td colspan="6">
 
 Keine Firmen vorhanden.
 

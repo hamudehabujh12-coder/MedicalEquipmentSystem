@@ -518,6 +518,13 @@ urlpatterns = [
     views.firmeninformationen_manage,
     name="firmeninformationen_manage"
     ),
+
+    path(
+    "firmeninformationen/<int:id>/",
+    views.firmeninformationen_detail,
+    name="firmeninformationen_detail"
+    ),
+    
     path(
     "firmeninformationen/edit/<int:id>/",
     views.firmeninformationen_edit,

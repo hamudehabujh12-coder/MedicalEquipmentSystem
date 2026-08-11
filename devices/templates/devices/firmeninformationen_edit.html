@@ -71,7 +71,15 @@
         value="{{ company.customer_number }}"
     >
 
+    <label>
+        Ansprechpartner
+    </label>
 
+    <input
+        type="text"
+        name="ansprechpartner"
+        value="{{ company.ansprechpartner|default:'' }}"
+    >
 
     <br><br>
 
@@ -81,7 +89,7 @@
     </button>
 
 
-    <a href="{% url 'firmeninformationen' %}" class="backup-btn">
+    <a href="{% url 'firmeninformationen' %}" class="cancel-btn">
         ❌ Abbrechen
     </a>
 

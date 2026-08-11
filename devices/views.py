@@ -3769,6 +3769,58 @@ def firmeninformationen_manage(request):
         }
     )
 
+@login_required
+def firmeninformationen_detail(request, id):
+
+    company = CompanyInformation.objects.get(
+        id=id
+    )
+
+    if request.method == "POST":
+
+        company.company_name = request.POST.get(
+            "company_name"
+        )
+
+        company.address = request.POST.get(
+            "address"
+        )
+
+        company.phone = request.POST.get(
+            "phone"
+        )
+
+        company.email = request.POST.get(
+            "email"
+        )
+
+        company.customer_number = request.POST.get(
+            "customer_number"
+        )
+
+        company.ansprechpartner = request.POST.get(
+            "ansprechpartner"
+        )
+
+        company.save()
+
+        messages.success(
+            request,
+            "Firmeninformationen erfolgreich gespeichert."
+        )
+
+        return redirect(
+            "firmeninformationen",
+          
+        )
+
+    return render(
+        request,
+        "devices/firmeninformationen_detail.html",
+        {
+            "company": company
+        }
+    )
 
 
 @login_required
@@ -3796,7 +3848,11 @@ def firmeninformationen_create(request):
 
             customer_number=request.POST.get(
                 "customer_number"
-            )
+            ),
+
+            ansprechpartner=request.POST.get(
+                "ansprechpartner"
+            ),
 
         )
 
@@ -3820,7 +3876,7 @@ def firmeninformationen_create(request):
 
 
         return redirect(
-            "firmeninformationen_manage"
+            "firmeninformationen"
         )
 
 
@@ -3862,6 +3918,9 @@ def firmeninformationen_edit(request, id):
             "customer_number"
         )
 
+        company.ansprechpartner = request.POST.get(
+            "ansprechpartner"
+        )
 
         company.save()
 
@@ -3885,7 +3944,7 @@ def firmeninformationen_edit(request, id):
 
 
         return redirect(
-            "firmeninformationen_manage"
+            "firmeninformationen"
         )
 
 
@@ -3934,7 +3993,7 @@ def firmeninformationen_delete(request, id):
 
 
     return redirect(
-        "firmeninformationen_manage"
+        "firmeninformationen"
     )
 
 @login_required

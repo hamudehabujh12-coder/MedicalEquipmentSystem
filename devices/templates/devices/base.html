@@ -426,6 +426,63 @@ details.menu-group ul li a:hover {
     padding-bottom:20px;
 }
 
+
+.sidebar-dropdown {
+    width: 100%;
+}
+
+
+.sidebar-dropdown-title {
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    cursor: pointer;
+
+    padding: 10px 15px;
+
+    color: inherit;
+
+    user-select: none;
+}
+
+
+.sidebar-dropdown-title:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+
+.sidebar-submenu {
+
+    display: none;
+
+    padding-left: 25px;
+
+}
+
+
+.sidebar-submenu a {
+
+    display: block;
+
+    padding: 8px 15px;
+
+    text-decoration: none;
+
+    color: inherit;
+
+}
+
+
+.sidebar-submenu a:hover {
+
+    background: rgba(255,255,255,0.08);
+
+}
+
+
+
 </style>
 
 </head>
@@ -553,9 +610,29 @@ details.menu-group ul li a:hover {
 
     </details>
     
-    <a href="{% url 'firmeninformationen' %}">
-        🏢 Firmeninformationen
-    </a>
+    <details class="menu-group" id="firmeninfos-menu">
+
+        <summary>🏢 Firmeninfos</summary>
+
+        <ul>
+
+            <li>
+                <a href="{% url 'firmeninformationen_create' %}">
+                    ➕ Neue Firma
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'firmeninformationen' %}">
+                    📋 Firmeninformationen
+                </a>
+            </li>
+
+        </ul>
+
+    </details>
+
+    
 
     <a href="{% url 'contact' %}">
         ☎️ Kontakt
@@ -685,6 +762,34 @@ document.querySelectorAll("details.menu-group").forEach(menu => {
 });
 </script>
 
+<script>
+
+function toggleFirmeninfos() {
+
+    const menu =
+        document.getElementById("firmeninfos-menu");
+
+    const arrow =
+        document.getElementById("firmeninfos-arrow");
+
+
+    if (menu.style.display === "block") {
+
+        menu.style.display = "none";
+
+        arrow.textContent = "▸";
+
+    } else {
+
+        menu.style.display = "block";
+
+        arrow.textContent = "▾";
+
+    }
+
+}
+
+</script>
 </body>
 </html>
 

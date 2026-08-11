@@ -1,0 +1,251 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>🏢 Firmeninformationen</h1>
+
+
+<div class="backup-card">
+
+
+<form method="POST">
+
+{% csrf_token %}
+
+
+<label>
+    Firmenname
+</label>
+
+<input
+    type="text"
+    name="company_name"
+    value="{{ company.company_name|default:'' }}"
+    required
+>
+
+
+<label>
+    Adresse
+</label>
+
+<textarea
+    name="address"
+    rows="3"
+>{{ company.address|default:'' }}</textarea>
+
+
+<label>
+    Telefon
+</label>
+
+<input
+    type="text"
+    name="phone"
+    value="{{ company.phone|default:'' }}"
+>
+
+
+<label>
+    E-Mail
+</label>
+
+<input
+    type="email"
+    name="email"
+    value="{{ company.email|default:'' }}"
+>
+
+
+<label>
+    Kundennummer
+</label>
+
+<input
+    type="text"
+    name="customer_number"
+    value="{{ company.customer_number|default:'' }}"
+>
+
+
+<label>
+    Ansprechpartner
+</label>
+
+<input
+    type="text"
+    name="ansprechpartner"
+    value="{{ company.ansprechpartner|default:'' }}"
+>
+
+
+<br><br>
+
+
+<button
+    type="submit"
+    class="backup-btn"
+>
+    💾 Speichern
+</button>
+
+
+{% if user.is_superuser %}
+
+<button
+    type="button"
+    class="delete-btn"
+    onclick="deleteCompany()"
+>
+    🗑️ Löschen
+</button>
+
+{% endif %}
+
+
+<a
+    href="{% url 'firmeninformationen' %}"
+    class="cancel-btn"
+>
+    ❌ Abbrechen
+</a>
+
+
+
+</form>
+
+
+{% if user.is_superuser %}
+
+<form
+    id="delete-form"
+    method="POST"
+    action="{% url 'firmeninformationen_delete' company.id %}"
+    style="display:none;"
+>
+
+    {% csrf_token %}
+
+</form>
+
+{% endif %}
+
+
+</div>
+
+
+<script>
+
+function deleteCompany() {
+
+    if (
+        confirm("Firma wirklich löschen?")
+    ) {
+
+        document
+            .getElementById("delete-form")
+            .submit();
+
+    }
+
+}
+
+</script>
+
+
+<style>
+
+label{
+
+    display:block;
+    margin-top:15px;
+    font-weight:bold;
+
+}
+
+
+input,
+textarea{
+
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    box-sizing:border-box;
+
+}
+
+
+/* ========================= */
+/* ALLE BUTTONS GLEICH GROSS */
+/* ========================= */
+
+.backup-btn,
+.cancel-btn,
+.delete-btn{
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    width:150px;
+    height:45px;
+
+    box-sizing:border-box;
+
+    padding:0;
+
+    border-radius:8px;
+
+    font-size:15px;
+
+    text-decoration:none;
+
+    cursor:pointer;
+
+    vertical-align:middle;
+
+}
+
+
+/* Speichern */
+
+.backup-btn{
+
+    background:#2563eb;
+    color:white;
+    border:none;
+
+}
+
+
+/* Löschen */
+
+.delete-btn{
+
+    background:#dc2626;
+    color:white;
+    border:none;
+
+    margin-left:10px;
+
+}
+
+
+/* Abbrechen */
+
+.cancel-btn{
+
+    background:#6b7280;
+    color:white;
+    border:none;
+
+    margin-left:10px;
+
+}
+
+</style>
+
+
+{% endblock %}
