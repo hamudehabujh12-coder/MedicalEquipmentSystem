@@ -374,16 +374,7 @@ def device_list(request):
             ):
                 return 3
             # -------------------------------------------------
-            # 4. Dialyse Betten Mechanische – Lübeck
-            # -------------------------------------------------
-            if (
-                geraetart_name
-                == "Dialyse Betten Mechanische"
-                and
-                standort_name
-                == "Lübeck"
-            ):
-                return 4
+            
             # -------------------------------------------------
             # 5. Dialyse Betten – Ratzeburg
             # -------------------------------------------------
