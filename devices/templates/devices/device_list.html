@@ -45,20 +45,30 @@
             <th>Inventarnummer</th>
             <th>Seriennummer</th>
             <th>Gerätebezeichnung</th>
-            <!-- ================================================= -->
+            <!-- ===================================================== -->
             <!-- GERÄTEART FILTER -->
-            <!-- ================================================= -->
+            <!-- ===================================================== -->
             <th class="filter">
                 Geräteart ▼
                 <div class="filter-menu">
 
                     {% for art in geraetarten %}
-                        <a href="?practice={{ practice }}&geraetart={{ art.id }}{% if status %}&status={{ status }}{% endif %}{% if search %}&search={{ search|urlencode }}{% endif %}">
+                        <a
+                            href="#"
+                            class="filter-link"
+                            data-param="geraetart"
+                            data-value="{{ art.id }}"
+                        >
                             {{ art.name }}
                         </a>
                     {% endfor %}
 
-                    <a href="?{% if practice %}practice={{ practice }}&{% endif %}{% if status %}status={{ status }}&{% endif %}{% if search %}search={{ search|urlencode }}{% endif %}">
+                    <a
+                        href="#"
+                        class="filter-link"
+                        data-param="geraetart"
+                        data-value=""
+                    >
                         Alle
                     </a>
 
@@ -66,68 +76,129 @@
             </th>
 
 
-            <!-- ================================================= -->
+            <!-- ===================================================== -->
             <!-- STANDORT FILTER -->
-            <!-- ================================================= -->
+            <!-- ===================================================== -->
             <th class="filter">
                 Standort ▼
                 <div class="filter-menu">
 
                     {% for standort in standorte %}
-                        <a href="?practice={{ standort.id }}{% if geraetart %}&geraetart={{ geraetart }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if search %}&search={{ search|urlencode }}{% endif %}">
+                        <a
+                            href="#"
+                            class="filter-link"
+                            data-param="practice"
+                            data-value="{{ standort.id }}"
+                        >
                             🏥 {{ standort.name }}
                         </a>
                     {% endfor %}
 
-                    <a href="?{% if geraetart %}geraetart={{ geraetart }}&{% endif %}{% if status %}status={{ status }}&{% endif %}{% if search %}search={{ search|urlencode }}{% endif %}">
+                    <a
+                        href="#"
+                        class="filter-link"
+                        data-param="practice"
+                        data-value=""
+                    >
                         Alle
                     </a>
 
                 </div>
             </th>
-            <!-- ================================================= -->
+
+
+            <!-- ===================================================== -->
             <!-- BETRIEBSSTUNDEN FILTER -->
-            <!-- ================================================= -->
+            <!-- ===================================================== -->
             <th class="filter">
                 Betriebsstunden ▼
                 <div class="filter-menu">
-                    <a href="?sort=operating_hours">
+
+                    <a
+                        href="#"
+                        class="filter-link"
+                        data-param="sort"
+                        data-value="operating_hours"
+                    >
                         ⬇ Weniger
                     </a>
-                    <a href="?sort=-operating_hours">
+
+                    <a
+                        href="#"
+                        class="filter-link"
+                        data-param="sort"
+                        data-value="-operating_hours"
+                    >
                         ⬆ Mehr
                     </a>
+
                 </div>
             </th>
-            <!-- ================================================= -->
+
+
+            <!-- ===================================================== -->
             <!-- NÄCHSTE ÜBERPRÜFUNG FILTER -->
-            <!-- ================================================= -->
+            <!-- ===================================================== -->
             <th class="filter">
                 Nächste Prüfung ▼
                 <div class="filter-menu">
-                    <a href="?sort=next_pruefung">
+
+                    <a
+                        href="#"
+                        class="filter-link"
+                        data-param="sort"
+                        data-value="next_pruefung"
+                    >
                         📅 Früheste
                     </a>
-                    <a href="?sort=-next_pruefung">
+
+                    <a
+                        href="#"
+                        class="filter-link"
+                        data-param="sort"
+                        data-value="-next_pruefung"
+                    >
                         📅 Späteste
                     </a>
+
                 </div>
             </th>
-            <!-- ================================================= -->
+
+
+            <!-- ===================================================== -->
             <!-- STATUS FILTER -->
-            <!-- ================================================= -->
+            <!-- ===================================================== -->
             <th class="filter">
                 Status ▼
                 <div class="filter-menu">
-                    <a href="?status=Aktiv">
+
+                    <a
+                        href="#"
+                        class="filter-link"
+                        data-param="status"
+                        data-value="Aktiv"
+                    >
                         🟢 Aktiv
                     </a>
-                    <a href="?status=Nicht aktiv">
+
+                    <a
+                        href="#"
+                        class="filter-link"
+                        data-param="status"
+                        data-value="Nicht aktiv"
+                    >
                         🔴 Nicht aktiv
                     </a>
-                    <a href="{% url 'device_list' %}">
+
+                    <a
+                        href="#"
+                        class="filter-link"
+                        data-param="status"
+                        data-value=""
+                    >
                         Alle
                     </a>
+
                 </div>
             </th>
         </tr>
@@ -513,5 +584,66 @@ document.addEventListener(
     }
 );
 </script>
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
+        document
+            .querySelectorAll(".filter-link")
+            .forEach(
+                function (link) {
+
+                    link.addEventListener(
+                        "click",
+                        function (event) {
+
+                            event.preventDefault();
+                            event.stopPropagation();
+
+                            const param =
+                                this.dataset.param;
+
+                            const value =
+                                this.dataset.value;
+
+                            /*
+                             * نأخذ الرابط الحالي
+                             * بكل الفلاتر الموجودة
+                             */
+                            const url =
+                                new URL(
+                                    window.location.href
+                                );
+
+                            /*
+                             * نغيّر فقط الفلتر
+                             * الذي ضغط عليه المستخدم
+                             */
+                            if (value === "") {
+
+                                url.searchParams.delete(
+                                    param
+                                );
+
+                            } else {
+
+                                url.searchParams.set(
+                                    param,
+                                    value
+                                );
+                            }
+
+                            /*
+                             * الانتقال إلى الرابط الجديد
+                             */
+                            window.location.href =
+                                url.toString();
+                        }
+                    );
+                }
+            );
+    }
+);
+</script>
 {% endblock %}
