@@ -210,6 +210,7 @@ def device_list(request):
     status = request.GET.get("status", "")
     sort = request.GET.get("sort", "")
     geraetart = request.GET.get("geraetart", "")
+
     # =========================================================
     # ALLE GERÄTE
     # =========================================================
@@ -220,6 +221,7 @@ def device_list(request):
         )
         .all()
     )
+
     # =========================================================
     # SUCHE
     # =========================================================
@@ -239,6 +241,7 @@ def device_list(request):
                 geraetart__name__icontains=search
             )
         )
+
     # =========================================================
     # STANDORT FILTER
     # =========================================================
@@ -246,6 +249,7 @@ def device_list(request):
         devices = devices.filter(
             practice_id=practice
         )
+
     # =========================================================
     # GERÄTEART FILTER
     # =========================================================
@@ -253,6 +257,7 @@ def device_list(request):
         devices = devices.filter(
             geraetart_id=geraetart
         )
+
     # =========================================================
     # STATUS FILTER
     # =========================================================
@@ -260,70 +265,140 @@ def device_list(request):
         devices = devices.filter(
             status=status
         )
+
     # =========================================================
     # SORTIERUNG
     # =========================================================
+
+    # =========================================================
+    # BETRIEBSSTUNDEN – WENIGER
+    # Nur vorhandene Werte
+    # =========================================================
     if sort == "operating_hours":
-        devices = devices.order_by(
-            "operating_hours"
-        )
-    elif sort == "-operating_hours":
-        devices = devices.order_by(
-            "-operating_hours"
-        )
-    # =========================================================
-    # NÄCHSTE ÜBERPRÜFUNG – FRÜHESTE
-    # =========================================================
-    elif sort == "next_pruefung":
+
         devices = (
             devices
+            .filter(
+                operating_hours__isnull=False
+            )
+            .order_by(
+                "operating_hours"
+            )
+        )
+
+    # =========================================================
+    # BETRIEBSSTUNDEN – MEHR
+    # Nur vorhandene Werte
+    # =========================================================
+    elif sort == "-operating_hours":
+
+        devices = (
+            devices
+            .filter(
+                operating_hours__isnull=False
+            )
+            .order_by(
+                "-operating_hours"
+            )
+        )
+
+    # =========================================================
+    # NÄCHSTE PRÜFUNG – FRÜHESTE
+    # Nur aktive Prüfungen mit Datum
+    # =========================================================
+    elif sort == "next_pruefung":
+
+        devices = (
+            devices
+            .filter(
+                pruefungen__aktiv=True,
+                pruefungen__naechstes_datum__isnull=False
+            )
             .order_by(
                 "pruefungen__naechstes_datum"
             )
             .distinct()
         )
+
     # =========================================================
-    # NÄCHSTE ÜBERPRÜFUNG – SPÄTESTE
+    # NÄCHSTE PRÜFUNG – SPÄTESTE
+    # Nur aktive Prüfungen mit Datum
     # =========================================================
     elif sort == "-next_pruefung":
+
         devices = (
             devices
+            .filter(
+                pruefungen__aktiv=True,
+                pruefungen__naechstes_datum__isnull=False
+            )
             .order_by(
                 "-pruefungen__naechstes_datum"
             )
             .distinct()
         )
+
     # =========================================================
-    # ALTE STK SORTIERUNG
+    # STK – FRÜHESTE
+    # Nur vorhandene STK-Werte
     # =========================================================
     elif sort == "next_stk":
-        devices = devices.order_by(
-            "next_stk"
+
+        devices = (
+            devices
+            .filter(
+                next_stk__isnull=False
+            )
+            .order_by(
+                "next_stk"
+            )
         )
+
+    # =========================================================
+    # STK – SPÄTESTE
+    # Nur vorhandene STK-Werte
+    # =========================================================
     elif sort == "-next_stk":
-        devices = devices.order_by(
-            "-next_stk"
+
+        devices = (
+            devices
+            .filter(
+                next_stk__isnull=False
+            )
+            .order_by(
+                "-next_stk"
+            )
         )
+
     # =========================================================
     # STANDORT SORTIERUNG
     # =========================================================
     elif sort == "practice":
+
         devices = devices.order_by(
             "practice__name"
         )
+
     elif sort == "-practice":
+
         devices = devices.order_by(
             "-practice__name"
         )
+
     # =========================================================
     # STANDARD-REIHENFOLGE
     #
-    # 1. Gerätart
-    # 2. Standort
-    # 3. Inventarnummer
+    # 1. Dialyse Maschinen – Lübeck
+    # 2. Dialyse Maschinen – Ratzeburg
+    # 3. Dialyse Betten – Lübeck
+    # 4. Dialyse Betten – Ratzeburg
+    #
+    # Danach Inventarnummer
     # =========================================================
     else:
+
         def device_group_priority(device):
+
             # -------------------------------------------------
             # GERÄTEART
             # -------------------------------------------------
@@ -332,6 +407,7 @@ def device_list(request):
                 if device.geraetart
                 else ""
             )
+
             # -------------------------------------------------
             # STANDORT
             # -------------------------------------------------
@@ -340,56 +416,52 @@ def device_list(request):
                 if device.practice
                 else ""
             )
+
             # -------------------------------------------------
             # 1. Dialyse Maschinen – Lübeck
             # -------------------------------------------------
             if (
-                geraetart_name
-                == "Dialyse Maschinen"
+                geraetart_name == "Dialyse Maschinen"
                 and
-                standort_name
-                == "Lübeck"
+                standort_name == "Lübeck"
             ):
                 return 1
+
             # -------------------------------------------------
             # 2. Dialyse Maschinen – Ratzeburg
             # -------------------------------------------------
             if (
-                geraetart_name
-                == "Dialyse Maschinen"
+                geraetart_name == "Dialyse Maschinen"
                 and
-                standort_name
-                == "Ratzeburg"
+                standort_name == "Ratzeburg"
             ):
                 return 2
+
             # -------------------------------------------------
             # 3. Dialyse Betten – Lübeck
             # -------------------------------------------------
             if (
-                geraetart_name
-                == "Dialyse Betten"
+                geraetart_name == "Dialyse Betten"
                 and
-                standort_name
-                == "Lübeck"
+                standort_name == "Lübeck"
             ):
                 return 3
+
             # -------------------------------------------------
-            
-            # -------------------------------------------------
-            # 5. Dialyse Betten – Ratzeburg
+            # 4. Dialyse Betten – Ratzeburg
             # -------------------------------------------------
             if (
-                geraetart_name
-                == "Dialyse Betten"
+                geraetart_name == "Dialyse Betten"
                 and
-                standort_name
-                == "Ratzeburg"
+                standort_name == "Ratzeburg"
             ):
-                return 5
+                return 4
+
             # -------------------------------------------------
             # ALLE ANDEREN GERÄTE
             # -------------------------------------------------
             return 99
+
         # =====================================================
         # SORTIEREN
         # =====================================================
@@ -402,6 +474,7 @@ def device_list(request):
                 ),
             ),
         )
+
     # =========================================================
     # DROPDOWN – STANDORTE
     # =========================================================
@@ -414,6 +487,7 @@ def device_list(request):
             "name"
         )
     )
+
     # =========================================================
     # DROPDOWN – GERÄTEARTEN
     # =========================================================
@@ -426,6 +500,7 @@ def device_list(request):
             "name"
         )
     )
+
     # =========================================================
     # RENDER
     # =========================================================
@@ -442,7 +517,6 @@ def device_list(request):
             "geraetarten": geraetarten,
         },
     )
-
 @login_required
 def device_detail(request, device_id):
 
