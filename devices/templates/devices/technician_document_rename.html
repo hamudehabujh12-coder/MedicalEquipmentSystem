@@ -2,31 +2,84 @@
 
 {% block content %}
 
-<h2>✏️ Dokument umbenennen</h2>
+<div class="container py-4">
 
-<form method="post">
+    <h2>✏️ Dokument bearbeiten</h2>
 
-    {% csrf_token %}
+    <form method="post">
 
-    <label>Neuer Name</label>
+        {% csrf_token %}
 
-    <input
-        type="text"
-        name="new_name"
-        value="{{ doc.title }}"
-        class="form-control"
-        required>
+        <!-- Dokumentname -->
+        <div class="mb-3">
 
-    <br>
+            <label class="form-label">
+                Dokumentname
+            </label>
 
-    <button class="btn btn-success">
-        💾 Speichern
-    </button>
+            <input
+                type="text"
+                name="new_name"
+                value="{{ doc.title }}"
+                class="form-control"
+                required>
 
-    <a href="{% url 'technician_documents' %}" class="btn btn-secondary">
-        Abbrechen
-    </a>
+        </div>
 
-</form>
+
+        <!-- Dokumentart -->
+        <div class="mb-3">
+
+            <label class="form-label">
+                Dokumentart
+            </label>
+
+            <select
+                name="category"
+                class="form-select"
+                required>
+
+                {% for value, label in category_choices %}
+
+                    <option
+                        value="{{ value }}"
+                        {% if doc.category == value %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ label }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <!-- Buttons -->
+        <div class="mt-4">
+
+            <button
+                type="submit"
+                class="btn btn-success">
+
+                💾 Speichern
+
+            </button>
+
+            <a
+                href="{% url 'technician_documents' %}"
+                class="btn btn-secondary">
+
+                Abbrechen
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
 
 {% endblock %}

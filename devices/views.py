@@ -2225,10 +2225,20 @@ def technician_document_rename(request, doc_id):
     if request.method == "POST":
 
         new_name = request.POST.get("new_name")
+        new_category = request.POST.get("category")
 
         if new_name:
             doc.title = new_name
-            doc.save()
+
+        if new_category:
+            valid_categories = dict(
+                TechnicianDocument.CATEGORY_CHOICES
+            )
+
+            if new_category in valid_categories:
+                doc.category = new_category
+
+        doc.save()
 
         return redirect("technician_documents")
 
@@ -2236,10 +2246,10 @@ def technician_document_rename(request, doc_id):
         request,
         "devices/technician_document_rename.html",
         {
-            "doc": doc
+            "doc": doc,
+            "category_choices": TechnicianDocument.CATEGORY_CHOICES,
         }
     )
-
 
 @login_required
 def technician_document_delete(request, doc_id):
