@@ -241,7 +241,62 @@ class Device(models.Model):
 
         super().save(*args, **kwargs)
 
+class DeviceDetailFieldConfig(models.Model):
 
+    FIELD_CHOICES = [
+        ("geraetart", "Gerätart"),
+        ("name", "Gerätbezeichnung"),
+        ("inventory_number", "Inventarnummer"),
+        ("serial_number", "Seriennummer"),
+        ("ec_number", "EC-Nummer"),
+        ("software_version", "Software Version"),
+        ("operating_hours", "Betriebsstunden"),
+        ("manufacturer", "Hersteller"),
+        ("year_built", "Baujahr"),
+        ("practice", "Standort"),
+        ("area", "Bereich"),
+        ("room", "Raum"),
+        ("status", "Status"),
+        ("notes", "Bemerkungen"),
+    ]
+
+    geraetart = models.ForeignKey(
+        Geraetart,
+        on_delete=models.CASCADE,
+        related_name="detail_field_configs",
+    )
+
+    field_name = models.CharField(
+        max_length=100,
+        choices=FIELD_CHOICES,
+    )
+
+    is_visible = models.BooleanField(
+        default=True
+    )
+
+    position = models.PositiveIntegerField(
+        default=0
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["geraetart", "field_name"],
+                name="unique_geraetart_detail_field"
+            )
+        ]
+
+        ordering = ["position"]
+
+    def __str__(self):
+        return (
+            f"{self.geraetart} - "
+            f"{self.get_field_name_display()}"
+        )
+
+
+        
 class DevicePruefung(models.Model):
 
     device = models.ForeignKey(
@@ -1175,3 +1230,5 @@ class SystemUpdate(models.Model):
 
     def __str__(self):
         return f"{self.version} - {self.status}"
+
+

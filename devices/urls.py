@@ -591,4 +591,10 @@ urlpatterns = [
     ),
 
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+
+    path(
+    "einstellungen/geraetedetails/",
+    views.geraetedetails_settings,
+    name="geraetedetails_settings"
+    ),
 ]

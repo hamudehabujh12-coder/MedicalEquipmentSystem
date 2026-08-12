@@ -188,7 +188,26 @@ class DeviceForm(forms.ModelForm):
 
 
 
+from django import forms
+from .models import Geraetart, DeviceDetailFieldConfig
 
+
+class DeviceDetailSettingsForm(forms.Form):
+
+    geraetart = forms.ModelChoiceField(
+        queryset=Geraetart.objects.all(),
+        required=True,
+        label="Gerätart"
+    )
+
+    fields = forms.MultipleChoiceField(
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        choices=DeviceDetailFieldConfig.FIELD_CHOICES,
+        label="Anzuzeigende Felder"
+    )
+
+    
 class DevicePruefungForm(forms.ModelForm):
 
     class Meta:

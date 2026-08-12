@@ -50,6 +50,7 @@ from openpyxl.utils import get_column_letter
 
 from .models import (
     Device,
+    DeviceDetailFieldConfig,
     DevicePruefung,
     Pruefart,
     Reparatur,
@@ -527,12 +528,32 @@ def device_detail(request, device_id):
 
     document_types = DocumentType.objects.all().order_by("order")
 
-    documents = DeviceDocument.objects.filter(
-        device=device
-    ).select_related("document_type").order_by(
-        "document_type__name",
-        "-upload_date"
+    documents = (
+        DeviceDocument.objects
+        .filter(device=device)
+        .select_related("document_type")
+        .order_by(
+            "document_type__name",
+            "-upload_date"
+        )
     )
+
+    # =========================================================
+    # GERÄTEDETAILS - SICHTBARE FELDER
+    # =========================================================
+
+    detail_fields = []
+
+    if device.geraetart:
+
+        detail_fields = list(
+            DeviceDetailFieldConfig.objects
+            .filter(
+                geraetart=device.geraetart,
+                is_visible=True
+            )
+            .order_by("position")
+        )
 
     return render(
         request,
@@ -541,10 +562,14 @@ def device_detail(request, device_id):
             "device": device,
             "document_types": document_types,
             "documents": documents,
-            "filterwechsel": device.filterwechsel.all().order_by("-datum"),
+            "filterwechsel": (
+                device.filterwechsel
+                .all()
+                .order_by("-datum")
+            ),
+            "detail_fields": detail_fields,
         }
     )
-
 
 @login_required
 def device_create(request):
@@ -4639,3 +4664,122 @@ def run_update(request):
         )
 
     return redirect("system_update")
+
+
+@login_required
+def geraetedetails_settings(request):
+
+    geraetarten = Geraetart.objects.all().order_by("name")
+
+    selected_geraetart_id = request.GET.get("geraetart")
+
+    selected_geraetart = None
+    selected_fields = set()
+
+    # =========================================================
+    # GERÄTART AUSWÄHLEN
+    # =========================================================
+
+    if selected_geraetart_id:
+
+        selected_geraetart = get_object_or_404(
+            Geraetart,
+            id=selected_geraetart_id
+        )
+
+        selected_fields = set(
+            DeviceDetailFieldConfig.objects.filter(
+                geraetart=selected_geraetart,
+                is_visible=True
+            ).values_list(
+                "field_name",
+                flat=True
+            )
+        )
+
+    # =========================================================
+    # SPEICHERN
+    # =========================================================
+
+    if request.method == "POST":
+
+        geraetart_id = request.POST.get("geraetart")
+
+        if not geraetart_id:
+            return redirect(
+                "geraetedetails_settings"
+            )
+
+        selected_geraetart = get_object_or_404(
+            Geraetart,
+            id=geraetart_id
+        )
+
+        selected_fields = set(
+            request.POST.getlist("fields")
+        )
+
+        # Alte Konfiguration dieser Gerätart löschen
+        DeviceDetailFieldConfig.objects.filter(
+            geraetart=selected_geraetart
+        ).delete()
+
+        # Neue Konfiguration speichern
+        field_choices = DeviceDetailFieldConfig.FIELD_CHOICES
+
+        for position, (field_name, field_label) in enumerate(
+            field_choices
+        ):
+
+            DeviceDetailFieldConfig.objects.create(
+                geraetart=selected_geraetart,
+                field_name=field_name,
+                is_visible=(
+                    field_name in selected_fields
+                ),
+                position=position
+            )
+
+        return redirect(
+            "geraetedetails_settings"
+        )
+
+    # =========================================================
+    # GESPEICHERTE EINSTELLUNGEN
+    # =========================================================
+
+    saved_configs = []
+
+    for geraetart in geraetarten:
+
+        fields = (
+            DeviceDetailFieldConfig.objects
+            .filter(
+                geraetart=geraetart,
+                is_visible=True
+            )
+            .order_by("position")
+        )
+
+        if fields.exists():
+
+            saved_configs.append({
+                "geraetart": geraetart,
+                "fields": fields,
+            })
+
+    # =========================================================
+    # RENDER
+    # =========================================================
+
+    return render(
+        request,
+        "devices/geraetedetails.html",
+        {
+            "geraetarten": geraetarten,
+            "selected_geraetart": selected_geraetart,
+            "selected_fields": selected_fields,
+            "field_choices": DeviceDetailFieldConfig.FIELD_CHOICES,
+            "saved_configs": saved_configs,
+        }
+    )

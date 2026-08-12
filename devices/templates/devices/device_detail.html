@@ -3,227 +3,278 @@
 {% block content %}
 
 <div class="device-detail-container">
-
-    <h1>🔧 Gerät Details</h1>
-
-
-    {% if device.image %}
-        <img 
-        src="{{ device.image.url }}" 
+<h1>🔧 Gerät Details</h1>
+{% if device.image %}
+    <img
+        src="{{ device.image.url }}"
         class="device-image">
-    {% endif %}
-
-
-    <div class="device-info-grid">
-
-    <div class="info-card">
-        <h4>Gerätbezeichnung</h4>
-         <p>{{ device.name }}</p>
-    </div>
-
-
-    <div class="info-card">
-        <h4>Geräteart</h4>
-        <p>{{ device.geraetart }}</p>
-    </div>
-
-    <div class="info-card">
-        <h4>Inventarnummer</h4>
-        <p>{{ device.inventory_number }}</p>
-    </div>
-
-    <div class="info-card">
-        <h4>Seriennummer</h4>
-        <p>{{ device.serial_number }}</p>
-    </div>
-
-    <div class="info-card">
-        <h4>Hersteller</h4>
-        <p>{{ device.manufacturer|default:"—" }}</p>
-    </div>
-
-     <div class="info-card">
-         <h4>Software Version</h4>
-         <p>{{ device.software_version|default:"—" }}</p>
-     </div>
-
-    {% if device.geraetart.name == "Dialyse Maschinen" %}
-
-    <div class="info-card">
-        <h4>Betriebsstunden:</h4>
-        <p>{{ device.operating_hours|default:"-" }}</p>
-    </div>
-
-    {% endif %}
-    
-     <div class="info-card">
-        <h4>EC-Nummer</h4>
-        <p>{{ device.ec_number }}</p>
-    </div>
-
-
-
-    <div class="info-card">
-        <h4>Standort</h4>
-        <p>{{ device.practice.name }}</p>
-    </div>
-
-   
-
-    {% if device.geraetart and device.geraetart.braucht_pruefung %}
-        {% if device.last_stk %}
-            <div class="info-card">
-                <h4>Nächste STK</h4>
-                <p>
-                    {{ device.next_stk|date:"d.m.Y"|default:"—" }}
-                </p>
-            </div>
-        {% endif %}
-        {% if device.last_mtk %}
-            <div class="info-card">
-                <h4>Nächste MTK</h4>
-                <p>
-                    {{ device.next_mtk|date:"d.m.Y"|default:"—" }}
-                </p>
-            </div>
-        {% endif %}
-        {% if device.last_dguv %}
-            <div class="info-card">
-                <h4>Nächste DGUV V3</h4>
-                <p>
-                    {{ device.next_dguv|date:"d.m.Y"|default:"—" }}
-                </p>
-            </div>
-        {% endif %}
-    {% endif %}
-
-     {% if device.geraetart and device.geraetart.name != "Dialyse Machine" %}
-    <div class="info-card">
-        <h4>Raum<h4>
-        <p>{{ device.room|default:"-" }}</p>
-    </div>
-    {% endif %}
-    
-        <div class="info-card">
-            <h4>Status</h4>
-
-            {% if device.status == "Aktiv" %}
-                <span class="status-active">🟢 Aktiv</span>
-            {% else %}
-                <span class="status-inactive">🔴 Nicht aktiv</span>
-            {% endif %}
-
-        </div>
-        </div>
-
-        
-    {% if request.user.is_superuser %}
-
-<div class="action-buttons">
-
-    <a href="{% url 'device_edit' device.id %}" class="edit-button">
-        ✏️ Gerät bearbeiten
-    </a>
-
-    <a href="{% url 'upload_document' device.id %}" class="upload-button">
-        + Dokument hochladen
-    </a>
-
-    <form method="POST"
-          action="{% url 'device_delete' device.id %}"
-          onsubmit="return confirm('Möchten Sie dieses Gerät wirklich löschen?');">
-
-        {% csrf_token %}
-
-        <button class="delete-button" type="submit">
-            🗑️ Gerät löschen
-        </button>
-
-    </form>
-
-</div>
-
 {% endif %}
-    </div>   <!-- نهاية action-buttons -->
-
-    
-
-<h2>📁 Dokumente</h2>
-
-<div class="documents">
-
-{% for type in document_types %}
-
-<div class="document-section">
-
-    <h3 class="folder-title" onclick="toggleFolder('folder{{ type.id }}')">
-        📁 {{ type.name }}
-        <span>▼</span>
-    </h3>
-
-    <div id="folder{{ type.id }}" class="file-list">
-
-        {% with found=False %}
-
-        {% for doc in documents %}
-
-            {% if doc.document_type.id == type.id %}
-
-                <div class="file-row">
-
-                    <a href="{{ doc.file.url }}" target="_blank">
-
-                        📄
-
-                        {% if doc.display_name %}
-                            {{ doc.display_name }}
-                        {% else %}
-                            {{ doc.file.name|cut:"device_documents/" }}
-                        {% endif %}
-
-                    </a>
-
-                    {% if request.user.is_superuser %}
-
-                    <div class="file-menu">
-
-                        <button class="menu-button">
-                            ⋮
-                        </button>
-
-                        <div class="menu-content">
-
-                            <a href="{% url 'document_rename' doc.id %}">
-                                ✏️ Umbenennen
-                            </a>
-
-                            <a href="{% url 'document_delete' doc.id %}">
-                                🗑️ Löschen
-                            </a>
-
-                        </div>
-
-                    </div>
-
+<!-- ========================================================= -->
+<!-- GERÄTEDETAILS - DYNAMISCH NACH GERÄTART -->
+<!-- ========================================================= -->
+<div class="device-info-grid">
+    {% for field in detail_fields %}
+        {% if field.field_name == "name" %}
+            <div class="info-card">
+                <h4>Gerätbezeichnung</h4>
+                <p>{{ device.name|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "geraetart" %}
+            <div class="info-card">
+                <h4>Geräteart</h4>
+                <p>{{ device.geraetart|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "inventory_number" %}
+            <div class="info-card">
+                <h4>Inventarnummer</h4>
+                <p>{{ device.inventory_number|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "serial_number" %}
+            <div class="info-card">
+                <h4>Seriennummer</h4>
+                <p>{{ device.serial_number|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "manufacturer" %}
+            <div class="info-card">
+                <h4>Hersteller</h4>
+                <p>{{ device.manufacturer|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "software_version" %}
+            <div class="info-card">
+                <h4>Software Version</h4>
+                <p>{{ device.software_version|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "operating_hours" %}
+            <div class="info-card">
+                <h4>Betriebsstunden</h4>
+                <p>{{ device.operating_hours|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "ec_number" %}
+            <div class="info-card">
+                <h4>EC-Nummer</h4>
+                <p>{{ device.ec_number|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "year_built" %}
+            <div class="info-card">
+                <h4>Baujahr</h4>
+                <p>{{ device.year_built|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "practice" %}
+            <div class="info-card">
+                <h4>Standort</h4>
+                <p>
+                    {% if device.practice %}
+                        {{ device.practice.name }}
+                    {% else %}
+                        —
                     {% endif %}
-
-                </div>
-
-            {% endif %}
-
-        {% endfor %}
-
-        {% endwith %}
-
-    </div>
-
+                </p>
+            </div>
+        {% elif field.field_name == "area" %}
+            <div class="info-card">
+                <h4>Bereich</h4>
+                <p>{{ device.area|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "room" %}
+            <div class="info-card">
+                <h4>Raum</h4>
+                <p>{{ device.room|default:"—" }}</p>
+            </div>
+        {% elif field.field_name == "status" %}
+            <div class="info-card">
+                <h4>Status</h4>
+                {% if device.status == "Aktiv" %}
+                    <span class="status-active">
+                        🟢 Aktiv
+                    </span>
+                {% else %}
+                    <span class="status-inactive">
+                        🔴 Nicht aktiv
+                    </span>
+                {% endif %}
+            </div>
+        {% elif field.field_name == "notes" %}
+            <div class="info-card">
+                <h4>Bemerkungen</h4>
+                <p>
+                    {{ device.notes|default:"—"|linebreaksbr }}
+                </p>
+            </div>
+        {% endif %}
+    {% empty %}
+        <div class="info-card">
+            <h4>Gerätedetails</h4>
+            <p>
+                Für diese Gerätart wurden noch keine Felder konfiguriert.
+            </p>
+        </div>
+    {% endfor %}
 </div>
-
+<!-- ========================================================= -->
+<!-- PRÜFUNGEN -->
+<!-- ========================================================= -->
+{% if device.geraetart and device.geraetart.braucht_pruefung %}
+    {% if device.last_stk %}
+        <div class="info-card">
+            <h4>Nächste STK</h4>
+            <p>
+                {{ device.next_stk|date:"d.m.Y"|default:"—" }}
+            </p>
+        </div>
+    {% endif %}
+    {% if device.last_mtk %}
+        <div class="info-card">
+            <h4>Nächste MTK</h4>
+            <p>
+                {{ device.next_mtk|date:"d.m.Y"|default:"—" }}
+            </p>
+        </div>
+    {% endif %}
+    {% if device.last_dguv %}
+        <div class="info-card">
+            <h4>Nächste DGUV V3</h4>
+            <p>
+                {{ device.next_dguv|date:"d.m.Y"|default:"—" }}
+            </p>
+        </div>
+    {% endif %}
+{% endif %}
+<!-- ========================================================= -->
+<!-- ADMIN ACTION BUTTONS -->
+<!-- ========================================================= -->
+{% if request.user.is_superuser %}
+    <div class="action-buttons">
+        <a
+            href="{% url 'device_edit' device.id %}"
+            class="edit-button">
+            ✏️ Gerät bearbeiten
+        </a>
+        <a
+            href="{% url 'upload_document' device.id %}"
+            class="upload-button">
+            + Dokument hochladen
+        </a>
+        <form
+            method="POST"
+            action="{% url 'device_delete' device.id %}"
+            onsubmit="return confirm('Möchten Sie dieses Gerät wirklich löschen?');">
+            {% csrf_token %}
+            <button
+                class="delete-button"
+                type="submit">
+                🗑️ Gerät löschen
+            </button>
+        </form>
+    </div>
+{% endif %}
+</div>
+<!-- ============================================================= -->
+<!-- DOKUMENTE -->
+<!-- ============================================================= -->
+<h2>📁 Dokumente</h2>
+<div class="documents">
+{% for type in document_types %}
+    <div class="document-section">
+        <h3
+            class="folder-title"
+            onclick="toggleFolder('folder{{ type.id }}')">
+            📁 {{ type.name }}
+            <span>▼</span>
+        </h3>
+        <div
+            id="folder{{ type.id }}"
+            class="file-list">
+            {% for doc in documents %}
+                {% if doc.document_type.id == type.id %}
+                    <div class="file-row">
+                        <a
+                            href="{{ doc.file.url }}"
+                            target="_blank">
+                            📄
+                            {% if doc.display_name %}
+                                {{ doc.display_name }}
+                            {% else %}
+                                {{ doc.file.name|cut:"device_documents/" }}
+                            {% endif %}
+                        </a>
+                        {% if request.user.is_superuser %}
+                            <div class="file-menu">
+                                <button class="menu-button">
+                                    ⋮
+                                </button>
+                                <div class="menu-content">
+                                    <a
+                                        href="{% url 'document_rename' doc.id %}">
+                                        ✏️ Umbenennen
+                                    </a>
+                                    <a
+                                        href="{% url 'document_delete' doc.id %}">
+                                        🗑️ Löschen
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
 {% endfor %}
-
 </div>
 <style>
-
+/* ========================================================= */
+/* CONTAINER */
+/* ========================================================= */
+.device-detail-container{
+    width:100%;
+}
+/* ========================================================= */
+/* DEVICE INFO */
+/* ========================================================= */
+.device-info-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+    margin:30px 0;
+}
+.info-card{
+    background:#ffffff;
+    border-radius:12px;
+    padding:18px;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+.info-card h4{
+    margin:0 0 10px;
+    color:#2563eb;
+    font-size:15px;
+}
+.info-card p{
+    margin:0;
+    font-size:16px;
+    font-weight:600;
+}
+/* ========================================================= */
+/* STATUS */
+/* ========================================================= */
+.status-active{
+    display:inline-block;
+    background:#dcfce7;
+    color:#166534;
+    padding:8px 14px;
+    border-radius:20px;
+    font-weight:bold;
+}
+.status-inactive{
+    display:inline-block;
+    background:#fee2e2;
+    color:#b91c1c;
+    padding:8px 14px;
+    border-radius:20px;
+    font-weight:bold;
+}
+/* ========================================================= */
+/* ACTION BUTTONS */
+/* ========================================================= */
 .action-buttons{
     margin-top:30px;
     width:100%;
@@ -234,34 +285,26 @@
     padding:0 20px;
     box-sizing:border-box;
 }
-
 .action-buttons a,
 .action-buttons button{
     width:220px;
     height:50px;
-
     display:flex;
     justify-content:center;
     align-items:center;
-
     font-size:16px;
     font-weight:bold;
-
     border-radius:10px;
     box-sizing:border-box;
 }
-
-
 .action-buttons form{
     width:220px;
     margin:0;
 }
-
-.device-detail-container{
-    width:100%;
-}
+/* ========================================================= */
+/* EDIT */
+/* ========================================================= */
 .edit-button{
-
     display:inline-block;
     background:#2563eb;
     color:white;
@@ -270,45 +313,47 @@
     text-decoration:none;
     margin-top:20px;
     margin-right:10px;
-
 }
-
 .edit-button:hover{
-
     background:#1d4ed8;
-
 }
-
-
-
+/* ========================================================= */
+/* DELETE */
+/* ========================================================= */
 .delete-button{
-
     background:#dc2626;
     color:white;
-
     border:none;
     padding:12px 25px;
-
     border-radius:10px;
-
     font-size:16px;
-
     cursor:pointer;
-
     box-shadow:0 5px 12px rgba(0,0,0,.15);
-
     transition:.3s;
 }
-
-
 .delete-button:hover{
-
     background:#b91c1c;
-
     transform:translateY(-3px);
-
 }
-
+/* ========================================================= */
+/* UPLOAD */
+/* ========================================================= */
+.upload-button{
+    display:inline-block;
+    background:#16a34a;
+    color:white;
+    text-decoration:none;
+    padding:12px 22px;
+    border-radius:10px;
+    margin-top:15px;
+    transition:.3s;
+}
+.upload-button:hover{
+    background:#15803d;
+}
+/* ========================================================= */
+/* DOCUMENTS */
+/* ========================================================= */
 .documents{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
@@ -321,8 +366,6 @@
     border-radius:12px;
     box-shadow:0 5px 15px rgba(0,0,0,.1);
 }
-
-
 .folder-title{
     cursor:pointer;
     display:flex;
@@ -333,14 +376,10 @@
     padding-bottom:10px;
     border-bottom:2px solid #e5e7eb;
 }
-
-
 .file-list{
     display:none;
     margin-top:15px;
 }
-
-
 .file-row{
     display:flex;
     justify-content:space-between;
@@ -348,33 +387,26 @@
     padding:10px 0;
     border-bottom:1px solid #e5e7eb;
 }
-
-
 .file-row a{
     text-decoration:none;
     color:#1d4ed8;
     font-weight:bold;
 }
-
-
 .file-row a:hover{
     text-decoration:underline;
 }
-
-
+/* ========================================================= */
+/* FILE MENU */
+/* ========================================================= */
 .file-menu{
     position:relative;
 }
-
-
 .menu-button{
     border:none;
     background:none;
     font-size:25px;
     cursor:pointer;
 }
-
-
 .menu-content{
     display:none;
     position:absolute;
@@ -386,99 +418,55 @@
     box-shadow:0 5px 15px rgba(0,0,0,.2);
     z-index:20;
 }
-
-
 .menu-content a{
     display:block;
     padding:10px;
     color:#333;
     text-decoration:none;
 }
-
-
 .menu-content a:hover{
     background:#f3f4f6;
 }
-
-
 .file-menu:hover .menu-content{
     display:block;
 }
-.upload-button{
-    display:inline-block;
-    background:#16a34a;
-    color:white;
-    text-decoration:none;
-    padding:12px 22px;
-    border-radius:10px;
-    margin-top:15px;
-    transition:.3s;
+/* ========================================================= */
+/* RESPONSIVE */
+/* ========================================================= */
+@media (max-width:900px){
+    .action-buttons{
+        gap:20px;
+    }
 }
-
-.upload-button:hover{
-    background:#15803d;
+@media (max-width:600px){
+    .device-info-grid{
+        grid-template-columns:1fr;
+    }
+    .documents{
+        grid-template-columns:1fr;
+    }
+    .action-buttons{
+        flex-direction:column;
+        gap:15px;
+        padding:0;
+    }
+    .action-buttons a,
+    .action-buttons button,
+    .action-buttons form{
+        width:100%;
+    }
 }
-
-.device-info-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:18px;
-    margin:30px 0;
-}
-
-.info-card{
-    background:#ffffff;
-    border-radius:12px;
-    padding:18px;
-    box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
-
-.info-card h4{
-    margin:0 0 10px;
-    color:#2563eb;
-    font-size:15px;
-}
-
-.info-card p{
-    margin:0;
-    font-size:16px;
-    font-weight:600;
-}
-
-.status-active{
-    display:inline-block;
-    background:#dcfce7;
-    color:#166534;
-    padding:8px 14px;
-    border-radius:20px;
-    font-weight:bold;
-}
-
-.status-inactive{
-    display:inline-block;
-    background:#fee2e2;
-    color:#b91c1c;
-    padding:8px 14px;
-    border-radius:20px;
-    font-weight:bold;
-}
-
 </style>
-
 <script>
-
 function toggleFolder(id){
-
     let folder = document.getElementById(id);
-
     if(folder.style.display === "block"){
         folder.style.display = "none";
     }
     else{
         folder.style.display = "block";
     }
-
 }
-
 </script>
+
 {% endblock %}
