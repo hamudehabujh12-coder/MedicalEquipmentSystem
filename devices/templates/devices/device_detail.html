@@ -80,6 +80,32 @@
                 <h4>Raum</h4>
                 <p>{{ device.room|default:"—" }}</p>
             </div>
+
+        {% elif field.field_name == "pruefart" %}
+
+        {% if pruefungen %}
+
+            {% for pruefung in pruefungen %}
+
+                {% if pruefung.letztes_datum %}
+
+                    <div class="info-card">
+
+                        <h4>
+                            Letzte {{ pruefung.pruefart.name }}
+                        </h4>
+
+                        <p>
+                            {{ pruefung.letztes_datum|date:"d.m.Y" }}
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        {% endif %}
         {% elif field.field_name == "status" %}
             <div class="info-card">
                 <h4>Status</h4>

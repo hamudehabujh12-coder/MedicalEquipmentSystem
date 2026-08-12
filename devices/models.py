@@ -255,6 +255,7 @@ class DeviceDetailFieldConfig(models.Model):
         ("year_built", "Baujahr"),
         ("practice", "Standort"),
         ("area", "Bereich"),
+        ("pruefart", "Prüfart"),
         ("room", "Raum"),
         ("status", "Status"),
         ("notes", "Bemerkungen"),
@@ -485,16 +486,15 @@ class DeviceDocument(models.Model):
 class TechnicianDocument(models.Model):
 
     CATEGORY_CHOICES = [
-        ("Zertifikat", "📜 Zertifikat"),
-        ("Servicehandbuch", "📘 Servicehandbuch"),
-        ("Bedienungsanleitung", "📖 Bedienungsanleitung"),
-        ("Software", "💻 Software"),
-        ("Schulung", "🎓 Schulung"),
-        ("Sonstiges", "📄 Sonstiges"),
+        ("Schulungszertifikate", "🎓 Schulungszertifikate"),
+        ("Wartungsprotokolle", "🔧 Wartungsprotokolle"),
+        ("Serviceberichte", "🛠️ Serviceberichte"),
+        ("Sonstige Dokumente", "📄 Sonstige Dokumente"),
     ]
 
     category = models.CharField(
-        max_length=50,
+        "Dokumentart",
+        max_length=100,
         choices=CATEGORY_CHOICES
     )
 
@@ -524,6 +524,8 @@ class TechnicianDocument(models.Model):
 
     def __str__(self):
         return self.title
+
+    
 class GeneralDocument(models.Model):
 
     DOCUMENT_CATEGORY = [

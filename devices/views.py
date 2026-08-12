@@ -538,6 +538,15 @@ def device_detail(request, device_id):
         )
     )
 
+    pruefungen = (
+        device.pruefungen
+        .filter(aktiv=True)
+        .select_related("pruefart")
+        .order_by(
+            "pruefart__order",
+            "pruefart__name"
+        )
+    )
     # =========================================================
     # GERÄTEDETAILS - SICHTBARE FELDER
     # =========================================================
@@ -568,6 +577,7 @@ def device_detail(request, device_id):
                 .order_by("-datum")
             ),
             "detail_fields": detail_fields,
+            "pruefungen": pruefungen,
         }
     )
 
