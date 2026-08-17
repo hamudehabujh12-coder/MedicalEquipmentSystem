@@ -222,16 +222,6 @@
             </a>
 
 
-            <button type="submit"
-                    name="delete"
-                    value="1"
-                    class="btn btn-danger"
-                    onclick="return confirm('Reparatur wirklich löschen?');">
-
-                🗑️ Löschen
-
-            </button>
-
         </div>
 </div>
 
@@ -279,66 +269,43 @@ toggleBearbeitung();
 
 
 
-form.addEventListener("submit", function(e){
+form.addEventListener("submit", function(e) {
 
 
-    if(
+
+    // 💾 Speichern → normale Validierung
+    if (
         statusSelect.value === "In Bearbeitung" ||
         statusSelect.value === "Erledigt"
-    ){
-
+    ) {
 
         let valid = true;
 
-
-        if(techniker.value.trim() === ""){
-
+        if (techniker.value.trim() === "") {
             techniker.style.border = "2px solid red";
             valid = false;
-
         } else {
-
             techniker.style.border = "";
-
         }
 
-
-
-        if(datum.value === ""){
-
+        if (datum.value === "") {
             datum.style.border = "2px solid red";
             valid = false;
-
         } else {
-
             datum.style.border = "";
-
         }
 
-
-
-        if(ausfuehrung.value.trim() === ""){
-
+        if (ausfuehrung.value.trim() === "") {
             ausfuehrung.style.border = "2px solid red";
             valid = false;
-
         } else {
-
             ausfuehrung.style.border = "";
-
         }
 
-
-
-        if(!valid){
-
+        if (!valid) {
             e.preventDefault();
-
         }
-
-
     }
-
 
 });
 
