@@ -491,7 +491,6 @@ class ReparaturBearbeitenForm(forms.ModelForm):
 from django import forms
 from .models import Filterwechsel
 
-
 class FilterwechselForm(forms.ModelForm):
 
     geraet = forms.ModelChoiceField(
@@ -499,7 +498,6 @@ class FilterwechselForm(forms.ModelForm):
         label="Gerät",
         empty_label="Gerät auswählen"
     )
-
 
     class Meta:
         model = Filterwechsel
@@ -512,7 +510,6 @@ class FilterwechselForm(forms.ModelForm):
             "durchgeführt_von",
             "bemerkung",
         ]
-
 
         widgets = {
 
@@ -530,7 +527,6 @@ class FilterwechselForm(forms.ModelForm):
             ),
         }
 
-
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
@@ -538,6 +534,10 @@ class FilterwechselForm(forms.ModelForm):
         self.fields["datum"].input_formats = [
             "%Y-%m-%d"
         ]
+
+        # Filtercode wird über filtercode_1, filtercode_2 ...
+        # dynamisch im HTML eingegeben
+        self.fields["filtercode"].required = False
 
 class GeraetartForm(forms.ModelForm):
 

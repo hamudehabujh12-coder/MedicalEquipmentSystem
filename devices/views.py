@@ -2847,10 +2847,29 @@ def filterwechsel_create(request):
 
         form = FilterwechselForm(request.POST)
 
-
         if form.is_valid():
 
-            filterwechsel = form.save()
+            filterwechsel = form.save(commit=False)
+
+            anzahl = filterwechsel.anzahl_filter
+
+            filtercodes = []
+
+            for i in range(1, anzahl + 1):
+
+                code = request.POST.get(
+                    f"filtercode_{i}",
+                    ""
+                ).strip()
+
+                if code:
+                    filtercodes.append(code)
+
+            filterwechsel.filtercode = " | ".join(
+                filtercodes
+            )
+
+            filterwechsel.save()
 
 
             AuditLog.objects.create(
@@ -2866,15 +2885,11 @@ def filterwechsel_create(request):
                 description=(
 
                     f"Filterwechsel erstellt. "
-
                     f"Gerät: "
                     f"{filterwechsel.geraet.name if filterwechsel.geraet else 'Unbekannt'} "
-
                     f"(Inventarnummer: "
                     f"{filterwechsel.geraet.inventory_number if filterwechsel.geraet else '—'})"
-
                 )
-
             )
 
 
@@ -2883,11 +2898,9 @@ def filterwechsel_create(request):
                 "Filterwechsel erfolgreich gespeichert."
             )
 
-
             return redirect(
                 "filterwechsel_history"
             )
-
 
     else:
 
@@ -2901,6 +2914,8 @@ def filterwechsel_create(request):
             "form": form
         }
     )
+
+
 @login_required
 def filterwechsel_history(request):
 
@@ -2934,36 +2949,47 @@ def filterwechsel_update(request, id):
         id=id
     )
 
-
     original_datum = filterwechsel.datum
-
 
 
     if request.method == "POST":
 
-
         form = FilterwechselForm(
-
             request.POST,
-
             instance=filterwechsel
-
         )
 
-
         if form.is_valid():
-
 
             obj = form.save(
                 commit=False
             )
 
-
+            # Datum nicht ändern
             obj.datum = original_datum
 
+            # Anzahl der Filter
+            anzahl = obj.anzahl_filter
+
+            # Neue Filtercodes sammeln
+            filtercodes = []
+
+            for i in range(1, anzahl + 1):
+
+                code = request.POST.get(
+                    f"filtercode_{i}",
+                    ""
+                ).strip()
+
+                if code:
+                    filtercodes.append(code)
+
+            # Filtercodes speichern
+            obj.filtercode = " | ".join(
+                filtercodes
+            )
 
             obj.save()
-
 
 
             AuditLog.objects.create(
@@ -2991,13 +3017,9 @@ def filterwechsel_update(request, id):
             )
 
 
-
             messages.success(
-
                 request,
-
                 "Filterwechsel geändert."
-
             )
 
 
@@ -3008,11 +3030,24 @@ def filterwechsel_update(request, id):
 
     else:
 
-
         form = FilterwechselForm(
             instance=filterwechsel
         )
 
+
+    # ============================
+    # Vorhandene Filtercodes
+    # ============================
+
+    filtercodes = []
+
+    if filterwechsel.filtercode:
+
+        filtercodes = [
+            code.strip()
+            for code in filterwechsel.filtercode.split("|")
+            if code.strip()
+        ]
 
 
     return render(
@@ -3023,7 +3058,8 @@ def filterwechsel_update(request, id):
 
         {
             "form": form,
-            "edit": True
+            "edit": True,
+            "filtercodes": filtercodes
         }
 
     )
