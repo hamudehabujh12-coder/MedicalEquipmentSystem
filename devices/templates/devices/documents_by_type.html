@@ -32,27 +32,25 @@ placeholder="🔍 Dokument suchen..."
 
     <span id="geraetart-arrow" style="cursor:pointer;">▼</span>
 
-
     <div id="geraetart-menu" class="filter-menu">
-
-
-        {% for art in geraetarten %}
-
-        <a href="?geraetart={{ art.id }}">
-            {{ art.name }}
-        </a>
-
-        {% endfor %}
-
 
         <a href="{% url 'documents_by_type' document_type_id=document_type.id %}">
             Alle
         </a>
 
+        {% for art in geraetarten %}
+
+            <a href="?geraetart={{ art.id }}{% if standort %}&standort={{ standort }}{% endif %}">
+                {{ art.name }}
+            </a>
+
+        {% endfor %}
 
     </div>
 
 </th>
+
+
 <th style="position:relative;">
 
     📍 Standort
@@ -61,13 +59,17 @@ placeholder="🔍 Dokument suchen..."
 
     <div id="standort-menu" class="filter-menu">
 
-        {% for standort in standorte %}
-            <a href="?practice={{ standort.id }}">
-                🏥 {{ standort.name }}
-            </a>
-        {% endfor %}
+        <a href="?{% if geraetart %}geraetart={{ geraetart }}{% endif %}">
+            Alle
+        </a>
 
-        <a href="?">Alle</a>
+        {% for standort_item in standorte %}
+
+            <a href="?{% if geraetart %}geraetart={{ geraetart }}&{% endif %}standort={{ standort_item.id }}">
+                🏥 {{ standort_item.name }}
+            </a>
+
+        {% endfor %}
 
     </div>
 

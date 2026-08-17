@@ -2133,26 +2133,62 @@ def documents_by_type(request, document_type_id):
         id=document_type_id
     )
 
-    documents = DeviceDocument.objects.filter(
-        document_type=document_type
-    ).select_related(
-        "device",
-        "device__geraetart",
-        "document_type"
+    # =========================================================
+    # ALLE DOKUMENTE DIESES DOKUMENT-TYPS
+    # =========================================================
+
+    documents = (
+        DeviceDocument.objects
+        .filter(document_type=document_type)
+        .select_related(
+            "device",
+            "device__geraetart",
+            "device__practice",
+            "document_type"
+        )
     )
 
-    geraetart = request.GET.get("geraetart")
+    # =========================================================
+    # FILTER GERÄTEART
+    # =========================================================
+
+    geraetart = request.GET.get("geraetart", "")
 
     if geraetart:
         documents = documents.filter(
             device__geraetart_id=geraetart
         )
 
-    geraetarten = Geraetart.objects.filter(
-        aktiv=True
-    ).order_by("name")
+    # =========================================================
+    # FILTER STANDORT
+    # =========================================================
 
-    standorte = Standort.objects.all()
+    standort = request.GET.get("standort", "")
+
+    if standort:
+        documents = documents.filter(
+            device__practice_id=standort
+        )
+
+    # =========================================================
+    # FILTER-OPTIONEN
+    # =========================================================
+
+    geraetarten = (
+        Geraetart.objects
+        .filter(aktiv=True)
+        .order_by("name")
+    )
+
+    standorte = (
+        Standort.objects
+        .all()
+        .order_by("name")
+    )
+
+    # =========================================================
+    # AUSGABE
+    # =========================================================
 
     return render(
         request,
@@ -2163,6 +2199,7 @@ def documents_by_type(request, document_type_id):
             "standorte": standorte,
             "geraetarten": geraetarten,
             "geraetart": geraetart,
+            "standort": standort,
         }
     )
 @login_required
