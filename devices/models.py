@@ -634,6 +634,7 @@ class Reparatur(models.Model):
         blank=True
     )
 
+    techniker_gelesen = models.BooleanField(default=False)
 
     techniker = models.CharField(
         "Techniker",

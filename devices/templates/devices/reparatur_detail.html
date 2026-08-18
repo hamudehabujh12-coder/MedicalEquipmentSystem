@@ -96,13 +96,41 @@
 
     <div class="form-group">
         <label>Meldedatum</label>
-        <input
-            type="text"
-            class="form-control"
-            value="{{ reparatur.datum|date:'d.m.Y' }}"
-            readonly>
-    </div>
+            <input
+                type="text"
+                class="form-control"
+                value="{{ reparatur.datum|date:'d.m.Y' }}"
+                readonly>
+        </div>
+    
+        <div class="form-group" style="margin-top:20px;">
 
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+
+                <input
+                    type="checkbox"
+                    name="techniker_gelesen"
+                    {% if reparatur.techniker_gelesen %}checked{% endif %}
+                    {% if not user.is_superuser %}disabled{% endif %}
+                    style="width:20px; height:20px;">
+
+                <span>
+                    {% if reparatur.techniker_gelesen %}
+                        Vom Techniker gelesen
+                    {% else %}
+                        Vom Techniker gelesen
+                    {% endif %}
+                </span>
+
+            </label>
+
+            {% if not user.is_superuser %}
+                <small style="color:#777; display:block; margin-top:5px;">
+                    Nur Admin kann diesen Status ändern.
+                </small>
+            {% endif %}
+
+        </div>
 </div>
 
 </div>

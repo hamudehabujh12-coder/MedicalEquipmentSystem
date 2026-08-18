@@ -1215,9 +1215,22 @@ def reparatur_detail(request, pk):
         print(request.POST)
         if form.is_valid():
 
-
             reparatur = form.save()
 
+            # =========================
+            # Vom Techniker gelesen
+            # Nur Admin darf ändern
+            # =========================
+
+            if request.user.is_superuser:
+
+                reparatur.techniker_gelesen = (
+                    request.POST.get("techniker_gelesen") == "on"
+                )
+
+                reparatur.save(
+                    update_fields=["techniker_gelesen"]
+                )
 
 
             AuditLog.objects.create(
