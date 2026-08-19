@@ -973,6 +973,7 @@ def faellige_pruefung(request, pruefart_id):
         .filter(
             pruefart=pruefart,
             aktiv=True,
+           device__status="Aktiv",
             naechstes_datum__isnull=False,
             naechstes_datum__lte=grenze
         )
