@@ -26,10 +26,12 @@
             autocomplete="off"
             style="
                 width:450px;
+                max-width:100%;
                 padding:12px;
                 border-radius:8px;
                 border:1px solid #ccc;
                 font-size:14px;
+                box-sizing:border-box;
             "
         >
 
@@ -50,7 +52,6 @@
     </form>
 
 
-
     <!-- =====================================================
          REPARATUR FORM
     ===================================================== -->
@@ -64,233 +65,187 @@
              TABELLE
         ================================================= -->
 
-        <table class="table">
+        <div class="table-wrapper">
 
-            <thead>
+            <table class="table reparatur-table">
 
-                <tr>
+                <thead>
 
-                    <th>
-                        Gerät
-                    </th>
+                    <tr>
 
-                    <th>
-                        Inventarnummer
-                    </th>
+                        <th>Gerät</th>
 
-                    <th>
-                        Seriennummer
-                    </th>
+                        <th>Inventarnummer</th>
 
-                    <th>
-                        Problemmeldung
-                    </th>
+                        <th>Seriennummer</th>
 
-                    <th>
-                        Reparaturausführung
-                    </th>
+                        <th>Problemmeldung</th>
 
-                    <th>
-                        Datum
-                    </th>
+                        <th>Reparaturausführung</th>
 
-                    <th>
-                        Status
-                    </th>
+                        <th>Datum</th>
 
+                        <th>Status</th>
+
+
+                        {% if user.is_superuser %}
+
+                        <!-- =====================================
+                             AUSWAHL – LETZTE SPALTE
+                        ====================================== -->
+
+                        <th class="auswahl-header">
+
+                            <span>Auswahl</span>
+
+                            <input
+                                type="checkbox"
+                                id="selectAllRepairs"
+                                title="Alle auswählen"
+                            >
+
+                        </th>
+
+                        {% endif %}
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for reparatur in reparaturen %}
+
+                <tr
+                    onclick="window.location.href='{% url 'reparatur_detail' reparatur.id %}?readonly=1';"
+                    style="cursor:pointer;"
+                >
+
+
+                    <!-- GERÄT -->
+
+                    <td>
+                        {{ reparatur.geraet.name }}
+                    </td>
+
+
+                    <!-- INVENTARNUMMER -->
+
+                    <td>
+                        {{ reparatur.geraet.inventory_number }}
+                    </td>
+
+
+                    <!-- SERIENNUMMER -->
+
+                    <td>
+                        {{ reparatur.geraet.serial_number }}
+                    </td>
+
+
+                    <!-- PROBLEMMELDUNG -->
+
+                    <td class="text-truncate">
+                        {{ reparatur.beschreibung }}
+                    </td>
+
+
+                    <!-- REPARATURAUSFÜHRUNG -->
+
+                    <td class="text-truncate">
+                        {{ reparatur.ausfuehrung }}
+                    </td>
+
+
+                    <!-- DATUM -->
+
+                    <td>
+                        {{ reparatur.datum }}
+                    </td>
+
+
+                    <!-- STATUS -->
+
+                    <td>
+
+                        {% if reparatur.status == "Offen" %}
+
+                            <span class="badge bg-danger">
+                                🔴 Offen
+                            </span>
+
+                        {% elif reparatur.status == "In Bearbeitung" %}
+
+                            <span class="badge bg-warning text-dark">
+                                🟡 In Bearbeitung
+                            </span>
+
+                        {% elif reparatur.status == "Erledigt" %}
+
+                            <span class="badge bg-success">
+                                🟢 Erledigt
+                            </span>
+
+                        {% else %}
+
+                            {{ reparatur.status }}
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =====================================
+                         AUSWAHL
+                         NUR CHECKBOX
+                    ====================================== -->
 
                     {% if user.is_superuser %}
 
-                    <!-- =====================================
-                         AUSWAHL – LETZTE SPALTE
-                    ====================================== -->
-
-                    <th
-                        style="
-                            width:110px;
-                            text-align:center;
-                            white-space:nowrap;
-                        "
+                    <td
+                        class="auswahl-cell"
+                        onclick="event.stopPropagation();"
                     >
-
-                        Auswahl
 
                         <input
                             type="checkbox"
-                            id="selectAllRepairs"
-                            title="Alle auswählen"
-                            style="
-                                width:18px;
-                                height:18px;
-                                margin-left:6px;
-                                vertical-align:middle;
-                                cursor:pointer;
-                            "
+                            name="selected_repairs"
+                            value="{{ reparatur.id }}"
+                            class="repair-checkbox"
                         >
 
-                    </th>
+                    </td>
 
                     {% endif %}
+
 
                 </tr>
 
-            </thead>
 
+                {% empty %}
 
-            <tbody>
+                <tr>
 
-
-            {% for reparatur in reparaturen %}
-
-            <tr
-                onclick="window.location.href='{% url 'reparatur_detail' reparatur.id %}?readonly=1';"
-                style="cursor:pointer;"
-            >
-
-
-                <!-- =====================================
-                     GERÄT
-                ====================================== -->
-
-                <td>
-                    {{ reparatur.geraet.name }}
-                </td>
-
-
-                <!-- =====================================
-                     INVENTARNUMMER
-                ====================================== -->
-
-                <td>
-                    {{ reparatur.geraet.inventory_number }}
-                </td>
-
-
-                <!-- =====================================
-                     SERIENNUMMER
-                ====================================== -->
-
-                <td>
-                    {{ reparatur.geraet.serial_number }}
-                </td>
-
-
-                <!-- =====================================
-                     PROBLEMMELDUNG
-                ====================================== -->
-
-                <td class="text-truncate">
-                    {{ reparatur.beschreibung }}
-                </td>
-
-
-                <!-- =====================================
-                     REPARATURAUSFÜHRUNG
-                ====================================== -->
-
-                <td class="text-truncate">
-                    {{ reparatur.ausfuehrung }}
-                </td>
-
-
-                <!-- =====================================
-                     DATUM
-                ====================================== -->
-
-                <td>
-                    {{ reparatur.datum }}
-                </td>
-
-
-                <!-- =====================================
-                     STATUS
-                ====================================== -->
-
-                <td>
-
-                    {% if reparatur.status == "Offen" %}
-
-                        <span class="badge bg-danger">
-                            🔴 Offen
-                        </span>
-
-                    {% elif reparatur.status == "In Bearbeitung" %}
-
-                        <span class="badge bg-warning text-dark">
-                            🟡 In Bearbeitung
-                        </span>
-
-                    {% elif reparatur.status == "Erledigt" %}
-
-                        <span class="badge bg-success">
-                            🟢 Erledigt
-                        </span>
-
-                    {% else %}
-
-                        {{ reparatur.status }}
-
-                    {% endif %}
-
-                </td>
-
-
-                <!-- =====================================
-                     AUSWAHL
-                     NUR CHECKBOX
-                ====================================== -->
-
-                {% if user.is_superuser %}
-
-                <td
-                    style="
-                        text-align:center;
-                    "
-                    onclick="event.stopPropagation();"
-                >
-
-                    <input
-                        type="checkbox"
-                        name="selected_repairs"
-                        value="{{ reparatur.id }}"
-                        class="repair-checkbox"
+                    <td
+                        colspan="8"
                         style="
-                            width:18px;
-                            height:18px;
-                            cursor:pointer;
+                            text-align:center;
+                            padding:20px;
                         "
                     >
+                        Keine Reparaturen vorhanden
+                    </td>
 
-                </td>
+                </tr>
 
-                {% endif %}
+                {% endfor %}
 
+                </tbody>
 
-            </tr>
+            </table>
 
-
-            {% empty %}
-
-            <tr>
-
-                <td
-                    colspan="8"
-                    style="
-                        text-align:center;
-                        padding:20px;
-                    "
-                >
-                    Keine Reparaturen vorhanden
-                </td>
-
-            </tr>
-
-            {% endfor %}
-
-            </tbody>
-
-        </table>
-
+        </div>
 
 
         <!-- =================================================
@@ -305,6 +260,7 @@
                 display:flex;
                 align-items:center;
                 gap:12px;
+                flex-wrap:wrap;
             "
         >
 
@@ -346,7 +302,6 @@
 </div>
 
 
-
 <!-- =========================================================
      SEARCH JAVASCRIPT
 ========================================================= -->
@@ -363,7 +318,6 @@ const searchForm =
         "search-form"
     );
 
-
 let timer = null;
 
 
@@ -372,7 +326,6 @@ searchInput.addEventListener(
     function(){
 
         clearTimeout(timer);
-
 
         timer = setTimeout(
             function(){
@@ -401,7 +354,6 @@ searchInput.addEventListener(
 </script>
 
 
-
 <!-- =========================================================
      AUSWAHL / ALLE AUSWÄHLEN
 ========================================================= -->
@@ -419,12 +371,10 @@ document.addEventListener(
                 "selectAllRepairs"
             );
 
-
         const checkboxes =
             document.querySelectorAll(
                 ".repair-checkbox"
             );
-
 
         const selectedCount =
             document.getElementById(
@@ -442,7 +392,6 @@ document.addEventListener(
                 document.querySelectorAll(
                     ".repair-checkbox:checked"
                 ).length;
-
 
             selectedCount.textContent =
                 selected + " ausgewählt";
@@ -492,7 +441,6 @@ document.addEventListener(
                     }
                 );
 
-
                 updateSelectedCount();
 
             }
@@ -539,7 +487,6 @@ document.addEventListener(
 {% endif %}
 
 
-
 <!-- =========================================================
      SEARCH HIGHLIGHT
 ========================================================= -->
@@ -569,13 +516,9 @@ document.addEventListener(
         }
 
 
-        /*
-         * Checkbox-Spalte nicht markieren
-         */
-
         const cells =
             document.querySelectorAll(
-                ".table tbody td"
+                ".reparatur-table tbody td"
             );
 
 
@@ -583,8 +526,7 @@ document.addEventListener(
             function(cell){
 
                 /*
-                 * Wenn die Zelle einen Checkbox
-                 * enthält, nicht verändern.
+                 * Checkbox-Spalte nicht verändern
                  */
 
                 if(
@@ -633,7 +575,6 @@ document.addEventListener(
 </script>
 
 
-
 <!-- =========================================================
      SUCHFELD FOCUS
 ========================================================= -->
@@ -657,7 +598,6 @@ document.addEventListener(
 
             input.focus();
 
-
             input.setSelectionRange(
                 input.value.length,
                 input.value.length
@@ -669,7 +609,6 @@ document.addEventListener(
 );
 
 </script>
-
 
 
 <!-- =========================================================
@@ -693,11 +632,48 @@ mark {
 }
 
 
-.text-truncate {
+/* =========================================================
+   TABLE WRAPPER
+========================================================= */
 
-    max-width:300px;
+.table-wrapper {
 
-    white-space:nowrap;
+    width:100%;
+
+    overflow-x:auto;
+
+    overflow-y:visible;
+
+    box-sizing:border-box;
+
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.reparatur-table {
+
+    width:100%;
+
+    table-layout:fixed;
+
+    border-collapse:collapse;
+
+    font-size:14px;
+
+}
+
+
+/* =========================================================
+   CELLS
+========================================================= */
+
+.reparatur-table th,
+.reparatur-table td {
+
+    padding:7px 6px;
 
     overflow:hidden;
 
@@ -706,39 +682,200 @@ mark {
 }
 
 
-.table {
+/* =========================================================
+   COLUMN WIDTHS
+========================================================= */
 
-    width:100%;
+.reparatur-table th:nth-child(1),
+.reparatur-table td:nth-child(1) {
 
-    overflow:visible;
-
-    table-layout:auto;
-
-    font-size:14px;
-
-}
-
-
-.table th,
-.table td {
-
-    padding:8px 10px;
+    width:14%;
 
 }
 
 
-.table th:last-child,
-.table td:last-child {
+.reparatur-table th:nth-child(2),
+.reparatur-table td:nth-child(2) {
 
-    text-align:center;
+    width:12%;
 
 }
 
 
-.repair-checkbox,
-#selectAllRepairs {
+.reparatur-table th:nth-child(3),
+.reparatur-table td:nth-child(3) {
+
+    width:12%;
+
+}
+
+
+.reparatur-table th:nth-child(4),
+.reparatur-table td:nth-child(4) {
+
+    width:20%;
+
+}
+
+
+.reparatur-table th:nth-child(5),
+.reparatur-table td:nth-child(5) {
+
+    width:20%;
+
+}
+
+
+.reparatur-table th:nth-child(6),
+.reparatur-table td:nth-child(6) {
+
+    width:10%;
+
+}
+
+
+.reparatur-table th:nth-child(7),
+.reparatur-table td:nth-child(7) {
+
+    width:12%;
+
+}
+
+
+/* =========================================================
+   AUSWAHL
+========================================================= */
+
+.auswahl-header,
+.auswahl-cell {
+
+    width:85px !important;
+
+    min-width:85px;
+
+    max-width:85px;
+
+    text-align:center !important;
+
+    white-space:nowrap;
+
+    overflow:visible !important;
+
+}
+
+
+.auswahl-header {
+
+    display:table-cell;
+
+}
+
+
+.auswahl-header span {
+
+    display:inline-block;
+
+    vertical-align:middle;
+
+}
+
+
+.auswahl-header input {
+
+    width:18px;
+
+    height:18px;
+
+    margin-left:6px;
+
+    vertical-align:middle;
+
+    cursor:pointer;
+
+}
+
+
+.repair-checkbox {
+
+    width:18px;
+
+    height:18px;
+
+    cursor:pointer;
 
     accent-color:#2563eb;
+
+}
+
+
+/* =========================================================
+   TEXT TRUNCATE
+========================================================= */
+
+.text-truncate {
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    max-width:300px;
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width:900px) {
+
+    .reparatur-table {
+
+        font-size:12px;
+
+    }
+
+
+    .reparatur-table th,
+    .reparatur-table td {
+
+        padding:5px 4px;
+
+    }
+
+
+    .auswahl-header,
+    .auswahl-cell {
+
+        width:75px !important;
+
+        min-width:75px;
+
+        max-width:75px;
+
+    }
+
+
+    .auswahl-header input {
+
+        width:16px;
+
+        height:16px;
+
+        margin-left:3px;
+
+    }
+
+
+    .repair-checkbox {
+
+        width:16px;
+
+        height:16px;
+
+    }
 
 }
 
