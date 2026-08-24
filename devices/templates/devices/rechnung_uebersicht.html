@@ -1,0 +1,706 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1>{{ title|default:"Rechnung Übersicht" }}</h1>
+
+
+    <!-- ==========================================
+         LIVE SEARCH
+    ========================================== -->
+
+    <div style="margin-bottom:25px;">
+
+        <input
+            type="text"
+            id="rechnungSearch"
+            placeholder="Suche nach Rechnungsnummer, Kategorie, Betrag oder Lieferant..."
+            autocomplete="off"
+            style="
+                width:450px;
+                padding:12px;
+                border-radius:8px;
+                border:1px solid #ccc;
+                box-sizing:border-box;
+            "
+        >
+
+        <button
+            type="button"
+            style="
+                padding:12px 20px;
+                border-radius:8px;
+                background:#1f2937;
+                color:white;
+                border:none;
+                cursor:pointer;
+                font-size:14px;
+            "
+        >
+            🔍 Suchen
+        </button>
+
+    </div>
+
+
+    <!-- ==========================================
+         TABELLE
+    ========================================== -->
+
+    <table
+        id="rechnungUebersichtTable"
+        class="table rechnung-uebersicht-table"
+    >
+
+        <thead>
+
+            <tr>
+
+                <th>Rechnungsnummer</th>
+
+                <th>Rechnungsdatum</th>
+
+                <th>Lieferant</th>
+
+                <th>Kategorie</th>
+
+                <th>Betrag</th>
+
+                <th>Status</th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+        {% for r in rechnungen %}
+
+        <tr
+            class="rechnung-row"
+            onclick="window.location='{% url 'rechnung_detail' r.id %}'"
+            style="cursor:pointer;"
+        >
+
+            <!-- ==================================
+                 RECHNUNGSNUMMER
+            =================================== -->
+
+            <td>
+
+                <strong>
+                    {{ r.rechnungsnummer }}
+                </strong>
+
+            </td>
+
+
+            <!-- ==================================
+                 RECHNUNGSDATUM
+            =================================== -->
+
+            <td>
+
+                {% if r.rechnungsdatum %}
+
+                    {{ r.rechnungsdatum|date:"d.m.Y" }}
+
+                {% else %}
+
+                    -
+
+                {% endif %}
+
+            </td>
+
+
+            <!-- ==================================
+                 LIEFERANT
+            =================================== -->
+
+            <td>
+
+                {{ r.lieferant|default:"-" }}
+
+            </td>
+
+
+            <!-- ==================================
+                 KATEGORIE
+            =================================== -->
+
+            <td>
+
+                {% if r.kategorie %}
+
+                    {{ r.kategorie }}
+
+                {% else %}
+
+                    -
+
+                {% endif %}
+
+            </td>
+
+
+            <!-- ==================================
+                 BETRAG
+            =================================== -->
+
+            <td>
+
+                {{ r.rechnungsbetrag|floatformat:2 }} €
+
+            </td>
+
+
+            <!-- ==================================
+                 STATUS
+            =================================== -->
+
+            <td class="status-column">
+
+                {% if r.status == "Erledigt" %}
+
+                    <span
+                        style="
+                            background:#28a745;
+                            color:white;
+                            padding:6px 12px;
+                            border-radius:15px;
+                            display:inline-block;
+                            font-size:12px;
+                            line-height:1.2;
+                            white-space:nowrap;
+                        "
+                    >
+                        ✅ {{ r.status }}
+                    </span>
+
+
+                {% elif r.status == "In Bearbeitung" %}
+
+                    <span
+                        style="
+                            background:#ffc107;
+                            color:black;
+                            padding:6px 12px;
+                            border-radius:15px;
+                            display:inline-block;
+                            font-size:12px;
+                            line-height:1.2;
+                            white-space:nowrap;
+                        "
+                    >
+                        🔧 {{ r.status }}
+                    </span>
+
+
+                {% elif r.status == "Offen" %}
+
+                    <span
+                        style="
+                            background:#dc3545;
+                            color:white;
+                            padding:6px 12px;
+                            border-radius:15px;
+                            display:inline-block;
+                            font-size:12px;
+                            line-height:1.2;
+                            white-space:nowrap;
+                        "
+                    >
+                        ⚠️ {{ r.status }}
+                    </span>
+
+
+                {% else %}
+
+                    {{ r.status }}
+
+                {% endif %}
+
+            </td>
+
+        </tr>
+
+
+        {% empty %}
+
+        <tr>
+
+            <td colspan="6">
+
+                Keine Rechnungen vorhanden
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+
+</div>
+
+
+<!-- =========================================================
+     DESIGN – IDENTISCH ZU RECHNUNG HISTORIE
+========================================================= -->
+
+<style>
+
+/* ==========================================
+   TABLE
+========================================== */
+
+.rechnung-uebersicht-table {
+
+    width:100% !important;
+
+    max-width:100% !important;
+
+    table-layout:fixed !important;
+
+    border-collapse:collapse !important;
+
+    background:#ffffff !important;
+
+    font-size:12px !important;
+
+}
+
+
+/* ==========================================
+   COLUMN WIDTHS
+   Gesamt = 100%
+========================================== */
+
+.rechnung-uebersicht-table th:nth-child(1),
+.rechnung-uebersicht-table td:nth-child(1) {
+
+    width:18% !important;
+
+}
+
+
+.rechnung-uebersicht-table th:nth-child(2),
+.rechnung-uebersicht-table td:nth-child(2) {
+
+    width:15% !important;
+
+}
+
+
+.rechnung-uebersicht-table th:nth-child(3),
+.rechnung-uebersicht-table td:nth-child(3) {
+
+    width:20% !important;
+
+}
+
+
+.rechnung-uebersicht-table th:nth-child(4),
+.rechnung-uebersicht-table td:nth-child(4) {
+
+    width:18% !important;
+
+}
+
+
+.rechnung-uebersicht-table th:nth-child(5),
+.rechnung-uebersicht-table td:nth-child(5) {
+
+    width:13% !important;
+
+}
+
+
+.rechnung-uebersicht-table th:nth-child(6),
+.rechnung-uebersicht-table td:nth-child(6) {
+
+    width:16% !important;
+
+}
+
+
+/* ==========================================
+   HEADER
+========================================== */
+
+.rechnung-uebersicht-table th {
+
+    background:#1f2937 !important;
+
+    color:#ffffff !important;
+
+    padding:10px 5px !important;
+
+    text-align:center !important;
+
+    vertical-align:middle !important;
+
+    font-size:16px !important;
+
+    line-height:1.15 !important;
+
+    white-space:nowrap !important;
+
+}
+
+
+/* ==========================================
+   CELLS
+========================================== */
+
+.rechnung-uebersicht-table td {
+
+    padding:11px 6px !important;
+
+    text-align:center !important;
+
+    vertical-align:middle !important;
+
+    border-bottom:1px solid #e5e7eb !important;
+
+    font-size:16px !important;
+
+    line-height:1.2 !important;
+
+    overflow:hidden !important;
+
+    text-overflow:ellipsis !important;
+
+    white-space:nowrap !important;
+
+}
+
+
+/* ==========================================
+   ROW
+========================================== */
+
+.rechnung-uebersicht-table .rechnung-row {
+
+    cursor:pointer !important;
+
+    height:48px !important;
+
+}
+
+
+.rechnung-uebersicht-table .rechnung-row:hover {
+
+    background:#f8fafc !important;
+
+}
+
+
+/* ==========================================
+   STATUS
+========================================== */
+
+.rechnung-uebersicht-table .status-column {
+
+    white-space:nowrap !important;
+
+    overflow:visible !important;
+
+    text-overflow:clip !important;
+
+    padding-left:4px !important;
+
+    padding-right:4px !important;
+
+}
+
+
+/* ==========================================
+   STATUS BADGE
+========================================== */
+
+.rechnung-uebersicht-table .status-column span {
+
+    white-space:nowrap !important;
+
+}
+
+
+/* ==========================================
+   SEARCH HIGHLIGHT
+========================================== */
+
+.rechnung-uebersicht-table mark {
+
+    background:#ffe066;
+
+    color:#000;
+
+    padding:2px 4px;
+
+    border-radius:4px;
+
+}
+
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width:1100px) {
+
+    .rechnung-uebersicht-table {
+
+        font-size:11px !important;
+
+    }
+
+
+    .rechnung-uebersicht-table th {
+
+        font-size:11px !important;
+
+        padding:9px 4px !important;
+
+    }
+
+
+    .rechnung-uebersicht-table td {
+
+        font-size:11px !important;
+
+        padding:9px 4px !important;
+
+    }
+
+
+}
+
+
+/* ==========================================
+   SMALL SCREEN
+========================================== */
+
+@media (max-width:800px) {
+
+    .rechnung-uebersicht-table {
+
+        font-size:11px !important;
+
+    }
+
+}
+
+</style>
+
+
+<!-- =========================================================
+     LIVE SEARCH JAVASCRIPT
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        const searchInput =
+            document.getElementById(
+                "rechnungSearch"
+            );
+
+
+        const tableRows =
+            document.querySelectorAll(
+                "#rechnungUebersichtTable tbody tr.rechnung-row"
+            );
+
+
+        /*
+         * Originalinhalt speichern
+         */
+
+        tableRows.forEach(function (row) {
+
+            row.querySelectorAll("td").forEach(
+                function (cell) {
+
+                    cell.setAttribute(
+                        "data-original",
+                        cell.innerHTML
+                    );
+
+                }
+            );
+
+        });
+
+
+        /*
+         * Live Search
+         */
+
+        searchInput.addEventListener(
+            "input",
+            function () {
+
+
+                const search =
+                    this.value.trim();
+
+
+                const searchLower =
+                    search.toLowerCase();
+
+
+                tableRows.forEach(
+                    function (row) {
+
+
+                        const cells =
+                            row.querySelectorAll("td");
+
+
+                        let searchableText = "";
+
+
+                        /*
+                         * Alle Spalten durchsuchen
+                         * außer Status
+                         */
+
+                        for (
+                            let i = 0;
+                            i < cells.length - 1;
+                            i++
+                        ) {
+
+                            searchableText +=
+                                " " +
+                                cells[i].innerText
+                                    .toLowerCase();
+
+                        }
+
+
+                        /*
+                         * Originalinhalt
+                         * wiederherstellen
+                         */
+
+                        cells.forEach(
+                            function (cell) {
+
+                                cell.innerHTML =
+                                    cell.getAttribute(
+                                        "data-original"
+                                    );
+
+                            }
+                        );
+
+
+                        /*
+                         * Suche leer
+                         */
+
+                        if (
+                            searchLower === ""
+                        ) {
+
+                            row.style.display = "";
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Kein Treffer
+                         */
+
+                        if (
+                            !searchableText.includes(
+                                searchLower
+                            )
+                        ) {
+
+                            row.style.display =
+                                "none";
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Treffer
+                         */
+
+                        row.style.display = "";
+
+
+                        /*
+                         * Treffer markieren
+                         */
+
+                        for (
+                            let i = 0;
+                            i < cells.length - 1;
+                            i++
+                        ) {
+
+
+                            const cell =
+                                cells[i];
+
+
+                            const original =
+                                cell.innerHTML;
+
+
+                            const escapedSearch =
+                                search.replace(
+                                    /[.*+?^${}()|[\]\\]/g,
+                                    "\\$&"
+                                );
+
+
+                            const regex =
+                                new RegExp(
+                                    "(" +
+                                    escapedSearch +
+                                    ")",
+                                    "gi"
+                                );
+
+
+                            cell.innerHTML =
+                                original.replace(
+                                    regex,
+                                    '<mark>$1</mark>'
+                                );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+
+{% endblock %}

@@ -2,73 +2,127 @@
 
 {% block content %}
 
-<h1 class="page-title">✏️ Benutzer bearbeiten</h1>
+<h1 class="page-title">
+    ✏️ Benutzer bearbeiten
+</h1>
+
 
 <div class="form-card">
 
     {% if messages %}
+
         {% for message in messages %}
+
             <div class="message {{ message.tags }}">
                 {{ message }}
             </div>
+
         {% endfor %}
+
     {% endif %}
+
 
     <form method="POST">
 
         {% csrf_token %}
 
+
+        <!-- =====================================================
+             BENUTZERDATEN
+        ====================================================== -->
+
+        <h2 class="section-title">
+            👤 Benutzerdaten
+        </h2>
+
+
         <div class="grid">
 
             <div>
-                <label>Benutzername</label>
+
+                <label>
+                    Benutzername
+                </label>
+
                 <input
                     type="text"
                     name="username"
                     value="{{ edit_user.username }}"
-                    required>
+                    required
+                >
+
             </div>
 
+
             <div>
-                <label>E-Mail</label>
+
+                <label>
+                    E-Mail
+                </label>
+
                 <input
                     type="email"
                     name="email"
-                    value="{{ edit_user.email }}">
+                    value="{{ edit_user.email }}"
+                >
+
             </div>
 
+
             <div>
-                <label>Vorname</label>
+
+                <label>
+                    Vorname
+                </label>
+
                 <input
                     type="text"
                     name="first_name"
-                    value="{{ edit_user.first_name }}">
+                    value="{{ edit_user.first_name }}"
+                >
+
             </div>
 
+
             <div>
-                <label>Nachname</label>
+
+                <label>
+                    Nachname
+                </label>
+
                 <input
                     type="text"
                     name="last_name"
-                    value="{{ edit_user.last_name }}">
+                    value="{{ edit_user.last_name }}"
+                >
+
             </div>
 
+
             <div>
-                <label>Rolle</label>
+
+                <label>
+                    Rolle
+                </label>
 
                 <select name="role">
 
-                    <option value="user"
-                    {% if not edit_user.is_superuser %}
-                    selected
-                    {% endif %}>
+                    <option
+                        value="user"
+                        {% if not edit_user.is_superuser %}
+                            selected
+                        {% endif %}
+                    >
                         Benutzer
                     </option>
 
-                    <option value="admin"
-                    {% if edit_user.is_superuser %}
-                    selected
-                    {% endif %}>
+
+                    <option
+                        value="admin"
+                        {% if edit_user.is_superuser %}
+                            selected
+                        {% endif %}
+                    >
                         Administrator
                     </option>
 
@@ -78,25 +132,312 @@
 
         </div>
 
-        <div style="display:flex; gap:10px; margin-top:20px;">
 
-            <button type="submit"
-                    class="btn btn-success">
+        <!-- =====================================================
+             BERECHTIGUNGEN
+        ====================================================== -->
+
+        <div class="permissions-section">
+
+            <h2 class="section-title">
+                🔐 Benutzerberechtigungen
+            </h2>
+
+
+            <p class="permissions-info">
+
+                Wählen Sie aus, welche Bereiche dieser Benutzer
+                sehen und verwenden darf.
+
+            </p>
+
+
+            <!-- MEDIZINISCHE GERÄTE -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    🩺 Medizinische Geräte
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_geraete"
+
+                        {% if permissions.permission_geraete %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span>
+                        Medizinische Geräte
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- REPARATUREN -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    🛠 Reparaturen
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_reparaturen"
+
+                        {% if permissions.permission_reparaturen %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span>
+                        Reparaturen
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- FILTERWECHSEL -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    🧪 Filterwechsel
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_filter"
+
+                        {% if permissions.permission_filter %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span>
+                        Filterwechsel
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- WARTUNG -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    🔧 Wartung
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_wartung"
+
+                        {% if permissions.permission_wartung %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span>
+                        Wartung
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- DOKUMENTE -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    📁 Dokumente
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_dokumente"
+
+                        {% if permissions.permission_dokumente %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span>
+                        Dokumente
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- RECHNUNG -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    🧾 Rechnung
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_rechnung"
+
+                        {% if permissions.permission_rechnung %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span>
+                        Rechnung
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- FIRMENINFOS -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    🏢 Firmeninfos
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_firmeninfos"
+
+                        {% if permissions.permission_firmeninfos %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span>
+                        Firmeninfos
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- KONTAKT -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    ☎️ Kontakt
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_kontakt"
+
+                        {% if permissions.permission_kontakt %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span>
+                        Kontakt
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- EINSTELLUNGEN -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    ⚙️ Einstellungen
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_einstellungen"
+
+                        {% if permissions.permission_einstellungen %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span>
+                        Einstellungen
+                    </span>
+
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             BUTTONS
+        ====================================================== -->
+
+        <div class="form-buttons">
+
+            <button
+                type="submit"
+                class="save-btn">
+
                 💾 Änderungen speichern
+
             </button>
 
 
-            <button type="button"
-                    class="btn btn-secondary"
-                    onclick="window.location.href='{% url 'user_list' %}'">
+            <button
+                type="button"
+                class="cancel-btn"
+                onclick="window.location.href='{% url 'user_list' %}'">
+
                 ↩️ Zurück
+
             </button>
 
 
-            <button type="button"
-                    class="btn btn-warning"
-                    onclick="window.location.href='{% url 'user_password_reset' edit_user.id %}'">
+            <button
+                type="button"
+                class="password-btn"
+                onclick="window.location.href='{% url 'user_password_reset' edit_user.id %}'">
+
                 🔑 Passwort zurücksetzen
+
             </button>
 
         </div>
@@ -105,20 +446,30 @@
 
 </div>
 
+
 <style>
 
 .page-title{
     text-align:center;
     margin-bottom:30px;
+    color:#1f2937;
 }
 
 .form-card{
-    max-width:900px;
+    max-width:1000px;
     margin:auto;
     background:white;
     padding:35px;
     border-radius:18px;
     box-shadow:0 5px 15px rgba(0,0,0,.12);
+}
+
+.section-title{
+    color:#1f2937;
+    margin-top:0;
+    margin-bottom:20px;
+    padding-bottom:10px;
+    border-bottom:2px solid #e5e7eb;
 }
 
 .grid{
@@ -131,6 +482,7 @@
     display:block;
     margin-bottom:8px;
     font-weight:bold;
+    color:#374151;
 }
 
 .grid input,
@@ -141,40 +493,97 @@
     border-radius:8px;
     font-size:15px;
     box-sizing:border-box;
+    background:white;
 }
 
-.buttons{
-    margin-top:30px;
+.permissions-section{
+    margin-top:40px;
+}
+
+.permissions-info{
+    color:#6b7280;
+    margin-bottom:25px;
+    font-size:15px;
+}
+
+.permission-group{
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    margin-bottom:12px;
+    overflow:hidden;
+    background:#f9fafb;
+}
+
+.permission-header{
+    padding:13px 16px;
+    background:#f3f4f6;
+    font-weight:bold;
+    color:#1f2937;
+}
+
+.permission-item{
     display:flex;
-    gap:15px;
+    align-items:center;
+    gap:12px;
+    padding:15px 16px;
+    cursor:pointer;
+    background:white;
+    transition:.2s;
 }
 
-.save-btn{
-    background:#2563eb;
-    color:white;
+.permission-item:hover{
+    background:#f0f9ff;
+}
+
+.permission-item input{
+    width:20px;
+    height:20px;
+    cursor:pointer;
+}
+
+.form-buttons{
+    display:flex;
+    gap:12px;
+    margin-top:35px;
+    flex-wrap:wrap;
+}
+
+.save-btn,
+.cancel-btn,
+.password-btn{
+    padding:12px 22px;
     border:none;
-    padding:12px 25px;
     border-radius:10px;
     cursor:pointer;
     font-size:16px;
     font-weight:bold;
 }
 
+.save-btn{
+    background:#16a34a;
+    color:white;
+}
+
 .save-btn:hover{
-    background:#1d4ed8;
+    background:#15803d;
 }
 
 .cancel-btn{
     background:#6b7280;
     color:white;
-    text-decoration:none;
-    padding:12px 25px;
-    border-radius:10px;
-    font-weight:bold;
 }
 
 .cancel-btn:hover{
     background:#4b5563;
+}
+
+.password-btn{
+    background:#f59e0b;
+    color:white;
+}
+
+.password-btn:hover{
+    background:#d97706;
 }
 
 .message{
@@ -191,6 +600,28 @@
 .message.error{
     background:#fee2e2;
     color:#991b1b;
+}
+
+@media(max-width:700px){
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .form-card{
+        padding:20px;
+    }
+
+    .form-buttons{
+        flex-direction:column;
+    }
+
+    .save-btn,
+    .cancel-btn,
+    .password-btn{
+        width:100%;
+    }
+
 }
 
 </style>

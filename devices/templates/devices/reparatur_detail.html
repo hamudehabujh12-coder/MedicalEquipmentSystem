@@ -19,27 +19,63 @@
 
 <tr>
     <th>Gerät</th>
-    <td>{{ reparatur.geraet.name }}</td>
+    <td>
+
+        <input
+            type="text"
+            id="geraet-search"
+            class="form-control"
+            placeholder="🔍 Gerät suchen..."
+            autocomplete="off"
+            style="margin-bottom:10px;"
+        >
+
+        {{ form.geraet.as_hidden}}
+
+        <div
+            id="geraet-results"
+            style="
+                border:1px solid #ddd;
+                border-radius:6px;
+                display:none;
+                max-height:250px;
+                overflow-y:auto;
+                background:white;
+                position:relative;
+                z-index:1000;
+            ">
+        </div>
+
+    </td>
 </tr>
 
 
 <tr>
     <th>Inventarnummer</th>
-    <td>{{ reparatur.geraet.inventory_number }}</td>
+    <td>
+        <span id="geraet-inventory">
+            {{ reparatur.geraet.inventory_number }}
+        </span>
+    </td>
 </tr>
-
 
 <tr>
     <th>Seriennummer</th>
-    <td>{{ reparatur.geraet.serial_number }}</td>
+    <td>
+        <span id="geraet-serial">
+            {{ reparatur.geraet.serial_number }}
+        </span>
+    </td>
 </tr>
-
 
 <tr>
     <th>Standort</th>
-    <td>{{ reparatur.geraet.practice }}</td>
+    <td>
+        <span id="geraet-standort">
+            {{ reparatur.geraet.practice }}
+        </span>
+    </td>
 </tr>
-
 
 <tr>
     <th>Status</th>
@@ -236,21 +272,43 @@
 
         </div> <!-- نهاية bearbeitung-section -->
 
+        <div
+            style="
+                display:flex;
+                gap:10px;
+                margin-top:30px;
+                margin-bottom:30px;
+            "
+        >
 
-        <div class="form-buttons" 
-            style="margin-top:25px; display:flex; gap:10px; align-items:center;">
-
-            <button type="submit" class="btn btn-primary">
+            <button
+                type="submit"
+                name="action"
+                value="save"
+                class="btn btn-success"
+            >
                 💾 Speichern
             </button>
 
 
-            <a href="{% url 'reparatur' %}" class="btn btn-secondary">
+            <button
+                type="button"
+                class="btn btn-danger"
+                id="delete-reparatur-btn"
+            >
+                🗑️ Löschen
+            </button>
+
+
+            <a
+                href="{% url 'reparatur' %}"
+                class="btn btn-secondary"
+            >
                 ❌ Abbrechen
             </a>
 
-
         </div>
+        
 </div>
 
 
@@ -299,6 +357,14 @@ toggleBearbeitung();
 
 form.addEventListener("submit", function(e) {
 
+    // 🗑️ Löschen → keine normale Validierung durchführen
+    if (
+        e.submitter &&
+        e.submitter.name === "delete" &&
+        e.submitter.value === "1"
+    ) {
+        return;
+    }
 
 
     // 💾 Speichern → normale Validierung
@@ -309,34 +375,209 @@ form.addEventListener("submit", function(e) {
 
         let valid = true;
 
+
         if (techniker.value.trim() === "") {
+
             techniker.style.border = "2px solid red";
+
             valid = false;
+
         } else {
+
             techniker.style.border = "";
+
         }
+
 
         if (datum.value === "") {
+
             datum.style.border = "2px solid red";
+
             valid = false;
+
         } else {
+
             datum.style.border = "";
+
         }
+
 
         if (ausfuehrung.value.trim() === "") {
+
             ausfuehrung.style.border = "2px solid red";
+
             valid = false;
+
         } else {
+
             ausfuehrung.style.border = "";
+
         }
 
+
         if (!valid) {
+
             e.preventDefault();
+
         }
+
     }
 
 });
 
+const geraetSearch = document.getElementById("geraet-search");
+const geraetSelect = document.getElementById("id_geraet");
+const geraetResults = document.getElementById("geraet-results");
 
+
+geraetSearch.addEventListener("input", function () {
+
+    const query = this.value.trim();
+
+    geraetResults.innerHTML = "";
+    geraetResults.style.display = "none";
+
+    if (query.length < 2) {
+        return;
+    }
+
+    fetch(
+        "{% url 'search_reparatur_device' %}?q=" +
+        encodeURIComponent(query)
+    )
+    .then(response => response.json())
+    .then(data => {
+
+        if (!data.length) {
+
+            geraetResults.innerHTML =
+                '<div style="padding:10px;">Kein Gerät gefunden.</div>';
+
+            geraetResults.style.display = "block";
+
+            return;
+        }
+
+
+        data.forEach(device => {
+
+            const item = document.createElement("div");
+
+            item.style.padding = "10px";
+            item.style.cursor = "pointer";
+            item.style.borderBottom = "1px solid #eee";
+
+            item.innerHTML =
+                "<strong>" +
+                device.inventory +
+                "</strong> - " +
+                device.name +
+                "<br>" +
+                "<small>" +
+                "Seriennummer: " +
+                device.serial +
+                " | Standort: " +
+                device.standort +
+                "</small>";
+
+
+            item.addEventListener("click", function () {
+
+                // Gerät auswählen
+                geraetSelect.value = device.id;
+
+                // Suchfeld aktualisieren
+                geraetSearch.value =
+                    device.inventory +
+                    " - " +
+                    device.name;
+
+                // Inventarnummer sofort aktualisieren
+                document.getElementById("geraet-inventory").textContent =
+                    device.inventory;
+
+                // Seriennummer sofort aktualisieren
+                document.getElementById("geraet-serial").textContent =
+                    device.serial;
+
+                // Standort sofort aktualisieren
+                document.getElementById("geraet-standort").textContent =
+                    device.standort;
+
+                // Ergebnisse schließen
+                geraetResults.style.display = "none";
+
+            });
+
+
+            geraetResults.appendChild(item);
+
+        });
+
+
+        geraetResults.style.display = "block";
+
+    })
+    .catch(error => {
+
+        console.error(
+            "Fehler bei der Gerätesuche:",
+            error
+        );
+
+    });
+
+});
+
+document.getElementById("delete-reparatur-btn").addEventListener(
+    "click",
+    function () {
+
+        if (
+            !confirm(
+                "Möchten Sie diese Reparatur wirklich löschen?"
+            )
+        ) {
+            return;
+        }
+
+        const deleteForm = document.createElement("form");
+
+        deleteForm.method = "POST";
+
+        deleteForm.action =
+            "{% url 'reparatur_delete' reparatur.pk %}";
+
+
+        const csrfToken =
+            document.querySelector(
+                "#reparatur-form input[name='csrfmiddlewaretoken']"
+            ).value;
+
+
+        const csrfInput =
+            document.createElement("input");
+
+        csrfInput.type = "hidden";
+
+        csrfInput.name =
+            "csrfmiddlewaretoken";
+
+        csrfInput.value =
+            csrfToken;
+
+
+        deleteForm.appendChild(
+            csrfInput
+        );
+
+        document.body.appendChild(
+            deleteForm
+        );
+
+        deleteForm.submit();
+
+    }
+);
 </script>
 {% endblock %}

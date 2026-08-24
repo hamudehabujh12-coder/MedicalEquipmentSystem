@@ -2,316 +2,1156 @@
 
 {% block content %}
 
-<h1>📤 Export</h1>
+<div class="container">
 
+    <h1>📤 Export</h1>
 
-<div class="backup-card">
 
-    <h2>Datenexport</h2>
+    <!-- =====================================================
+         GESAMTE GERÄTE
+    ====================================================== -->
 
-    <p>
-        Exportieren Sie Gerätedaten nach Excel.
-    </p>
+    <div class="export-card">
 
+        <h2>🏥 Gesamte Geräte</h2>
 
-    <form method="POST">
+        <p>
+            Gerätedaten nach Geräteart und Standort exportieren.
+        </p>
 
-        {% csrf_token %}
 
+        <form method="POST">
 
-        <div class="filter-box">
+            {% csrf_token %}
 
-            <label>
-                Geräteart:
-            </label>
+            <input
+                type="hidden"
+                name="export_typ"
+                value="geraete"
+            >
 
 
-            <select name="geraetart">
+            <div class="filter-row">
 
-                <option value="">
-                    Alle Geräte
-                </option>
 
+                <!-- =================================================
+                     GERÄTART
+                ================================================= -->
 
-                {% for art in geraetearten %}
+                <div class="field">
 
-                <option value="{{ art.name }}">
-                    {{ art.name }}
-                </option>
+                    <label>
+                        Geräteart
+                    </label>
 
-                {% endfor %}
 
+                    <select name="geraetart">
 
-            </select>
+                        <option value="">
+                            Alle Gerätarten
+                        </option>
 
 
+                        {% for art in geraetearten %}
 
-            <label>
-                Standort:
-            </label>
+                            <option value="{{ art.id }}">
+                                {{ art.name }}
+                            </option>
 
+                        {% empty %}
 
-            <select name="standort">
+                            <option value="">
+                                Keine Gerätarten vorhanden
+                            </option>
 
+                        {% endfor %}
 
-                <option value="">
-                    Alle Standorte
-                </option>
+                    </select>
 
+                </div>
 
-                {% for ort in standorte %}
 
-                <option value="{{ ort.name }}">
-                    {{ ort.name }}
-                </option>
+                <!-- =================================================
+                     STANDORT
+                ================================================= -->
 
+                <div class="field">
 
-                {% endfor %}
+                    <label>
+                        Standort
+                    </label>
 
 
-            </select>
+                    <select name="standort">
 
+                        <option value="">
+                            Alle Standorte
+                        </option>
 
-        </div>
 
+                        {% for ort in standorte %}
 
-        <br>
+                            <option value="{{ ort.id }}">
+                                {{ ort.name }}
+                            </option>
 
+                        {% empty %}
 
-        <button class="backup-btn">
-            📤 Export erstellen
-        </button>
+                            <option value="">
+                                Keine Standorte vorhanden
+                            </option>
 
+                        {% endfor %}
 
-    </form>
+                    </select>
 
+                </div>
 
-</div>
 
+                <button
+                    type="submit"
+                    class="export-btn"
+                >
+                    📤 Export
+                </button>
 
+            </div>
 
+        </form>
 
-<div class="backup-table">
+    </div>
 
-    <h2>Vorhandene Exporte</h2>
 
 
-    <table class="table">
+    <!-- =====================================================
+         REPARATURHISTORIE
+    ====================================================== -->
 
+    <div class="export-card">
 
-        <thead>
+        <h2>🛠️ Reparaturhistorie</h2>
 
-            <tr>
+        <p>
+            Reparaturen nach Zeitraum exportieren.
+        </p>
 
-                <th>Dateiname</th>
 
-                <th>Erstellt am</th>
+        <form method="POST">
 
-                <th>Größe</th>
+            {% csrf_token %}
 
-                <th>Aktionen</th>
+            <input
+                type="hidden"
+                name="export_typ"
+                value="reparatur"
+            >
 
-            </tr>
 
+            <div class="filter-row">
 
-        </thead>
 
+                <div class="field">
 
+                    <label>
+                        Von
+                    </label>
 
-        <tbody>
+                    <input
+                        type="date"
+                        name="datum_von"
+                    >
 
+                </div>
 
-        {% for export in exports %}
 
+                <div class="field">
 
-            <tr>
+                    <label>
+                        Bis
+                    </label>
 
+                    <input
+                        type="date"
+                        name="datum_bis"
+                    >
 
-                <td>
-                    {{ export.name }}
-                </td>
+                </div>
 
 
-                <td>
-                    {{ export.date|date:"d.m.Y H:i" }}
-                </td>
+                <button
+                    type="submit"
+                    class="export-btn"
+                >
+                    📤 Export
+                </button>
 
+            </div>
 
-                <td>
-                    {{ export.size }} MB
-                </td>
+        </form>
 
+    </div>
 
-                <td>
 
 
-                    <a href="{% url 'export_download' export.name %}">
-                        ⬇️ Download
-                    </a>
+    <!-- =====================================================
+         FILTERWECHSEL
+    ====================================================== -->
 
+    <div class="export-card">
 
+        <h2>🔄 Filterwechselhistorie</h2>
 
-                    |
+        <p>
+            Filterwechsel nach Zeitraum exportieren.
+        </p>
 
 
+        <form method="POST">
 
-                    <form method="POST"
-                          action="{% url 'export_delete' export.name %}"
-                          style="display:inline;"
-                          onsubmit="return confirm('Export wirklich löschen?');">
+            {% csrf_token %}
 
+            <input
+                type="hidden"
+                name="export_typ"
+                value="filterwechsel"
+            >
 
-                        {% csrf_token %}
 
+            <div class="filter-row">
 
-                        <button type="submit" class="delete-btn">
 
-                            🗑️ Löschen
+                <div class="field">
+
+                    <label>
+                        Von
+                    </label>
+
+                    <input
+                        type="date"
+                        name="datum_von"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Bis
+                    </label>
+
+                    <input
+                        type="date"
+                        name="datum_bis"
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="export-btn"
+                >
+                    📤 Export
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+
+    <!-- =====================================================
+        WARTUNG / PRÜFUNGEN
+    ===================================================== -->
+
+    <div class="export-card">
+
+        <h2>📋 Wartung / Prüfungen</h2>
+
+        <p>
+            Exportieren Sie die jeweilige Prüfart.
+        </p>
+
+
+        <div class="pruefarten-list">
+
+
+            {% for pruefart in pruefarten %}
+
+
+                <form method="POST">
+
+                    {% csrf_token %}
+
+
+                    <!-- Export-Typ -->
+
+                    <input
+                        type="hidden"
+                        name="export_typ"
+                        value="wartung"
+                    >
+
+
+                    <!-- Prüfart-ID -->
+
+                    <input
+                        type="hidden"
+                        name="pruefart_id"
+                        value="{{ pruefart.id }}"
+                    >
+
+
+                    <div class="pruefart-row">
+
+
+                        <!-- Prüfart Name -->
+
+                        <span class="pruefart-name">
+
+                            📋 {{ pruefart.name }}
+
+                        </span>
+
+
+                        <!-- Export Button -->
+
+                        <button
+                            type="submit"
+                            class="export-small-btn"
+                        >
+
+                            📤 Export
 
                         </button>
 
 
-                    </form>
+                    </div>
 
 
-                </td>
+                </form>
 
 
-            </tr>
+            {% empty %}
 
 
-        {% empty %}
+                <div class="empty-message">
+
+                    Keine Prüfarten vorhanden.
+
+                </div>
 
 
-            <tr>
-
-                <td colspan="4">
-
-                    Keine Exporte vorhanden.
-
-                </td>
-
-            </tr>
+            {% endfor %}
 
 
-        {% endfor %}
+        </div>
+
+    </div>
 
 
-        </tbody>
+<!-- =====================================================
+     STYLE FÜR WARTUNG / PRÜFUNGEN
+===================================================== -->
+
+<style>
+
+.pruefarten-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+
+}
 
 
-    </table>
+.pruefarten-list form {
 
+    margin: 0;
+
+    width: 100%;
+
+}
+
+
+.pruefart-row {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 11px 13px;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 8px;
+
+    background: #f9fafb;
+
+}
+
+
+.pruefart-name {
+
+    font-weight: 600;
+
+    color: #1f2937;
+
+}
+
+
+.export-small-btn {
+
+    padding: 7px 13px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+}
+
+
+.export-small-btn:hover {
+
+    background: #1d4ed8;
+
+}
+
+
+.empty-message {
+
+    padding: 15px;
+
+    color: #6b7280;
+
+    background: #f9fafb;
+
+    border-radius: 8px;
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .pruefart-row {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    .export-small-btn {
+
+        width: 100%;
+
+    }
+
+}
+
+</style>
+
+
+    <!-- =====================================================
+         RECHNUNG HISTORIE
+    ====================================================== -->
+
+    <div class="export-card">
+
+        <h2>🧾 Rechnungshistorie</h2>
+
+        <p>
+            Rechnungshistorie nach Rechnungsdatum exportieren.
+        </p>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <input
+                type="hidden"
+                name="export_typ"
+                value="rechnung"
+            >
+
+
+            <div class="filter-row">
+
+
+                <div class="field">
+
+                    <label>
+                        Rechnungsdatum von
+                    </label>
+
+
+                    <input
+                        type="date"
+                        name="datum_von"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Rechnungsdatum bis
+                    </label>
+
+
+                    <input
+                        type="date"
+                        name="datum_bis"
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="export-btn"
+                >
+
+                    📤 Export
+
+                </button>
+
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         VORHANDENE EXPORTE
+    ====================================================== -->
+
+    <div class="export-table">
+
+        <h2>
+            📁 Vorhandene Exporte
+        </h2>
+
+
+        <table class="table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Dateiname
+                    </th>
+
+                    <th>
+                        Erstellt am
+                    </th>
+
+                    <th>
+                        Größe
+                    </th>
+
+                    <th>
+                        Aktionen
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for export in exports %}
+
+
+                    <tr>
+
+
+                        <td>
+                            📄 {{ export.name }}
+                        </td>
+
+
+                        <td>
+                            {{ export.date|date:"d.m.Y H:i" }}
+                        </td>
+
+
+                        <td>
+                            {{ export.size }} MB
+                        </td>
+
+
+                        <td>
+
+
+                            <a
+                                href="{% url 'export_download' export.name %}"
+                                class="download-btn"
+                            >
+                                ⬇️ Download
+                            </a>
+
+
+                            {% if user.is_superuser %}
+
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'export_delete' export.name %}"
+                                    class="delete-form"
+                                    onsubmit="return confirm('Export wirklich löschen?');"
+                                >
+
+                                    {% csrf_token %}
+
+
+                                    <button
+                                        type="submit"
+                                        class="delete-btn"
+                                    >
+                                        🗑️ Löschen
+                                    </button>
+
+                                </form>
+
+
+                            {% endif %}
+
+
+                        </td>
+
+
+                    </tr>
+
+
+                {% empty %}
+
+
+                    <tr>
+
+                        <td
+                            colspan="4"
+                            class="empty-table"
+                        >
+
+                            📂 Keine Exporte vorhanden.
+
+                        </td>
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+    </div>
 
 </div>
-
 
 
 
 <style>
 
+/* =========================================================
+   CONTAINER
+========================================================= */
 
-.filter-box{
+.container {
 
-    display:flex;
-    gap:20px;
-    align-items:center;
-    flex-wrap:wrap;
-
-}
-
-
-.filter-box label{
-
-    font-weight:bold;
+    position: relative;
 
 }
 
 
-.filter-box select{
+/* =========================================================
+   CARD
+========================================================= */
 
-    padding:10px;
-    border-radius:8px;
-    border:1px solid #ccc;
-    min-width:200px;
+.export-card {
 
-}
+    background: white;
 
+    padding: 22px;
 
+    border-radius: 12px;
 
-.delete-btn{
+    margin-bottom: 20px;
 
-    background:#dc2626;
-    color:white;
-    border:none;
-    padding:6px 12px;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:bold;
+    box-shadow:
+        0 3px 12px rgba(0,0,0,.08);
 
 }
 
 
-.delete-btn:hover{
+.export-card h2 {
 
-    background:#b91c1c;
+    margin-top: 0;
 
-}
-
-
-
-.backup-card{
-
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    margin-bottom:30px;
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    margin-bottom: 6px;
 
 }
 
 
+.export-card p {
 
-.backup-btn{
+    margin-top: 0;
 
-    background:#2563eb;
-    color:white;
-    border:none;
-    padding:14px 22px;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:16px;
+    color: #6b7280;
 
 }
 
 
-.backup-btn:hover{
+/* =========================================================
+   FILTER ROW
+========================================================= */
 
-    background:#1d4ed8;
+.filter-row {
+
+    display: flex;
+
+    align-items: flex-end;
+
+    gap: 15px;
+
+    flex-wrap: wrap;
+
+}
+
+
+.field {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
 
 }
 
 
+.field label {
 
-.backup-table{
+    font-size: 14px;
 
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    font-weight: bold;
 
 }
 
 
-.backup-table a{
+.field input,
+.field select {
 
-    text-decoration:none;
-    font-weight:bold;
+    min-width: 210px;
+
+    padding: 10px 12px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 7px;
+
+    background: white;
+
+    font-size: 14px;
 
 }
 
+
+.field select {
+
+    cursor: pointer;
+
+}
+
+
+/* =========================================================
+   EXPORT BUTTON
+========================================================= */
+
+.export-btn {
+
+    padding: 10px 18px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+.export-btn:hover {
+
+    background: #1d4ed8;
+
+}
+
+
+/* =========================================================
+   PRÜFARTEN
+========================================================= */
+
+.pruefarten-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+
+}
+
+
+.pruefarten-list form {
+
+    margin: 0;
+
+}
+
+
+.pruefart-row {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 11px 13px;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 8px;
+
+    background: #f9fafb;
+
+}
+
+
+.pruefart-name {
+
+    font-weight: 600;
+
+}
+
+
+.export-small-btn {
+
+    padding: 7px 13px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+.export-small-btn:hover {
+
+    background: #1d4ed8;
+
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty-message {
+
+    padding: 15px;
+
+    color: #6b7280;
+
+    background: #f9fafb;
+
+    border-radius: 8px;
+
+}
+
+
+/* =========================================================
+   EXPORT TABLE
+========================================================= */
+
+.export-table {
+
+    background: white;
+
+    padding: 22px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 3px 12px rgba(0,0,0,.08);
+
+}
+
+
+.export-table h2 {
+
+    margin-top: 0;
+
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+}
+
+
+.table th {
+
+    background: #1f2937;
+
+    color: white;
+
+    padding: 12px;
+
+    text-align: left;
+
+}
+
+
+.table td {
+
+    padding: 10px;
+
+    border-bottom: 1px solid #e5e7eb;
+
+}
+
+
+.table tr:hover {
+
+    background: #f8fafc;
+
+}
+
+
+/* =========================================================
+   DOWNLOAD
+========================================================= */
+
+.download-btn {
+
+    display: inline-block;
+
+    padding: 6px 10px;
+
+    margin-right: 6px;
+
+    border-radius: 6px;
+
+    background: #16a34a;
+
+    color: white;
+
+    text-decoration: none;
+
+    font-weight: bold;
+
+    font-size: 13px;
+
+}
+
+
+.download-btn:hover {
+
+    background: #15803d;
+
+}
+
+
+/* =========================================================
+   DELETE
+========================================================= */
+
+.delete-form {
+
+    display: inline;
+
+}
+
+
+.delete-btn {
+
+    padding: 6px 10px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: #dc2626;
+
+    color: white;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+.delete-btn:hover {
+
+    background: #b91c1c;
+
+}
+
+
+/* =========================================================
+   EMPTY TABLE
+========================================================= */
+
+.empty-table {
+
+    text-align: center;
+
+    padding: 25px !important;
+
+    color: #6b7280;
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .filter-row {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    .field {
+
+        width: 100%;
+
+    }
+
+
+    .field input,
+    .field select {
+
+        width: 100%;
+
+        min-width: 0;
+
+        box-sizing: border-box;
+
+    }
+
+
+    .export-btn {
+
+        width: 100%;
+
+    }
+
+
+    .pruefart-row {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    .export-small-btn {
+
+        width: 100%;
+
+    }
+
+
+    .export-table {
+
+        overflow-x: auto;
+
+    }
+
+
+    .table {
+
+        min-width: 700px;
+
+    }
+
+}
 
 </style>
-
 
 {% endblock %}

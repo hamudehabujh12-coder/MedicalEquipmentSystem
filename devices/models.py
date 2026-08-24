@@ -308,7 +308,7 @@ class DevicePruefung(models.Model):
 
     pruefart = models.ForeignKey(
         Pruefart,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="geraete_pruefungen"
     )
 
@@ -454,7 +454,7 @@ class DeviceDocument(models.Model):
 
     document_type = models.ForeignKey(
         DocumentType,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Dokumenttyp"
     )
     
@@ -1235,3 +1235,268 @@ class SystemUpdate(models.Model):
         return f"{self.version} - {self.status}"
 
 
+class Rechnung(models.Model):
+
+    STATUS_CHOICES = [
+        ("Offen", "Offen"),
+        ("In Bearbeitung", "In Bearbeitung"),
+        ("Erledigt", "Erledigt"),
+    ]
+
+    # ==========================================
+    # DATEN VON DER RECHNUNG
+    # ==========================================
+
+    rechnungsnummer = models.CharField(
+        "Rechnungsnummer",
+        max_length=100
+    )
+
+    rechnungsdatum = models.DateField(
+        "Rechnungsdatum"
+    )
+
+    lieferant = models.CharField(
+        "Lieferant / Firma",
+        max_length=200
+    )
+
+    auftragsnummer = models.CharField(
+        "Auftragsnummer",
+        max_length=100,
+        blank=True
+    )
+
+    lieferscheinnummer = models.CharField(
+        "Lieferscheinnummer",
+        max_length=100,
+        blank=True
+    )
+
+    kundennummer = models.CharField(
+        "Kundennummer",
+        max_length=100,
+        blank=True
+    )
+
+    leistungsdatum = models.DateField(
+        "Leistungsdatum",
+        null=True,
+        blank=True
+    )
+
+    rechnungsbetrag = models.DecimalField(
+        "Rechnungsbetrag",
+        max_digits=12,
+        decimal_places=2
+    )
+
+    zahlungsziel = models.PositiveIntegerField(
+        "Zahlungsziel (Tage)",
+        null=True,
+        blank=True
+    )
+
+    faelligkeitsdatum = models.DateField(
+        "Fälligkeitsdatum",
+        null=True,
+        blank=True
+    )
+
+    # ==========================================
+    # INTERNE DATEN
+    # ==========================================
+
+    kostenstelle = models.CharField(
+        "Kostenstelle",
+        max_length=100,
+        blank=True
+    )
+
+    kategorie = models.CharField(
+        "Kategorie",
+        max_length=100,
+        blank=True
+    )
+
+    verantwortlicher = models.CharField(
+        "Verantwortlicher",
+        max_length=200,
+        blank=True,
+        default=""
+    )
+
+    bemerkung = models.TextField(
+        "Bemerkung",
+        blank=True
+    )
+
+    # ==========================================
+    # STATUS
+    # ==========================================
+
+    status = models.CharField(
+        "Status",
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default="Offen"
+    )
+
+    # ==========================================
+    # ZAHLUNG
+    # ==========================================
+
+    bezahlt_am = models.DateField(
+        "Bezahlt am",
+        null=True,
+        blank=True
+    )
+
+    zahlungsreferenz = models.CharField(
+        "Zahlungsreferenz",
+        max_length=200,
+        blank=True
+    )
+
+    # ==========================================
+    # RECHNUNGSDOKUMENT
+    # ==========================================
+
+    rechnung_datei = models.FileField(
+        "Rechnung",
+        upload_to="rechnungen/",
+        blank=True,
+        null=True
+    )
+
+    # ==========================================
+    # SYSTEMDATEN
+    # ==========================================
+
+    erstellt_von = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="erstellte_rechnungen"
+    )
+
+    erstellt_am = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    aktualisiert_am = models.DateTimeField(
+        auto_now=True
+    )
+    rechnung_datei = models.FileField(
+        "Rechnung",
+        upload_to="rechnungen/",
+        blank=True,
+        null=True
+    )
+
+    lieferschein_datei = models.FileField(
+        "Lieferschein",
+        upload_to="lieferscheine/",
+        blank=True,
+        null=True
+    )
+    class Meta:
+        permissions = [
+            (
+                "access_rechnung",
+                "Can access Rechnung"
+            ),
+        ]
+
+        ordering = ["-erstellt_am"]
+
+        verbose_name = "Rechnung"
+        verbose_name_plural = "Rechnungen"
+    def __str__(self):
+        return f"{self.rechnungsnummer} - {self.lieferant}"
+
+class RechnungKategorie(models.Model):
+
+    name = models.CharField(
+        max_length=100,
+        unique=True
+    )
+
+    erstellt_am = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Rechnung Kategorie"
+        verbose_name_plural = "Rechnung Kategorien"    
+
+
+class UserPermission(models.Model):
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="custom_permissions"
+    )
+
+    # ==============================
+    # SIDEBAR / BEREICHE
+    # ==============================
+
+    permission_geraete = models.BooleanField(
+        default=False
+    )
+
+    permission_reparaturen = models.BooleanField(
+        default=False
+    )
+
+    permission_filter = models.BooleanField(
+        default=False
+    )
+
+    permission_wartung = models.BooleanField(
+        default=False
+    )
+
+    permission_dokumente = models.BooleanField(
+        default=False
+    )
+
+    permission_rechnung = models.BooleanField(
+        default=False
+    )
+
+    permission_firmeninfos = models.BooleanField(
+        default=False
+    )
+
+    permission_kontakt = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellungen = models.BooleanField(
+        default=False
+    )
+
+    def __str__(self):
+        return f"Berechtigungen - {self.user.username}"
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+
+@receiver(post_save, sender=User)
+def create_user_permission(sender, instance, created, **kwargs):
+
+    if created:
+        UserPermission.objects.get_or_create(
+            user=instance
+        )

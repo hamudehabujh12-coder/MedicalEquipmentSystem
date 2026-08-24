@@ -1,0 +1,383 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h2>🧾 Neue Rechnung hinzufügen</h2>
+
+    <form method="post" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <!-- ==========================================
+             RECHNUNGSDATEN
+        =========================================== -->
+
+        <h3>📄 Rechnungsdaten</h3>
+
+        <div class="form-group">
+            <label>Rechnungsnummer *</label>
+            <input
+                type="text"
+                name="rechnungsnummer"
+                class="form-control"
+                value="{{ request.POST.rechnungsnummer|default:'' }}"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Rechnungsdatum *</label>
+            <input
+                type="date"
+                name="rechnungsdatum"
+                id="rechnungsdatum"
+                class="form-control"
+                value="{{ request.POST.rechnungsdatum|default:'' }}"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Lieferant / Firma *</label>
+            <input
+                type="text"
+                name="lieferant"
+                class="form-control"
+                value="{{ request.POST.lieferant|default:'' }}"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Auftragsnummer</label>
+            <input
+                type="text"
+                name="auftragsnummer"
+                class="form-control"
+                value="{{ request.POST.auftragsnummer|default:'' }}"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Lieferschein-Nr.</label>
+            <input
+                type="text"
+                name="lieferscheinnummer"
+                class="form-control"
+                value="{{ request.POST.lieferscheinnummer|default:'' }}"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Kundennummer</label>
+            <input
+                type="text"
+                name="kundennummer"
+                class="form-control"
+                value="{{ request.POST.kundennummer|default:'' }}"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Leistungsdatum</label>
+            <input
+                type="date"
+                name="leistungsdatum"
+                class="form-control"
+                value="{{ request.POST.leistungsdatum|default:'' }}"
+            >
+        </div>
+
+
+        <!-- ==========================================
+             INTERNE ANGABEN
+        =========================================== -->
+
+        <h3 style="margin-top:30px;">
+            🏥 Interne Angaben
+        </h3>
+
+        <div class="form-group">
+            <label>Kostenstelle</label>
+            <input
+                type="text"
+                name="kostenstelle"
+                class="form-control"
+                value="{{ request.POST.kostenstelle|default:'' }}"
+            >
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="kategorie">
+                Kategorie
+            </label>
+
+            <select
+                name="kategorie"
+                id="kategorie"
+                class="form-control"
+                required
+                style="
+                    width:100%;
+                    box-sizing:border-box;
+                    min-height:42px;
+                "
+            >
+
+                <option value="">
+                    -- Kategorie auswählen --
+                </option>
+
+                {% for kategorie in kategorien %}
+
+                    <option
+                        value="{{ kategorie.id }}"
+                        {% if request.POST.kategorie == kategorie.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ kategorie.name }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Bemerkung</label>
+
+            <textarea
+                name="bemerkung"
+                class="form-control"
+                rows="4"
+                placeholder="Weitere Informationen zur Rechnung..."
+            >{{ request.POST.bemerkung|default:'' }}</textarea>
+
+        </div>
+
+
+        <!-- ==========================================
+             BETRAG / ZAHLUNG
+        =========================================== -->
+
+        <h3 style="margin-top:30px;">
+            💶 Betrag und Zahlung
+        </h3>
+
+        <div class="form-group">
+
+            <label>Rechnungsbetrag *</label>
+
+            <input
+                type="number"
+                name="rechnungsbetrag"
+                class="form-control"
+                step="0.01"
+                min="0"
+                value="{{ request.POST.rechnungsbetrag|default:'' }}"
+                required
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Zahlungsziel (Tage)</label>
+
+            <input
+                type="number"
+                name="zahlungsziel"
+                id="zahlungsziel"
+                class="form-control"
+                min="0"
+                placeholder="z. B. 14"
+                value="{{ request.POST.zahlungsziel|default:'' }}"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Fälligkeitsdatum</label>
+
+            <input
+                type="date"
+                name="faelligkeitsdatum"
+                id="faelligkeitsdatum"
+                class="form-control"
+                value="{{ request.POST.faelligkeitsdatum|default:'' }}"
+                readonly
+            >
+
+        </div>
+
+
+        <!-- ==========================================
+             RECHNUNG HOCHLADEN
+        =========================================== -->
+
+        <h3 style="margin-top:30px;">
+            📎 Dateien
+        </h3>
+
+
+        <div class="form-group">
+
+            <label>
+                🧾 Rechnung hochladen
+            </label>
+
+            <input
+                type="file"
+                name="rechnung_datei"
+                class="form-control"
+                accept=".pdf,.jpg,.jpeg,.png"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                📦 Lieferschein hochladen
+            </label>
+
+            <input
+                type="file"
+                name="lieferschein_datei"
+                class="form-control"
+                accept=".pdf,.jpg,.jpeg,.png"
+            >
+
+        </div>
+
+
+        <!-- ==========================================
+             BUTTONS
+        =========================================== -->
+
+        <div
+            style="
+                display:flex;
+                gap:10px;
+                margin-top:30px;
+            "
+        >
+
+            <button
+                type="submit"
+                class="btn btn-success"
+            >
+                💾 Rechnung speichern
+            </button>
+
+
+            <a
+                href="{% url 'rechnung_uebersicht' %}"
+                class="btn btn-secondary"
+            >
+                ❌ Abbrechen
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const rechnungsdatum =
+        document.getElementById("rechnungsdatum");
+
+    const zahlungsziel =
+        document.getElementById("zahlungsziel");
+
+    const faelligkeitsdatum =
+        document.getElementById("faelligkeitsdatum");
+
+
+    function berechneFaelligkeit() {
+
+        if (
+            !rechnungsdatum.value ||
+            !zahlungsziel.value
+        ) {
+            faelligkeitsdatum.value = "";
+            return;
+        }
+
+
+        const datum = new Date(
+            rechnungsdatum.value + "T00:00:00"
+        );
+
+
+        const tage = parseInt(
+            zahlungsziel.value,
+            10
+        );
+
+
+        if (isNaN(tage)) {
+            faelligkeitsdatum.value = "";
+            return;
+        }
+
+
+        datum.setDate(
+            datum.getDate() + tage
+        );
+
+
+        const jahr = datum.getFullYear();
+
+        const monat = String(
+            datum.getMonth() + 1
+        ).padStart(2, "0");
+
+        const tag = String(
+            datum.getDate()
+        ).padStart(2, "0");
+
+
+        faelligkeitsdatum.value =
+            `${jahr}-${monat}-${tag}`;
+    }
+
+
+    rechnungsdatum.addEventListener(
+        "change",
+        berechneFaelligkeit
+    );
+
+
+    zahlungsziel.addEventListener(
+        "input",
+        berechneFaelligkeit
+    );
+
+
+    // Nach einem Fehler erneut berechnen
+    // wenn Rechnungsdatum und Zahlungsziel vorhanden sind
+    berechneFaelligkeit();
+
+});
+
+</script>
+
+{% endblock %}

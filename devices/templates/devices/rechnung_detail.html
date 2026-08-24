@@ -1,0 +1,626 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+    >
+
+        {% csrf_token %}
+
+
+        <!-- ==========================================
+             RECHNUNGSDATEN
+        =========================================== -->
+
+        <h3>📄 Rechnungsdaten</h3>
+
+
+        <div class="form-group">
+
+            <label>Rechnungsnummer</label>
+
+            <input
+                type="text"
+                name="rechnungsnummer"
+                class="form-control"
+                value="{{ rechnung.rechnungsnummer }}"
+                required
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Rechnungsdatum</label>
+
+            <input
+                type="date"
+                name="rechnungsdatum"
+                id="rechnungsdatum"
+                class="form-control"
+                value="{{ rechnung.rechnungsdatum|date:'Y-m-d' }}"
+                required
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Lieferant / Firma</label>
+
+            <input
+                type="text"
+                name="lieferant"
+                class="form-control"
+                value="{{ rechnung.lieferant }}"
+                required
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Auftragsnummer</label>
+
+            <input
+                type="text"
+                name="auftragsnummer"
+                class="form-control"
+                value="{{ rechnung.auftragsnummer|default:'' }}"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Lieferscheinnummer</label>
+
+            <input
+                type="text"
+                name="lieferscheinnummer"
+                class="form-control"
+                value="{{ rechnung.lieferscheinnummer|default:'' }}"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Kundennummer</label>
+
+            <input
+                type="text"
+                name="kundennummer"
+                class="form-control"
+                value="{{ rechnung.kundennummer|default:'' }}"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Leistungsdatum</label>
+
+            <input
+                type="date"
+                name="leistungsdatum"
+                class="form-control"
+                value="{{ rechnung.leistungsdatum|date:'Y-m-d' }}"
+            >
+
+        </div>
+
+        <!-- ==========================================
+             INTERNE ANGABEN
+        =========================================== -->
+
+        <h3 style="margin-top:30px;">
+            🏥 Interne Angaben
+        </h3>
+
+
+        <div class="form-group">
+
+            <label>Kostenstelle</label>
+
+            <input
+                type="text"
+                name="kostenstelle"
+                class="form-control"
+                value="{{ rechnung.kostenstelle|default:'' }}"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Kategorie</label>
+
+            <input
+                type="text"
+                class="form-control"
+                value="{{ rechnung.kategorie|default:'-' }}"
+                readonly
+            >
+
+        </div>
+
+                
+
+
+        <div class="form-group">
+
+            <label>Erstellt von</label>
+
+            <input
+                type="text"
+                class="form-control"
+                value="{% if rechnung.erstellt_von %}{{ rechnung.erstellt_von.get_full_name|default:rechnung.erstellt_von.username }}{% endif %}"
+                readonly
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Bemerkung</label>
+
+            <textarea
+                name="bemerkung"
+                class="form-control"
+                rows="4"
+            >{{ rechnung.bemerkung|default:'' }}</textarea>
+
+        </div>
+
+        <!-- ==========================================
+             BETRAG / ZAHLUNG
+        =========================================== -->
+
+        <h3 style="margin-top:30px;">
+            💶 Betrag und Zahlung
+        </h3>
+
+
+        <div class="form-group">
+
+            <label>Rechnungsbetrag</label>
+
+            <input
+                type="number"
+                name="rechnungsbetrag"
+                id="rechnungsbetrag"
+                class="form-control"
+                step="0.01"
+                min="0"
+                value="{{ rechnung.rechnungsbetrag|stringformat:'s' }}"
+                required
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Zahlungsziel (Tage)</label>
+
+            <input
+                type="number"
+                name="zahlungsziel"
+                id="zahlungsziel"
+                class="form-control"
+                min="0"
+                value="{{ rechnung.zahlungsziel|default:'' }}"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Fälligkeitsdatum</label>
+
+            <input
+                type="date"
+                name="faelligkeitsdatum"
+                id="faelligkeitsdatum"
+                class="form-control"
+                value="{{ rechnung.faelligkeitsdatum|date:'Y-m-d' }}"
+                readonly
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Bezahlt am</label>
+
+            <input
+                type="date"
+                name="bezahlt_am"
+                class="form-control"
+                value="{{ rechnung.bezahlt_am|date:'Y-m-d' }}"
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Verantwortlicher</label>
+
+            <input
+                type="text"
+                name="verantwortlicher"
+                class="form-control"
+                value="{{ rechnung.verantwortlicher|default:'' }}"
+                placeholder="Name des Verantwortlichen"
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Zahlungsreferenz</label>
+
+            <input
+                type="text"
+                name="zahlungsreferenz"
+                class="form-control"
+                value="{{ rechnung.zahlungsreferenz|default:'' }}"
+            >
+
+        </div>
+
+
+        
+
+
+        <!-- ==========================================
+             DATEIEN
+        =========================================== -->
+
+        <h3 style="margin-top:30px;">
+            📎 Dateien
+        </h3>
+
+
+        <!-- RECHNUNG -->
+
+        <div class="form-group">
+
+            <label>
+                🧾 Rechnung
+            </label>
+
+
+            {% if rechnung.rechnung_datei %}
+
+                <div style="margin-bottom:10px;">
+
+                    <a
+                        href="{{ rechnung.rechnung_datei.url }}"
+                        target="_blank"
+                        class="btn btn-primary"
+                    >
+                        📄 Rechnung öffnen
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+
+            <input
+                type="file"
+                name="rechnung_datei"
+                class="form-control"
+                accept=".pdf,.jpg,.jpeg,.png"
+            >
+
+        </div>
+
+
+        <!-- LIEFERSCHEIN -->
+
+        <div class="form-group">
+
+            <label>
+                📦 Lieferschein
+            </label>
+
+
+            {% if rechnung.lieferschein_datei %}
+
+                <div style="margin-bottom:10px;">
+
+                    <a
+                        href="{{ rechnung.lieferschein_datei.url }}"
+                        target="_blank"
+                        class="btn btn-primary"
+                    >
+                        📄 Lieferschein öffnen
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+
+            <input
+                type="file"
+                name="lieferschein_datei"
+                class="form-control"
+                accept=".pdf,.jpg,.jpeg,.png"
+            >
+
+        </div>
+
+
+       <!-- ==========================================
+            STATUS
+        ========================================== -->
+        <h3 style="margin-top:30px;">
+            🔄 Status
+        </h3>
+        <div class="form-group">
+        <label for="status">
+            Status
+        </label>
+        <select
+            name="status"
+            id="status"
+            class="form-control"
+            style="
+                width:100%;
+                box-sizing:border-box;
+                height:42px;
+                min-height:42px;
+                padding:8px 12px;
+                border-radius:8px;
+                background:white;
+                color:#374151;
+                border:1px solid #ccc;
+                font-size:16px;
+                cursor:pointer;
+            "
+        >
+            {% for value, label in rechnung.STATUS_CHOICES %}
+                <option
+                    value="{{ value }}"
+                    {% if rechnung.status == value %}
+                        selected
+                    {% endif %}
+                >
+                    {% if value == "Offen" %}
+                        🔴 Offen
+                    {% elif value == "In Bearbeitung" %}
+                        🟡 In Bearbeitung
+                    {% elif value == "Erledigt" %}
+                        🟢 Erledigt
+                    {% else %}
+                        {{ label }}
+                    {% endif %}
+                </option>
+            {% endfor %}
+        </select>
+        </div>
+
+
+        <!-- ==========================================
+             AKTIONEN
+        =========================================== -->
+
+        <div
+            style="
+                display:flex;
+                gap:10px;
+                margin-top:30px;
+                margin-bottom:30px;
+            "
+        >
+
+            <button
+                type="submit"
+                name="action"
+                value="save"
+                class="btn btn-success"
+            >
+                💾 Speichern
+            </button>
+
+
+            <button
+                type="submit"
+                name="action"
+                value="delete"
+                class="btn btn-danger"
+                formnovalidate
+                onclick="return confirm(
+                    'Möchten Sie diese Rechnung wirklich löschen?'
+                );"
+            >
+                🗑️ Löschen
+            </button>
+
+
+            <a
+                href="{% url 'rechnung_uebersicht' %}"
+                class="btn btn-secondary"
+            >
+                ❌ Abbrechen
+            </a>
+
+        </div>
+
+
+    </form>
+
+</div>
+
+
+<!-- ==========================================
+     FÄLLIGKEIT AUTOMATISCH BERECHNEN
+=========================================== -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const rechnungsdatum =
+            document.getElementById(
+                "rechnungsdatum"
+            );
+
+        const zahlungsziel =
+            document.getElementById(
+                "zahlungsziel"
+            );
+
+        const faelligkeitsdatum =
+            document.getElementById(
+                "faelligkeitsdatum"
+            );
+
+
+        function berechneFaelligkeit() {
+
+            if (
+                !rechnungsdatum.value ||
+                !zahlungsziel.value
+            ) {
+
+                faelligkeitsdatum.value = "";
+
+                return;
+            }
+
+
+            const datum = new Date(
+                rechnungsdatum.value
+                + "T00:00:00"
+            );
+
+
+            const tage = parseInt(
+                zahlungsziel.value,
+                10
+            );
+
+
+            if (isNaN(tage)) {
+
+                faelligkeitsdatum.value = "";
+
+                return;
+            }
+
+
+            datum.setDate(
+                datum.getDate() + tage
+            );
+
+
+            const jahr =
+                datum.getFullYear();
+
+
+            const monat =
+                String(
+                    datum.getMonth() + 1
+                ).padStart(2, "0");
+
+
+            const tag =
+                String(
+                    datum.getDate()
+                ).padStart(2, "0");
+
+
+            faelligkeitsdatum.value =
+                `${jahr}-${monat}-${tag}`;
+
+        }
+
+
+        rechnungsdatum.addEventListener(
+            "change",
+            berechneFaelligkeit
+        );
+
+
+        zahlungsziel.addEventListener(
+            "input",
+            berechneFaelligkeit
+        );
+
+    }
+
+);
+
+</script>
+<style>
+
+/* =====================================================
+   EINHEITLICHE FORMULARFELDER
+===================================================== */
+
+.form-group .form-control {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 8px 12px !important;
+    font-size: 16px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+}
+
+
+/* =====================================================
+   KATEGORIE SELECT
+===================================================== */
+
+.form-group select.form-control {
+    width: 100% !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 8px 12px !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 8px !important;
+    background-color: #ffffff !important;
+    color: #374151 !important;
+    cursor: pointer !important;
+}
+
+
+/* =====================================================
+   TEXTAREA
+===================================================== */
+
+.form-group textarea.form-control {
+    height: auto !important;
+    min-height: 100px !important;
+    resize: vertical !important;
+}
+
+</style>
+{% endblock %}

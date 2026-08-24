@@ -6,7 +6,7 @@ import shutil
 import subprocess
 from devices.services.git_service import GitService
 from devices.services.update_service import UpdateService
-
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, date, timedelta
 
 from django.conf import settings
@@ -25,6 +25,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import (
     Count,
     Q,
+    Sum,
     Case,
     When,
     Value,
@@ -57,7 +58,10 @@ from .models import (
     PracticeSettings,
     DeviceDocument,
     GeneralDocument,
+    Rechnung,
+    RechnungKategorie,
     UserProfile,
+    UserPermission,
     HomeInformation,
     HomeImage,
     Standort,
@@ -90,6 +94,29 @@ from .forms import (
     ReparaturBearbeitenForm,
 )
 
+def rechnung_permission_required(view_func):
+
+    @login_required
+    def wrapper(request, *args, **kwargs):
+
+        # Superuser darf immer auf Rechnung zugreifen
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+
+        # Benutzer mit Rechnung-Berechtigung
+        if request.user.has_perm(
+            "devices.access_rechnung"
+        ):
+            return view_func(request, *args, **kwargs)
+
+        # Keine Berechtigung
+        return render(
+            request,
+            "403.html",
+            status=403
+        )
+
+    return wrapper
 
 def login_view(request):
 
@@ -849,26 +876,50 @@ def pruefart_edit(request, id):
         }
     )
 
-
 @login_required
 def pruefart_delete(request, id):
+
+    # =========================================================
+    # NUR ADMIN
+    # =========================================================
+
     if not request.user.is_superuser:
-            return redirect("permission_denied")
+        return redirect("permission_denied")
+
+
+    # =========================================================
+    # PRÜFART LADEN
+    # =========================================================
+
     pruefart = get_object_or_404(
         Pruefart,
         id=id
     )
 
+
+    # =========================================================
+    # LÖSCHEN
+    # =========================================================
+
     if request.method == "POST":
+
+        name = pruefart.name
 
         pruefart.delete()
 
         messages.success(
             request,
-            "Prüfart erfolgreich gelöscht."
+            f'✅ Prüfart "{name}" wurde erfolgreich gelöscht.'
         )
 
-        return redirect("pruefarten")
+        return redirect(
+            "pruefarten"
+        )
+
+
+    # =========================================================
+    # BESTÄTIGUNG
+    # =========================================================
 
     return render(
         request,
@@ -1491,6 +1542,50 @@ def repair_delete(request, repair_id):
     return redirect(
         "reparatur"
     )
+
+@login_required
+def reparatur_delete(request, pk):
+
+    reparatur = get_object_or_404(
+        Reparatur,
+        pk=pk
+    )
+
+    if request.method == "POST":
+
+        AuditLog.objects.create(
+
+            user=request.user,
+
+            action="DELETE",
+
+            model_name="Reparatur",
+
+            object_id=reparatur.id,
+
+            description=(
+
+                f"Reparatur für Gerät "
+                f"{reparatur.geraet.name} "
+                f"(Inventarnummer: "
+                f"{reparatur.geraet.inventory_number}) "
+                "gelöscht."
+
+            )
+
+        )
+
+        reparatur.delete()
+
+        messages.success(
+            request,
+            "Reparatur erfolgreich gelöscht."
+        )
+
+    return redirect(
+        "reparatur"
+    )
+
 @login_required
 def device_search(request):
 
@@ -2216,6 +2311,61 @@ def documents_by_type(request, document_type_id):
             "standort": standort,
         }
     )
+
+@login_required
+def document_type_delete(request, document_type_id):
+
+    # =========================================================
+    # NUR ADMIN
+    # =========================================================
+
+    if not request.user.is_superuser:
+        return redirect("permission_denied")
+
+
+    # =========================================================
+    # DOCUMENT TYPE LADEN
+    # =========================================================
+
+    document_type = get_object_or_404(
+        DocumentType,
+        id=document_type_id
+    )
+
+
+    # =========================================================
+    # LÖSCHEN
+    # =========================================================
+
+    if request.method == "POST":
+
+        name = document_type.name
+
+        document_type.delete()
+
+        messages.success(
+            request,
+            f'✅ Dokumenttyp "{name}" wurde erfolgreich gelöscht.'
+        )
+
+        return redirect(
+            "document_types"
+        )
+
+
+    # =========================================================
+    # BESTÄTIGUNG
+    # =========================================================
+
+    return render(
+        request,
+        "devices/document_type_delete_confirm.html",
+        {
+            "document_type": document_type
+        }
+    )
+
+
 @login_required
 def technician_documents(request):
 
@@ -2442,6 +2592,841 @@ def general_document_delete(request, doc_id):
         }
     )
 
+@rechnung_permission_required
+def rechnung_neu(request):
+
+    if request.method == "POST":
+
+        rechnungsnummer = request.POST.get(
+            "rechnungsnummer",
+            ""
+        ).strip()
+
+        rechnungsdatum = request.POST.get(
+            "rechnungsdatum"
+        )
+
+        lieferant = request.POST.get(
+            "lieferant",
+            ""
+        ).strip()
+
+        auftragsnummer = request.POST.get(
+            "auftragsnummer",
+            ""
+        ).strip()
+
+        lieferscheinnummer = request.POST.get(
+            "lieferscheinnummer",
+            ""
+        ).strip()
+
+        kundennummer = request.POST.get(
+            "kundennummer",
+            ""
+        ).strip()
+
+        leistungsdatum = request.POST.get(
+            "leistungsdatum"
+        )
+
+        rechnungsbetrag = request.POST.get(
+            "rechnungsbetrag"
+        )
+
+        zahlungsziel = request.POST.get(
+            "zahlungsziel"
+        )
+
+        faelligkeitsdatum = request.POST.get(
+            "faelligkeitsdatum"
+        )
+
+        kostenstelle = request.POST.get(
+            "kostenstelle",
+            ""
+        ).strip()
+
+        kategorie_id = request.POST.get(
+            "kategorie"
+        )
+
+        if kategorie_id:
+            kategorie = get_object_or_404(
+                RechnungKategorie,
+                id=kategorie_id
+            )
+        else:
+            kategorie = None
+
+        # ==========================================
+        # VERANTWORTLICHER
+        # ==========================================
+
+        verantwortlicher = request.POST.get(
+            "verantwortlicher",
+            ""
+        ).strip()
+
+        bemerkung = request.POST.get(
+            "bemerkung",
+            ""
+        ).strip()
+
+        rechnung_datei = request.FILES.get(
+            "rechnung_datei"
+        )
+
+        lieferschein_datei = request.FILES.get(
+            "lieferschein_datei"
+        )
+
+        # ==========================================
+        # KATEGORIEN
+        # ==========================================
+
+        kategorien = RechnungKategorie.objects.order_by(
+            "name"
+        )
+
+        # ==========================================
+        # PFLICHTFELDER
+        # ==========================================
+
+        if not rechnungsnummer:
+            messages.error(
+                request,
+                "Bitte Rechnungsnummer eingeben."
+            )
+
+            return render(
+                request,
+                "devices/rechnung_neu.html",
+                {
+                    "kategorien": kategorien,
+                }
+            )
+
+        if not rechnungsdatum:
+            messages.error(
+                request,
+                "Bitte Rechnungsdatum eingeben."
+            )
+
+            return render(
+                request,
+                "devices/rechnung_neu.html",
+                {
+                    "kategorien": kategorien,
+                }
+            )
+
+        if not lieferant:
+            messages.error(
+                request,
+                "Bitte Lieferant / Firma eingeben."
+            )
+
+            return render(
+                request,
+                "devices/rechnung_neu.html",
+                {
+                    "kategorien": kategorien,
+                }
+            )
+
+        if not rechnungsbetrag:
+            messages.error(
+                request,
+                "Bitte Rechnungsbetrag eingeben."
+            )
+
+            return render(
+                request,
+                "devices/rechnung_neu.html",
+                {
+                    "kategorien": kategorien,
+                }
+            )
+
+        # ==========================================
+        # RECHNUNG ERSTELLEN
+        # ==========================================
+
+        rechnung = Rechnung(
+            rechnungsnummer=rechnungsnummer,
+
+            rechnungsdatum=rechnungsdatum,
+
+            lieferant=lieferant,
+
+            auftragsnummer=auftragsnummer,
+
+            lieferscheinnummer=lieferscheinnummer,
+
+            kundennummer=kundennummer,
+
+            leistungsdatum=leistungsdatum or None,
+
+            rechnungsbetrag=rechnungsbetrag,
+
+            zahlungsziel=zahlungsziel or None,
+
+            faelligkeitsdatum=faelligkeitsdatum or None,
+
+            kostenstelle=kostenstelle,
+
+            kategorie=kategorie,
+
+            verantwortlicher=verantwortlicher,
+
+            bemerkung=bemerkung,
+
+            status="Offen",
+
+            rechnung_datei=rechnung_datei,
+
+            lieferschein_datei=lieferschein_datei,
+
+            erstellt_von=request.user,
+        )
+
+        rechnung.save()
+
+        # ==========================================
+        # ERFOLGSMELDUNG
+        # ==========================================
+
+        messages.success(
+            request,
+            "Rechnung erfolgreich hinzugefügt."
+        )
+
+        return redirect(
+            "rechnung_uebersicht"
+        )
+
+    # ==========================================
+    # NEUE RECHNUNG
+    # ==========================================
+
+    kategorien = RechnungKategorie.objects.order_by(
+        "name"
+    )
+
+    return render(
+        request,
+        "devices/rechnung_neu.html",
+        {
+            "kategorien": kategorien,
+        }
+    )
+@rechnung_permission_required
+def rechnung_detail(request, rechnung_id):
+    rechnung = get_object_or_404(
+        Rechnung,
+        id=rechnung_id
+    )
+    # =====================================================
+    # POST
+    # =====================================================
+    if request.method == "POST":
+        action = request.POST.get("action")
+        # =================================================
+        # LÖSCHEN
+        # =================================================
+        if action == "delete":
+            if rechnung.rechnung_datei:
+                rechnung.rechnung_datei.delete(
+                    save=False
+                )
+            if hasattr(rechnung, "lieferschein_datei"):
+                if rechnung.lieferschein_datei:
+                    rechnung.lieferschein_datei.delete(
+                        save=False
+                    )
+            rechnung.delete()
+            messages.success(
+                request,
+                "Rechnung erfolgreich gelöscht."
+            )
+            return redirect(
+                "rechnung_uebersicht"
+            )
+        # =================================================
+        # SPEICHERN
+        # =================================================
+        if action == "save":
+            # -------------------------------------------------
+            # RECHNUNGSDATEN
+            # -------------------------------------------------
+            rechnung.rechnungsnummer = (
+                request.POST.get(
+                    "rechnungsnummer",
+                    ""
+                ).strip()
+            )
+            rechnungsdatum = request.POST.get(
+                "rechnungsdatum"
+            )
+            if rechnungsdatum:
+                rechnung.rechnungsdatum = rechnungsdatum
+            rechnung.lieferant = (
+                request.POST.get(
+                    "lieferant",
+                    ""
+                ).strip()
+            )
+            rechnung.auftragsnummer = (
+                request.POST.get(
+                    "auftragsnummer",
+                    ""
+                ).strip()
+            )
+            rechnung.lieferscheinnummer = (
+                request.POST.get(
+                    "lieferscheinnummer",
+                    ""
+                ).strip()
+            )
+            rechnung.kundennummer = (
+                request.POST.get(
+                    "kundennummer",
+                    ""
+                ).strip()
+            )
+            # -------------------------------------------------
+            # LEISTUNGSDATUM
+            # -------------------------------------------------
+            rechnung.leistungsdatum = (
+                request.POST.get(
+                    "leistungsdatum"
+                ) or None
+            )
+            # -------------------------------------------------
+            # RECHNUNGSBETRAG
+            # -------------------------------------------------
+            betrag = request.POST.get(
+                "rechnungsbetrag",
+                ""
+            ).strip()
+            if betrag:
+                betrag = betrag.replace(
+                    ",",
+                    "."
+                )
+                try:
+                    rechnung.rechnungsbetrag = (
+                        Decimal(betrag).quantize(
+                            Decimal("0.01")
+                        )
+                    )
+                except InvalidOperation:
+                    messages.error(
+                        request,
+                        "Ungültiger Rechnungsbetrag."
+                    )
+                    return redirect(
+                        "rechnung_detail",
+                        rechnung_id=rechnung.id
+                    )
+            # -------------------------------------------------
+            # ZAHLUNGSZIEL
+            # -------------------------------------------------
+            zahlungsziel = request.POST.get(
+                "zahlungsziel",
+                ""
+            ).strip()
+            if zahlungsziel:
+                try:
+                    rechnung.zahlungsziel = int(
+                        zahlungsziel
+                    )
+                except ValueError:
+                    messages.error(
+                        request,
+                        "Ungültiges Zahlungsziel."
+                    )
+                    return redirect(
+                        "rechnung_detail",
+                        rechnung_id=rechnung.id
+                    )
+            else:
+                rechnung.zahlungsziel = None
+            # -------------------------------------------------
+            # FÄLLIGKEITSDATUM
+            # -------------------------------------------------
+            rechnung.faelligkeitsdatum = (
+                request.POST.get(
+                    "faelligkeitsdatum"
+                ) or None
+            )
+            # -------------------------------------------------
+            # ZAHLUNG
+            # -------------------------------------------------
+            rechnung.bezahlt_am = (
+                request.POST.get(
+                    "bezahlt_am"
+                ) or None
+            )
+            rechnung.zahlungsreferenz = (
+                request.POST.get(
+                    "zahlungsreferenz",
+                    ""
+                ).strip()
+            )
+            # =================================================
+            # INTERNE ANGABEN
+            # =================================================
+            rechnung.kostenstelle = (
+                request.POST.get(
+                    "kostenstelle",
+                    ""
+                ).strip()
+            )
+            # =================================================
+            # KATEGORIE
+            # =================================================
+            #
+            # Kategorie kommt aus Neue Rechnung.
+            # Wenn im Detail-Formular kein Kategorie-Feld
+            # gesendet wird, bleibt die bereits gespeicherte
+            # Kategorie unverändert.
+            #
+            # =================================================
+            if "kategorie" in request.POST:
+                kategorie_id = request.POST.get(
+                    "kategorie"
+                )
+                if kategorie_id:
+                    rechnung.kategorie = get_object_or_404(
+                        RechnungKategorie,
+                        id=kategorie_id
+                    )
+            # =================================================
+            # BEMERKUNG
+            # =================================================
+            rechnung.bemerkung = (
+                request.POST.get(
+                    "bemerkung",
+                    ""
+                ).strip()
+            )
+            # =================================================
+            # VERANTWORTLICHER
+            # =================================================
+            rechnung.verantwortlicher = (
+                request.POST.get(
+                    "verantwortlicher",
+                    ""
+                ).strip()
+            )
+            # =================================================
+            # STATUS
+            # =================================================
+            status = request.POST.get(
+                "status"
+            )
+            if status in dict(
+                Rechnung.STATUS_CHOICES
+            ):
+                rechnung.status = status
+            # =================================================
+            # RECHNUNG DATEI
+            # =================================================
+            if request.FILES.get(
+                "rechnung_datei"
+            ):
+                if rechnung.rechnung_datei:
+                    rechnung.rechnung_datei.delete(
+                        save=False
+                    )
+                rechnung.rechnung_datei = (
+                    request.FILES[
+                        "rechnung_datei"
+                    ]
+                )
+            # =================================================
+            # LIEFERSCHEIN DATEI
+            # =================================================
+            if request.FILES.get(
+                "lieferschein_datei"
+            ):
+                if hasattr(
+                    rechnung,
+                    "lieferschein_datei"
+                ):
+                    if rechnung.lieferschein_datei:
+                        rechnung.lieferschein_datei.delete(
+                            save=False
+                        )
+                    rechnung.lieferschein_datei = (
+                        request.FILES[
+                            "lieferschein_datei"
+                        ]
+                    )
+            # =================================================
+            # SPEICHERN
+            # =================================================
+            rechnung.save()
+            messages.success(
+                request,
+                "Rechnung erfolgreich gespeichert."
+            )
+            return redirect(
+                "rechnung_uebersicht"
+            )
+    # =====================================================
+    # ANZEIGE
+    # =====================================================
+    return render(
+        request,
+        "devices/rechnung_detail.html",
+        {
+            "rechnung": rechnung,
+        }
+    )
+
+@rechnung_permission_required
+def rechnung_uebersicht(request):
+
+    rechnungen = (
+        Rechnung.objects
+        .select_related(
+            "erstellt_von"
+        )
+        .exclude(
+            status="Erledigt"
+        )
+        .order_by(
+            "faelligkeitsdatum",
+            "-erstellt_am"
+        )
+    )
+
+    return render(
+        request,
+        "devices/rechnung_uebersicht.html",
+        {
+            "rechnungen": rechnungen,
+        }
+    )
+
+@rechnung_permission_required
+def rechnung_historie(request):
+
+    rechnungen = (
+        Rechnung.objects
+        .filter(status="Erledigt")
+        .select_related(
+            "erstellt_von",
+        )
+    )
+
+    # ==========================================
+    # SUCHE
+    # ==========================================
+
+    search = request.GET.get(
+        "search",
+        ""
+    ).strip()
+
+    if search:
+
+        rechnungen = rechnungen.filter(
+            Q(rechnungsnummer__icontains=search)
+            |
+            Q(kategorie__name__icontains=search)
+            |
+            Q(lieferant__icontains=search)
+            |
+            Q(rechnungsbetrag__icontains=search)
+        )
+
+    # ==========================================
+    # DATUM FILTER
+    # ==========================================
+
+    datum_von = request.GET.get(
+        "datum_von",
+        ""
+    ).strip()
+
+    datum_bis = request.GET.get(
+        "datum_bis",
+        ""
+    ).strip()
+
+    if datum_von:
+        rechnungen = rechnungen.filter(
+            rechnungsdatum__gte=datum_von
+        )
+
+    if datum_bis:
+        rechnungen = rechnungen.filter(
+            rechnungsdatum__lte=datum_bis
+        )
+
+    # ==========================================
+    # MEHRERE RECHNUNGEN LÖSCHEN
+    # ==========================================
+
+    if request.method == "POST":
+
+        if request.POST.get("action") == "delete_selected":
+
+            selected_ids = request.POST.getlist(
+                "selected_rechnungen"
+            )
+
+            for rechnung_id in selected_ids:
+
+                rechnung = Rechnung.objects.filter(
+                    id=rechnung_id
+                ).first()
+
+                if not rechnung:
+                    continue
+
+                if rechnung.rechnung_datei:
+
+                    rechnung.rechnung_datei.delete(
+                        save=False
+                    )
+
+                if hasattr(
+                    rechnung,
+                    "lieferschein_datei"
+                ):
+
+                    if rechnung.lieferschein_datei:
+
+                        rechnung.lieferschein_datei.delete(
+                            save=False
+                        )
+
+                rechnung.delete()
+
+            messages.success(
+                request,
+                "Ausgewählte Rechnungen erfolgreich gelöscht."
+            )
+
+            return redirect(
+                "rechnung_historie"
+            )
+    # ==========================================
+    # GESAMTSUMME
+    # ==========================================
+
+    gesamtsumme = rechnungen.aggregate(
+        total=Sum("rechnungsbetrag")
+    )["total"] or 0
+    # ==========================================
+    # SORTIERUNG
+    # ==========================================
+
+    rechnungen = rechnungen.order_by(
+        "-bezahlt_am",
+        "-erstellt_am"
+    )
+
+    return render(
+        request,
+        "devices/rechnung_historie.html",
+        {
+            "rechnungen": rechnungen,
+            "search": search,
+            "datum_von": datum_von,
+            "datum_bis": datum_bis,
+            "gesamtsumme": gesamtsumme,
+        }
+    )
+
+@rechnung_permission_required
+def rechnung_historie_delete(request, rechnung_id):
+
+    rechnung = get_object_or_404(
+        Rechnung,
+        id=rechnung_id
+    )
+
+    if request.method == "POST":
+
+        if rechnung.rechnung_datei:
+
+            rechnung.rechnung_datei.delete(
+                save=False
+            )
+
+        if hasattr(
+            rechnung,
+            "lieferschein_datei"
+        ):
+
+            if rechnung.lieferschein_datei:
+
+                rechnung.lieferschein_datei.delete(
+                    save=False
+                )
+
+        rechnung.delete()
+
+        messages.success(
+            request,
+            "Rechnung erfolgreich gelöscht."
+        )
+
+    return redirect(
+        "rechnung_historie"
+    )
+@rechnung_permission_required
+def rechnung_kategorie_list(request):
+
+    kategorien = RechnungKategorie.objects.order_by("name")
+
+    return render(
+        request,
+        "devices/rechnung_kategorie_list.html",
+        {
+            "kategorien": kategorien,
+        }
+    )
+
+@rechnung_permission_required
+def add_rechnung_kategorie(request):
+
+    if request.method == "POST":
+
+        name = request.POST.get(
+            "name",
+            ""
+        ).strip()
+
+        if not name:
+            messages.error(
+                request,
+                "Bitte Kategorie eingeben."
+            )
+
+            return redirect(
+                "add_rechnung_kategorie"
+            )
+
+        if RechnungKategorie.objects.filter(
+            name__iexact=name
+        ).exists():
+
+            messages.error(
+                request,
+                "Diese Kategorie existiert bereits."
+            )
+
+            return redirect(
+                "rechnung_kategorie_list"
+            )
+
+        RechnungKategorie.objects.create(
+            name=name
+        )
+
+        messages.success(
+            request,
+            "Kategorie erfolgreich hinzugefügt."
+        )
+
+        return redirect(
+            "rechnung_kategorie_list"
+        )
+
+    return render(
+        request,
+        "devices/add_rechnung_kategorie.html"
+    )
+
+@rechnung_permission_required
+def edit_rechnung_kategorie(request, pk):
+
+    kategorie = get_object_or_404(
+        RechnungKategorie,
+        id=pk
+    )
+
+    if request.method == "POST":
+
+        name = request.POST.get(
+            "name",
+            ""
+        ).strip()
+
+        if not name:
+            messages.error(
+                request,
+                "Bitte Kategorie eingeben."
+            )
+
+            return redirect(
+                "edit_rechnung_kategorie",
+                pk=pk
+            )
+
+        if RechnungKategorie.objects.filter(
+            name__iexact=name
+        ).exclude(
+            id=pk
+        ).exists():
+
+            messages.error(
+                request,
+                "Diese Kategorie existiert bereits."
+            )
+
+            return redirect(
+                "edit_rechnung_kategorie",
+                pk=pk
+            )
+
+        kategorie.name = name
+        kategorie.save()
+
+        messages.success(
+            request,
+            "Kategorie erfolgreich geändert."
+        )
+
+        return redirect(
+            "rechnung_kategorie_list"
+        )
+
+    return render(
+        request,
+        "devices/edit_rechnung_kategorie.html",
+        {
+            "kategorie": kategorie,
+        }
+    )
+
+@rechnung_permission_required
+def delete_rechnung_kategorie(request, pk):
+
+    kategorie = get_object_or_404(
+        RechnungKategorie,
+        id=pk
+    )
+
+    if request.method == "POST":
+
+        kategorie.delete()
+
+        messages.success(
+            request,
+            "Kategorie erfolgreich gelöscht."
+        )
+
+    return redirect(
+        "rechnung_kategorie_list"
+    )
 
 @login_required
 def system_settings(request):
@@ -2643,39 +3628,145 @@ def user_edit(request, user_id):
     if not request.user.is_superuser:
         return redirect("home")
 
-    user = get_object_or_404(User, id=user_id)
+    user = get_object_or_404(
+        User,
+        id=user_id
+    )
+
+    # ==========================================
+    # USER PERMISSION OBJECT
+    # ==========================================
+
+    permission, created = UserPermission.objects.get_or_create(
+        user=user
+    )
+
+    # ==========================================
+    # POST
+    # ==========================================
 
     if request.method == "POST":
 
-        user.username = request.POST.get("username")
-        user.first_name = request.POST.get("first_name")
-        user.last_name = request.POST.get("last_name")
-        user.email = request.POST.get("email")
+        # ======================================
+        # USER DATA
+        # ======================================
 
-        role = request.POST.get("role")
+        user.username = request.POST.get(
+            "username",
+            ""
+        ).strip()
+
+        user.first_name = request.POST.get(
+            "first_name",
+            ""
+        ).strip()
+
+        user.last_name = request.POST.get(
+            "last_name",
+            ""
+        ).strip()
+
+        user.email = request.POST.get(
+            "email",
+            ""
+        ).strip()
+
+        # ======================================
+        # ROLE
+        # ======================================
+
+        role = request.POST.get(
+            "role"
+        )
 
         if role == "admin":
+
             user.is_staff = True
             user.is_superuser = True
+
         else:
+
             user.is_staff = False
             user.is_superuser = False
 
         user.save()
 
-        messages.success(request, "Benutzer erfolgreich geändert.")
+        # ======================================
+        # PERMISSIONS
+        # ======================================
 
-        return redirect("user_list")
+        permission.permission_geraete = (
+            "permission_geraete"
+            in request.POST
+        )
+
+        permission.permission_reparaturen = (
+            "permission_reparaturen"
+            in request.POST
+        )
+
+        permission.permission_filter = (
+            "permission_filter"
+            in request.POST
+        )
+
+        permission.permission_wartung = (
+            "permission_wartung"
+            in request.POST
+        )
+
+        permission.permission_dokumente = (
+            "permission_dokumente"
+            in request.POST
+        )
+
+        permission.permission_rechnung = (
+            "permission_rechnung"
+            in request.POST
+        )
+
+        permission.permission_firmeninfos = (
+            "permission_firmeninfos"
+            in request.POST
+        )
+
+        permission.permission_kontakt = (
+            "permission_kontakt"
+            in request.POST
+        )
+
+        permission.permission_einstellungen = (
+            "permission_einstellungen"
+            in request.POST
+        )
+
+        permission.save()
+
+        # ======================================
+        # SUCCESS
+        # ======================================
+
+        messages.success(
+            request,
+            "Benutzer und Berechtigungen erfolgreich geändert."
+        )
+
+        return redirect(
+            "user_list"
+        )
+
+    # ==========================================
+    # GET
+    # ==========================================
 
     return render(
         request,
         "devices/user_edit.html",
         {
-            "edit_user": user
+            "edit_user": user,
+            "permissions": permission,
         }
     )
-
-
 
 
 @login_required
@@ -2972,25 +4063,104 @@ def filterwechsel_history(request):
 
     filterwechsel = Filterwechsel.objects.all().order_by("-datum")
 
-    search = request.GET.get("search")
+    # ==========================================
+    # SUCHE
+    # ==========================================
+
+    search = request.GET.get(
+        "search",
+        ""
+    ).strip()
 
     if search:
+
         filterwechsel = filterwechsel.filter(
             inventarnummer__icontains=search
         )
 
+
+    # ==========================================
+    # AUSGEWÄHLTE LÖSCHEN
+    # NUR SUPERUSER
+    # ==========================================
+
+    if request.method == "POST":
+
+        if not request.user.is_superuser:
+
+            return redirect(
+                "permission_denied"
+            )
+
+
+        ids = request.POST.getlist(
+            "selected_filterwechsel"
+        )
+
+
+        for filter_id in ids:
+
+            obj = Filterwechsel.objects.filter(
+                id=filter_id
+            ).first()
+
+
+            if obj:
+
+                AuditLog.objects.create(
+
+                    user=request.user,
+
+                    action="DELETE",
+
+                    model_name="Filterwechsel",
+
+                    object_id=obj.id,
+
+                    description=(
+
+                        f"Filterwechsel gelöscht. "
+
+                        f"Gerät: "
+                        f"{obj.geraet.name if obj.geraet else 'Unbekannt'} "
+
+                        f"(Inventarnummer: "
+                        f"{obj.geraet.inventory_number if obj.geraet else '—'})"
+
+                    )
+
+                )
+
+
+                obj.delete()
+
+
+        messages.success(
+
+            request,
+
+            "Ausgewählte Filterwechsel gelöscht."
+
+        )
+
+
+        return redirect(
+            "filterwechsel_history"
+        )
+
+
     return render(
+
         request,
+
         "devices/filterwechsel_history.html",
+
         {
             "filterwechsel": filterwechsel,
-            "search": search or ""
+            "search": search,
         }
+
     )
-
-
-
-
 
 @login_required
 def filterwechsel_update(request, id):
@@ -3435,6 +4605,102 @@ def backup_delete(request, filename):
 
     return redirect("backup")
 
+
+@login_required
+def backup_delete_all(request):
+
+    # =========================================================
+    # NUR ADMIN
+    # =========================================================
+
+    if not request.user.is_superuser:
+        return redirect("permission_denied")
+
+
+    # =========================================================
+    # NUR POST
+    # =========================================================
+
+    if request.method != "POST":
+        return redirect("backup")
+
+
+    # =========================================================
+    # BACKUP ORDNER
+    # =========================================================
+
+    backup_dir = os.path.join(
+        settings.BASE_DIR,
+        "backups"
+    )
+
+
+    # =========================================================
+    # ORDNER NICHT VORHANDEN
+    # =========================================================
+
+    if not os.path.exists(backup_dir):
+
+        messages.warning(
+            request,
+            "⚠️ Keine Backups vorhanden."
+        )
+
+        return redirect("backup")
+
+
+    # =========================================================
+    # ALLE BACKUPS LÖSCHEN
+    # =========================================================
+
+    deleted_count = 0
+
+
+    for filename in os.listdir(backup_dir):
+
+        filepath = os.path.join(
+            backup_dir,
+            filename
+        )
+
+
+        if not os.path.isfile(filepath):
+            continue
+
+
+        try:
+
+            os.remove(filepath)
+
+            deleted_count += 1
+
+        except OSError:
+
+            continue
+
+
+    # =========================================================
+    # ERGEBNIS
+    # =========================================================
+
+    if deleted_count > 0:
+
+        messages.success(
+            request,
+            f"✅ {deleted_count} Backups wurden erfolgreich gelöscht."
+        )
+
+    else:
+
+        messages.warning(
+            request,
+            "⚠️ Keine Backups zum Löschen vorhanden."
+        )
+
+
+    return redirect("backup")
+
+
 @login_required
 def backup_restore(request, filename):
 
@@ -3538,9 +4804,24 @@ def create_update_backup():
 @login_required
 def export(request):
 
+    # =========================================================
+    # NUR ADMIN
+    # =========================================================
+
     if not request.user.is_superuser:
         return redirect("permission_denied")
+
+
+    # =========================================================
+    # FIRMA
+    # =========================================================
+
     company = CompanyInformation.objects.first()
+
+
+    # =========================================================
+    # EXPORT ORDNER
+    # =========================================================
 
     export_dir = os.path.join(
         settings.BASE_DIR,
@@ -3553,199 +4834,1087 @@ def export(request):
     )
 
 
+    # =========================================================
+    # POST = EXPORT ERSTELLEN
+    # =========================================================
+
     if request.method == "POST":
 
-        
-        geraetart_filter = request.POST.get(
-            "geraetart"
-        )
-
-        standort_filter = request.POST.get(
-            "standort"
-        )
+        export_typ = request.POST.get(
+            "export_typ",
+            ""
+        ).strip()
 
 
-        devices = Device.objects.all()
-
-
-        if geraetart_filter:
-
-            devices = devices.filter(
-                geraetart__name=geraetart_filter
-            )
-
-
-        if standort_filter:
-
-            devices = devices.filter(
-                practice__name=standort_filter
-            )
-
-
+        # =====================================================
+        # EXCEL ERSTELLEN
+        # =====================================================
 
         wb = Workbook()
 
         ws = wb.active
 
-        ws.title = "Geräte"
+        ws.title = "Export"
 
-        # Firmeninformationen
+
+        # =====================================================
+        # FIRMA
+        # =====================================================
 
         if company:
 
             ws.append([
-                company.company_name
+                company.company_name or ""
             ])
 
             ws.append([
-                company.address
+                company.address or ""
             ])
 
             ws.append([
-                f"Telefon: {company.phone}"
+                f"Telefon: {company.phone or ''}"
             ])
 
             ws.append([
-                f"E-Mail: {company.email}"
+                f"E-Mail: {company.email or ''}"
             ])
 
             ws.append([
-                f"Kundennummer: {company.customer_number}"
+                f"Kundennummer: {company.customer_number or ''}"
             ])
-
-
-        ws.append([])
-
-        # Bericht Kopf
-
-        ws.append([
-            "Geräte Export"
-        ])
-
-
-        ws.append([
-            f"Erstellt am: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
-        ])
-
-
-        ws.append([
-            f"Geräteart: {geraetart_filter if geraetart_filter else 'Alle Geräte'}"
-        ])
-
-
-        ws.append([
-            f"Standort: {standort_filter if standort_filter else 'Alle Standorte'}"
-        ])
-
 
         ws.append([])
 
 
+        # =====================================================
+        # 1. GESAMTE GERÄTE
+        # =====================================================
 
-        # Tabellen Kopf
+        if export_typ == "geraete":
 
-        ws.append([
+            geraetart_filter = request.POST.get(
+                "geraetart",
+                ""
+            ).strip()
 
-            "Inventarnummer",
-
-            "Seriennummer",
-
-            "Gerätname",
-
-            "Gerätart",
-
-            "Standort",
-
-            "Betriebsstunden",
-
-            "Letzte STK",
-
-            "Letzte MTK",
-
-            "Letzte DGUV V3",
-
-        ])
+            standort_filter = request.POST.get(
+                "standort",
+                ""
+            ).strip()
 
 
-
-        # Kopf formatieren
-
-        for cell in ws[6]:
-
-            cell.font = Font(
-                bold=True
-            )
-
-            cell.alignment = Alignment(
-                horizontal="center"
+            devices = (
+                Device.objects
+                .select_related(
+                    "geraetart",
+                    "practice"
+                )
+                .all()
+                .order_by(
+                    "inventory_number"
+                )
             )
 
 
+            if geraetart_filter:
 
-        for device in devices:
-
-
-            betriebsstunden = ""
-
-
-            if (
-                device.geraetart
-                and device.geraetart.name == "Dialyse Maschinen"
-            ):
-
-                betriebsstunden = (
-                    device.operating_hours
-                    or ""
+                devices = devices.filter(
+                    geraetart_id=geraetart_filter
                 )
 
 
+            if standort_filter:
+
+                devices = devices.filter(
+                    practice_id=standort_filter
+                )
+
+
+            # =================================================
+            # KEINE GERÄTE
+            # =================================================
+
+            if not devices.exists():
+
+                messages.warning(
+                    request,
+                    "⚠️ Keine Geräte zum Exportieren vorhanden."
+                )
+
+                return redirect("export")
+
+
+            # =================================================
+            # TITEL
+            # =================================================
+
+            ws.append([
+                "📋 Gesamte Geräte"
+            ])
+
+            ws.append([
+                "Erstellt am: "
+                + datetime.now().strftime(
+                    "%d.%m.%Y %H:%M"
+                )
+            ])
+
+
+            # =================================================
+            # GERÄTEART
+            # =================================================
+
+            if geraetart_filter:
+
+                geraetart_name = (
+                    Geraetart.objects
+                    .filter(
+                        id=geraetart_filter
+                    )
+                    .values_list(
+                        "name",
+                        flat=True
+                    )
+                    .first()
+                    or ""
+                )
+
+            else:
+
+                geraetart_name = "Alle Gerätarten"
+
+
+            ws.append([
+                "Geräteart: "
+                + geraetart_name
+            ])
+
+
+            # =================================================
+            # STANDORT
+            # =================================================
+
+            if standort_filter:
+
+                standort_name = (
+                    Standort.objects
+                    .filter(
+                        id=standort_filter
+                    )
+                    .values_list(
+                        "name",
+                        flat=True
+                    )
+                    .first()
+                    or ""
+                )
+
+            else:
+
+                standort_name = "Alle Standorte"
+
+
+            ws.append([
+                "Standort: "
+                + standort_name
+            ])
+
+            ws.append([])
+
+
+            # =================================================
+            # TABELLENKOPF
+            # =================================================
 
             ws.append([
 
+                "Inventarnummer",
 
-                device.inventory_number,
+                "Seriennummer",
 
+                "Gerätbezeichnung",
 
-                device.serial_number,
+                "Gerätart",
 
+                "Standort",
 
-                device.name,
+                "Betriebsstunden",
 
+                "Nächste Prüfung",
 
-                device.geraetart.name
-                if device.geraetart
-                else "",
-
-
-                device.practice.name
-                if device.practice
-                else "",
-
-
-                betriebsstunden,
-
-
-                device.last_stk.strftime("%d.%m.%Y")
-                if device.last_stk
-                else "",
-
-
-                device.last_mtk.strftime("%d.%m.%Y")
-                if device.last_mtk
-                else "",
-
-
-                device.last_dguv.strftime("%d.%m.%Y")
-                if device.last_dguv
-                else "",
-
+                "Status",
 
             ])
 
 
+            # =================================================
+            # GERÄTE
+            # =================================================
+
+            for device in devices:
+
+                naechste_pruefungen = []
 
 
-        # Spalten automatisch anpassen
+                if device.next_stk:
+
+                    naechste_pruefungen.append(
+                        "STK: "
+                        + device.next_stk.strftime(
+                            "%d.%m.%Y"
+                        )
+                    )
+
+
+                if device.next_mtk:
+
+                    naechste_pruefungen.append(
+                        "MTK: "
+                        + device.next_mtk.strftime(
+                            "%d.%m.%Y"
+                        )
+                    )
+
+
+                if device.next_dguv:
+
+                    naechste_pruefungen.append(
+                        "DGUV V3: "
+                        + device.next_dguv.strftime(
+                            "%d.%m.%Y"
+                        )
+                    )
+
+
+                ws.append([
+
+                    device.inventory_number
+                    or "",
+
+                    device.serial_number
+                    or "",
+
+                    device.name
+                    or "",
+
+                    (
+                        device.geraetart.name
+                        if device.geraetart
+                        else ""
+                    ),
+
+                    (
+                        device.practice.name
+                        if device.practice
+                        else ""
+                    ),
+
+                    (
+                        device.operating_hours
+                        if device.operating_hours is not None
+                        else ""
+                    ),
+
+                    "\n".join(
+                        naechste_pruefungen
+                    ),
+
+                    device.status
+                    or "",
+
+                ])
+
+
+        # =====================================================
+        # 2. REPARATURHISTORIE
+        # =====================================================
+
+        elif export_typ == "reparatur":
+
+            datum_von = request.POST.get(
+                "datum_von",
+                ""
+            ).strip()
+
+            datum_bis = request.POST.get(
+                "datum_bis",
+                ""
+            ).strip()
+
+
+            reparaturen = (
+                Reparatur.objects
+                .filter(
+                    status="Erledigt"
+                )
+                .select_related(
+                    "geraet"
+                )
+                .order_by(
+                    "-datum"
+                )
+            )
+
+
+            if datum_von:
+
+                reparaturen = reparaturen.filter(
+                    datum__gte=datum_von
+                )
+
+
+            if datum_bis:
+
+                reparaturen = reparaturen.filter(
+                    datum__lte=datum_bis
+                )
+
+
+            if not reparaturen.exists():
+
+                messages.warning(
+                    request,
+                    "⚠️ Keine Reparaturen zum Exportieren vorhanden."
+                )
+
+                return redirect("export")
+
+
+            ws.append([
+                "🛠️ Reparaturhistorie"
+            ])
+
+            ws.append([
+                "Erstellt am: "
+                + datetime.now().strftime(
+                    "%d.%m.%Y %H:%M"
+                )
+            ])
+
+            ws.append([
+                "Zeitraum von: "
+                + (
+                    datum_von
+                    if datum_von
+                    else "Alle"
+                )
+            ])
+
+            ws.append([
+                "Zeitraum bis: "
+                + (
+                    datum_bis
+                    if datum_bis
+                    else "Alle"
+                )
+            ])
+
+            ws.append([])
+
+
+            ws.append([
+
+                "Gerät",
+
+                "Inventarnummer",
+
+                "Seriennummer",
+
+                "Problemmeldung",
+
+                "Reparaturausführung",
+
+                "Datum",
+
+                "Status",
+
+            ])
+
+
+            for reparatur in reparaturen:
+
+                geraet = reparatur.geraet
+
+
+                ws.append([
+
+                    (
+                        geraet.name
+                        if geraet
+                        else ""
+                    ),
+
+                    (
+                        geraet.inventory_number
+                        if geraet
+                        else ""
+                    ),
+
+                    (
+                        geraet.serial_number
+                        if geraet
+                        else ""
+                    ),
+
+                    reparatur.beschreibung
+                    or "",
+
+                    reparatur.ausfuehrung
+                    or "",
+
+                    (
+                        reparatur.datum.strftime(
+                            "%d.%m.%Y"
+                        )
+                        if reparatur.datum
+                        else ""
+                    ),
+
+                    reparatur.status
+                    or "",
+
+                ])
+
+
+        # =====================================================
+        # 3. FILTERWECHSEL HISTORIE
+        # =====================================================
+
+        elif export_typ == "filterwechsel":
+
+            datum_von = request.POST.get(
+                "datum_von",
+                ""
+            ).strip()
+
+            datum_bis = request.POST.get(
+                "datum_bis",
+                ""
+            ).strip()
+
+
+            filterwechsel = (
+                Filterwechsel.objects
+                .select_related(
+                    "geraet"
+                )
+                .order_by(
+                    "-datum"
+                )
+            )
+
+
+            if datum_von:
+
+                filterwechsel = filterwechsel.filter(
+                    datum__gte=datum_von
+                )
+
+
+            if datum_bis:
+
+                filterwechsel = filterwechsel.filter(
+                    datum__lte=datum_bis
+                )
+
+
+            if not filterwechsel.exists():
+
+                messages.warning(
+                    request,
+                    "⚠️ Keine Filterwechsel zum Exportieren vorhanden."
+                )
+
+                return redirect("export")
+
+
+            ws.append([
+                "🔄 Filterwechselhistorie"
+            ])
+
+            ws.append([
+                "Erstellt am: "
+                + datetime.now().strftime(
+                    "%d.%m.%Y %H:%M"
+                )
+            ])
+
+            ws.append([
+                "Zeitraum von: "
+                + (
+                    datum_von
+                    if datum_von
+                    else "Alle"
+                )
+            ])
+
+            ws.append([
+                "Zeitraum bis: "
+                + (
+                    datum_bis
+                    if datum_bis
+                    else "Alle"
+                )
+            ])
+
+            ws.append([])
+
+
+            ws.append([
+
+                "Inventarnummer",
+
+                "Anzahl der Filter",
+
+                "Filtercode",
+
+                "Datum",
+
+                "Durchgeführt von",
+
+            ])
+
+
+            for item in filterwechsel:
+
+                ws.append([
+
+                    (
+                        item.geraet.inventory_number
+                        if item.geraet
+                        else ""
+                    ),
+
+                    (
+                        item.anzahl_filter
+                        if item.anzahl_filter is not None
+                        else ""
+                    ),
+
+                    item.filtercode
+                    or "",
+
+                    (
+                        item.datum.strftime(
+                            "%d.%m.%Y"
+                        )
+                        if item.datum
+                        else ""
+                    ),
+
+                    getattr(
+                        item,
+                        "durchgeführt_von",
+                        ""
+                    )
+                    or "",
+
+                ])
+
+
+        # =====================================================
+        # 4. WARTUNG / PRÜFUNGEN
+        # =====================================================
+
+        elif export_typ == "wartung":
+
+            # IMPORTANT:
+            # HTML sendet name="pruefart"
+
+            pruefart_id = request.POST.get(
+                "pruefart",
+                ""
+            ).strip()
+
+
+            if not pruefart_id:
+
+                messages.warning(
+                    request,
+                    "⚠️ Keine Prüfart ausgewählt."
+                )
+
+                return redirect("export")
+
+
+            # =================================================
+            # PRÜFART
+            # =================================================
+
+            pruefart = (
+                Pruefart.objects
+                .filter(
+                    id=pruefart_id
+                )
+                .first()
+            )
+
+
+            if not pruefart:
+
+                messages.warning(
+                    request,
+                    "⚠️ Prüfart wurde nicht gefunden."
+                )
+
+                return redirect("export")
+
+
+            # =================================================
+            # PRÜFUNGEN
+            # =================================================
+
+            pruefungen = (
+                DevicePruefung.objects
+                .filter(
+                    pruefart_id=pruefart_id,
+                    aktiv=True,
+                    device__status="Aktiv",
+                    naechstes_datum__isnull=False,
+                )
+                .select_related(
+                    "device",
+                    "pruefart",
+                    "device__geraetart",
+                    "device__practice",
+                )
+                .order_by(
+                    "naechstes_datum"
+                )
+            )
+
+
+            # =================================================
+            # KEINE DATEN
+            # =================================================
+
+            if not pruefungen.exists():
+
+                messages.warning(
+                    request,
+                    f"⚠️ Keine Daten für {pruefart.name} zum Exportieren vorhanden."
+                )
+
+                return redirect("export")
+
+
+            # =================================================
+            # TITEL
+            # =================================================
+
+            ws.append([
+                f"📋 Prüfungen - {pruefart.name}"
+            ])
+
+            ws.append([
+                "Erstellt am: "
+                + datetime.now().strftime(
+                    "%d.%m.%Y %H:%M"
+                )
+            ])
+
+            ws.append([])
+
+
+            # =================================================
+            # TABELLENKOPF
+            # =================================================
+
+            ws.append([
+
+                "Inventarnummer",
+
+                "Seriennummer",
+
+                "Gerätbezeichnung",
+
+                "Gerätart",
+
+                "Standort",
+
+                "Nächste Prüfung",
+
+                "Status",
+
+            ])
+
+
+            heute = datetime.now().date()
+
+
+            # =================================================
+            # PRÜFUNGEN
+            # =================================================
+
+            for pruefung in pruefungen:
+
+                device = pruefung.device
+
+
+                if pruefung.naechstes_datum < heute:
+
+                    status_text = "Überfällig"
+
+                else:
+
+                    status_text = "Fällig"
+
+
+                ws.append([
+
+                    device.inventory_number
+                    or "",
+
+                    device.serial_number
+                    or "",
+
+                    device.name
+                    or "",
+
+                    (
+                        device.geraetart.name
+                        if device.geraetart
+                        else ""
+                    ),
+
+                    (
+                        device.practice.name
+                        if device.practice
+                        else ""
+                    ),
+
+                    pruefung.naechstes_datum.strftime(
+                        "%d.%m.%Y"
+                    ),
+
+                    status_text,
+
+                ])
+
+
+        # =====================================================
+        # 5. RECHNUNGSHISTORIE
+        # =====================================================
+
+        elif export_typ == "rechnung":
+
+            datum_von = request.POST.get(
+                "datum_von",
+                ""
+            ).strip()
+
+            datum_bis = request.POST.get(
+                "datum_bis",
+                ""
+            ).strip()
+
+
+            # =================================================
+            # RECHNUNGEN LADEN
+            # =================================================
+
+            rechnungen = (
+                Rechnung.objects
+                .select_related(
+                    "erstellt_von"
+                )
+                .filter(
+                    status="Erledigt"
+                )
+                .order_by(
+                    "-rechnungsdatum"
+                )
+            )
+
+
+            # =================================================
+            # DATUM VON
+            # =================================================
+
+            if datum_von:
+
+                rechnungen = rechnungen.filter(
+                    rechnungsdatum__gte=datum_von
+                )
+
+
+            # =================================================
+            # DATUM BIS
+            # =================================================
+
+            if datum_bis:
+
+                rechnungen = rechnungen.filter(
+                    rechnungsdatum__lte=datum_bis
+                )
+
+
+            # =================================================
+            # KEINE DATEN
+            # =================================================
+
+            if not rechnungen.exists():
+
+                messages.warning(
+                    request,
+                    "⚠️ Keine Rechnungen zum Exportieren vorhanden."
+                )
+
+                return redirect("export")
+
+
+            # =================================================
+            # GESAMTSUMME
+            # =================================================
+
+            gesamtsumme = (
+                rechnungen.aggregate(
+                    total=Sum(
+                        "rechnungsbetrag"
+                    )
+                )["total"]
+                or 0
+            )
+
+
+            # =================================================
+            # TITEL
+            # =================================================
+
+            ws.append([
+                "🧾 Rechnungshistorie"
+            ])
+
+            ws.append([
+                "Erstellt am: "
+                + datetime.now().strftime(
+                    "%d.%m.%Y %H:%M"
+                )
+            ])
+
+            ws.append([
+                "Rechnungsdatum von: "
+                + (
+                    datum_von
+                    if datum_von
+                    else "Alle"
+                )
+            ])
+
+            ws.append([
+                "Rechnungsdatum bis: "
+                + (
+                    datum_bis
+                    if datum_bis
+                    else "Alle"
+                )
+            ])
+
+            ws.append([
+                "Gesamtsumme: "
+                + f"{float(gesamtsumme):.2f} €"
+            ])
+
+            ws.append([])
+
+
+            # =================================================
+            # TABELLENKOPF
+            # =================================================
+
+            ws.append([
+
+                "Rechnungsnummer",
+
+                "Rechnungsdatum",
+
+                "Lieferant",
+
+                "Auftragsnummer",
+
+                "Lieferscheinnummer",
+
+                "Kundennummer",
+
+                "Leistungsdatum",
+
+                "Betrag",
+
+                "Zahlungsziel",
+
+                "Fälligkeitsdatum",
+
+                "Kostenstelle",
+
+                "Kategorie",
+
+                "Verantwortlicher",
+
+                "Bezahlt am",
+
+                "Zahlungsreferenz",
+
+                "Status",
+
+                "Bemerkung",
+
+            ])
+
+
+            # =================================================
+            # RECHNUNGEN
+            # =================================================
+
+            for r in rechnungen:
+
+                ws.append([
+
+                    r.rechnungsnummer
+                    or "",
+
+                    (
+                        r.rechnungsdatum.strftime(
+                            "%d.%m.%Y"
+                        )
+                        if r.rechnungsdatum
+                        else ""
+                    ),
+
+                    r.lieferant
+                    or "",
+
+                    r.auftragsnummer
+                    or "",
+
+                    r.lieferscheinnummer
+                    or "",
+
+                    r.kundennummer
+                    or "",
+
+                    (
+                        r.leistungsdatum.strftime(
+                            "%d.%m.%Y"
+                        )
+                        if r.leistungsdatum
+                        else ""
+                    ),
+
+                    float(
+                        r.rechnungsbetrag
+                        or 0
+                    ),
+
+                    (
+                        r.zahlungsziel
+                        if r.zahlungsziel is not None
+                        else ""
+                    ),
+
+                    (
+                        r.faelligkeitsdatum.strftime(
+                            "%d.%m.%Y"
+                        )
+                        if r.faelligkeitsdatum
+                        else ""
+                    ),
+
+                    r.kostenstelle
+                    or "",
+
+                    r.kategorie
+                    or "",
+
+                    r.verantwortlicher
+                    or "",
+
+                    (
+                        r.bezahlt_am.strftime(
+                            "%d.%m.%Y"
+                        )
+                        if r.bezahlt_am
+                        else ""
+                    ),
+
+                    r.zahlungsreferenz
+                    or "",
+
+                    r.status
+                    or "",
+
+                    r.bemerkung
+                    or "",
+
+                ])
+
+
+        # =====================================================
+        # UNBEKANNTER EXPORT
+        # =====================================================
+
+        else:
+
+            messages.error(
+                request,
+                "Bitte wählen Sie einen Export-Typ."
+            )
+
+            return redirect("export")
+
+
+        # =====================================================
+        # FORMATIERUNG
+        # =====================================================
+
+        for row in ws.iter_rows():
+
+            for cell in row:
+
+                if cell.value is not None:
+
+                    cell.alignment = Alignment(
+                        vertical="top",
+                        wrap_text=True
+                    )
+
+
+        # =====================================================
+        # TABELLENKOPF FETT
+        # =====================================================
+
+        for row in ws.iter_rows():
+
+            values = [
+
+                str(cell.value)
+                if cell.value is not None
+                else ""
+
+                for cell in row
+
+            ]
+
+
+            if (
+                "Inventarnummer" in values
+                or
+                "Rechnungsnummer" in values
+                or
+                "Gerät" in values
+            ):
+
+                for cell in row:
+
+                    cell.font = Font(
+                        bold=True
+                    )
+
+                break
+
+
+        # =====================================================
+        # SPALTENBREITE
+        # =====================================================
 
         for column in ws.columns:
 
@@ -3758,22 +5927,64 @@ def export(request):
 
             for cell in column:
 
-                if cell.value:
+                if cell.value is not None:
 
-                    max_length = max(
-                        max_length,
-                        len(str(cell.value))
+                    lines = str(
+                        cell.value
+                    ).split("\n")
+
+
+                    longest = max(
+                        len(line)
+                        for line in lines
                     )
 
 
-            ws.column_dimensions[column_letter].width = (
-                max_length + 3
+                    max_length = max(
+                        max_length,
+                        longest
+                    )
+
+
+            ws.column_dimensions[
+                column_letter
+            ].width = min(
+                max_length + 3,
+                60
             )
 
 
+        # =====================================================
+        # DATEINAME
+        # =====================================================
 
-        filename = datetime.now().strftime(
-            "Geraete_Export_%Y-%m-%d_%H-%M-%S.xlsx"
+        prefix = {
+
+            "geraete":
+                "Geraete",
+
+            "reparatur":
+                "Reparaturhistorie",
+
+            "filterwechsel":
+                "Filterwechselhistorie",
+
+            "wartung":
+                "Wartung",
+
+            "rechnung":
+                "Rechnungshistorie",
+
+        }.get(
+            export_typ,
+            "Export"
+        )
+
+
+        filename = (
+            f"{prefix}_Export_"
+            f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+            ".xlsx"
         )
 
 
@@ -3783,25 +5994,40 @@ def export(request):
         )
 
 
-        wb.save(filepath)
+        # =====================================================
+        # SPEICHERN
+        # =====================================================
 
-
-
-        messages.success(
-            request,
-            "Export erfolgreich erstellt."
+        wb.save(
+            filepath
         )
 
 
-        return redirect("export")
+        # =====================================================
+        # ERFOLG
+        # =====================================================
+
+        messages.success(
+            request,
+            "✅ Export erfolgreich erstellt."
+        )
 
 
+        return redirect(
+            "export"
+        )
 
+
+    # =========================================================
+    # GET = EXPORT SEITE
+    # =========================================================
 
     exports = []
 
 
-    for file in os.listdir(export_dir):
+    for file in os.listdir(
+        export_dir
+    ):
 
         path = os.path.join(
             export_dir,
@@ -3809,22 +6035,35 @@ def export(request):
         )
 
 
+        if not os.path.isfile(path):
+
+            continue
+
+
         exports.append({
 
-            "name": file,
+            "name":
+                file,
 
-            "date": datetime.fromtimestamp(
-                os.path.getmtime(path)
-            ),
+            "date":
+                datetime.fromtimestamp(
+                    os.path.getmtime(path)
+                ),
 
-            "size": round(
-                os.path.getsize(path) / 1024 / 1024,
-                2
-            ),
+            "size":
+                round(
+                    os.path.getsize(path)
+                    / 1024
+                    / 1024,
+                    2
+                ),
 
         })
 
 
+    # =========================================================
+    # NEUESTE EXPORTE ZUERST
+    # =========================================================
 
     exports.sort(
         key=lambda x: x["date"],
@@ -3832,20 +6071,70 @@ def export(request):
     )
 
 
+    # =========================================================
+    # GERÄTARTEN
+    # =========================================================
+
+    geraetearten = (
+        Geraetart.objects
+        .all()
+        .order_by(
+            "name"
+        )
+    )
+
+
+    # =========================================================
+    # STANDORTE
+    # =========================================================
+
+    standorte = (
+        Standort.objects
+        .all()
+        .order_by(
+            "name"
+        )
+    )
+
+
+    # =========================================================
+    # PRÜFARTEN
+    # =========================================================
+
+    pruefarten = (
+        Pruefart.objects
+        .filter(
+            aktiv=True
+        )
+        .order_by(
+            "order",
+            "name"
+        )
+    )
+
+
+    # =========================================================
+    # RENDER
+    # =========================================================
 
     return render(
         request,
         "devices/export.html",
         {
+            "exports":
+                exports,
 
-            "exports": exports,
+            "geraetearten":
+                geraetearten,
 
-            "geraetearten": Geraetart.objects.all(),
+            "standorte":
+                standorte,
 
-            "standorte": Standort.objects.all(),
-
+            "pruefarten":
+                pruefarten,
         }
     )
+
 
 @login_required
 def export_download(request, filename):

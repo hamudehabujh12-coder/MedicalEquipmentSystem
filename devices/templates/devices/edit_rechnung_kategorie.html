@@ -1,0 +1,44 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h1>✏️ Rechnung Kategorie bearbeiten</h1>
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    <div class="form-group">
+
+        <label>Kategorie</label>
+
+        <input
+            type="text"
+            name="name"
+            class="form-control"
+            value="{{ kategorie.name }}"
+            required
+            autofocus
+        >
+
+    </div>
+
+    <br>
+
+    <button
+        type="submit"
+        class="btn btn-success"
+    >
+        💾 Speichern
+    </button>
+
+    <a
+        href="{% url 'rechnung_kategorie_list' %}"
+        class="btn btn-secondary"
+    >
+        ❌ Abbrechen
+    </a>
+
+</form>
+
+{% endblock %}

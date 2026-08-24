@@ -213,58 +213,120 @@ urlpatterns = [
     ),
 
     path(
-    "dashboard/",
-    views.dashboard,
-    name="dashboard"
+        "dashboard/",
+        views.dashboard,
+        name="dashboard"
     ),
     path(
-    "document/<int:document_id>/delete/",
-    views.document_delete,
-    name="document_delete"
+        "document/<int:document_id>/delete/",
+        views.document_delete,
+        name="document_delete"
     ),
    path(
-    "document/<int:document_id>/rename/",
-    views.document_rename,
-    name="document_rename"
+        "document/<int:document_id>/rename/",
+        views.document_rename,
+        name="document_rename"
     ),
     path(
-    "documents/",
-    views.documents_home,
-    name="documents_home"
+        "documents/",
+        views.documents_home,
+        name="documents_home"
     ),
     path(
-    "documents/",
-    views.documents,
-    name="documents"
+        "documents/",
+        views.documents,
+        name="documents"
     ),
     path(
-    "documents/type/<int:document_type_id>/",
-    views.documents_by_type,
-    name="documents_by_type"
-    ),
-    path(
-    "documents/technician/",
-    views.technician_documents,
-    name="technician_documents"
+        "documents/type/<int:document_type_id>/",
+        views.documents_by_type,
+        name="documents_by_type"
     ),
 
     path(
-    "documents/technician/upload/",
-    views.technician_document_upload,
-    name="technician_document_upload"
+        "documents/types/<int:document_type_id>/delete/",
+        views.document_type_delete,
+        name="document_type_delete",
     ),
 
     path(
-    "documents/technician/<int:doc_id>/rename/",
-    views.technician_document_rename,
-    name="technician_document_rename"
+        "documents/technician/",
+        views.technician_documents,
+        name="technician_documents"
     ),
 
     path(
-    "documents/technician/<int:doc_id>/delete/",
-    views.technician_document_delete,
-    name="technician_document_delete"
+        "documents/technician/upload/",
+        views.technician_document_upload,
+        name="technician_document_upload"
     ),
+
+    path(
+        "documents/technician/<int:doc_id>/rename/",
+        views.technician_document_rename,
+        name="technician_document_rename"
+    ),
+
+    path(
+        "documents/technician/<int:doc_id>/delete/",
+        views.technician_document_delete,
+        name="technician_document_delete"
+    ),
+
+    path(
+        "rechnung/neu/",
+        views.rechnung_neu,
+        name="rechnung_neu"
+    ),
+
+    path(
+        "rechnung/<int:rechnung_id>/",
+        views.rechnung_detail,
+        name="rechnung_detail"
+    ),
+
+    path(
+        "rechnung/kategorien/",
+        views.rechnung_kategorie_list,
+        name="rechnung_kategorie_list",
+    ),
+
+    path(
+        "rechnung/kategorien/neu/",
+        views.add_rechnung_kategorie,
+        name="add_rechnung_kategorie",
+    ),
+
+    path(
+        "rechnung/kategorien/<int:pk>/bearbeiten/",
+        views.edit_rechnung_kategorie,
+        name="edit_rechnung_kategorie",
+    ),
+
+    path(
+        "rechnung/kategorien/<int:pk>/loeschen/",
+        views.delete_rechnung_kategorie,
+        name="delete_rechnung_kategorie",
+    ),
+
+    path(
+        "rechnung/uebersicht/",
+        views.rechnung_uebersicht,
+        name="rechnung_uebersicht"
+    ),
+
+    path(
+        "rechnung/historie/",
+        views.rechnung_historie,
+        name="rechnung_historie"
+    ),
+
+    path(
+        "rechnung/<int:rechnung_id>/historie/delete/",
+        views.rechnung_historie_delete,
+        name="rechnung_historie_delete"
+    ),
+
     path(
     "reparatur/",
     views.reparatur,
@@ -288,6 +350,13 @@ urlpatterns = [
     views.repair_delete,
     name="repair_delete",
     ),
+
+    path(
+        "reparatur/<int:pk>/delete/",
+        views.reparatur_delete,
+        name="reparatur_delete"
+    ),
+
     path(
     "reparatur/uebersicht/",
     views.reparatur_uebersicht,
@@ -433,7 +502,7 @@ urlpatterns = [
     views.delete_document_type,
     name="delete_document_type"
     ),
-
+   
     path(
     "dashboard/widgets/",
     views.dashboard_widgets,
@@ -480,6 +549,12 @@ urlpatterns = [
     "backup/delete/<str:filename>/",
     views.backup_delete,
     name="backup_delete",
+    ),
+
+    path(
+        "settings/backup/delete-all/",
+        views.backup_delete_all,
+        name="backup_delete_all"
     ),
 
     path(

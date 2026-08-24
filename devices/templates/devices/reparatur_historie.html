@@ -4,295 +4,745 @@
 
 <div class="container">
 
-<h1>🗂 Reparaturhistorie</h1>
+    <h1>🗂 Reparaturhistorie</h1>
 
 
-<!-- Suchfeld -->
-<form method="GET" id="search-form" style="margin-bottom:25px;">
+    <!-- =====================================================
+         SUCHFELD
+    ===================================================== -->
 
-<input 
-type="text"
-id="search-input"
-name="search"
-value="{{ search|default:'' }}"
-placeholder="Suche nach Inventarnummer, Seriennummer, Problem oder Ausführung..."
-style="
-width:450px;
-padding:12px;
-border-radius:8px;
-border:1px solid #ccc;
-">
+    <form
+        method="GET"
+        id="search-form"
+        style="margin-bottom:25px;"
+    >
 
-<button type="submit"
-style="
-padding:12px 20px;
-border-radius:8px;
-background:#1f2937;
-color:white;
-border:none;
-cursor:pointer;
-">
-🔍 Suchen
-</button>
+        <input
+            type="text"
+            id="search-input"
+            name="search"
+            value="{{ search|default:'' }}"
+            placeholder="Suche nach Inventarnummer, Seriennummer, Problem oder Ausführung..."
+            autocomplete="off"
+            style="
+                width:450px;
+                padding:12px;
+                border-radius:8px;
+                border:1px solid #ccc;
+                font-size:14px;
+            "
+        >
 
-</form>
+        <button
+            type="submit"
+            style="
+                padding:12px 20px;
+                border-radius:8px;
+                background:#1f2937;
+                color:white;
+                border:none;
+                cursor:pointer;
+            "
+        >
+            🔍 Suchen
+        </button>
 
-
-
-<form method="post">
-
-{% csrf_token %}
-
-<table class="table">
-
-<tr>
-    <th>Gerät</th>
-    <th>Inventarnummer</th>
-    <th>Seriennummer</th>
-    <th>Problemmeldung</th>
-    <th>Reparaturausführung</th>
-    <th>Datum</th>
-    <th>Status</th>
-    {% if user.is_superuser %}
-        <th>Auswahl</th>
-    {% endif %}
-
-</tr>
+    </form>
 
 
-{% for reparatur in reparaturen %}
 
-<tr onclick="window.location.href='{% url 'reparatur_detail' reparatur.id %}?readonly=1';"
-    style="cursor:pointer;">
+    <!-- =====================================================
+         REPARATUR FORM
+    ===================================================== -->
 
+    <form method="post">
 
-    <td>
-        {{ reparatur.geraet.name }}
-    </td>
-
-
-    <td>
-        {{ reparatur.geraet.inventory_number }}
-    </td>
+        {% csrf_token %}
 
 
-    <td>
-        {{ reparatur.geraet.serial_number }}
-    </td>
+        <!-- =================================================
+             TABELLE
+        ================================================= -->
+
+        <table class="table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Gerät
+                    </th>
+
+                    <th>
+                        Inventarnummer
+                    </th>
+
+                    <th>
+                        Seriennummer
+                    </th>
+
+                    <th>
+                        Problemmeldung
+                    </th>
+
+                    <th>
+                        Reparaturausführung
+                    </th>
+
+                    <th>
+                        Datum
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
 
 
-    <td class="text-truncate">
-        {{ reparatur.beschreibung }}
-    </td>
+                    {% if user.is_superuser %}
 
-    <td class="text-truncate">
-        {{ reparatur.ausfuehrung }}
-    </td>
+                    <!-- =====================================
+                         AUSWAHL – LETZTE SPALTE
+                    ====================================== -->
+
+                    <th
+                        style="
+                            width:110px;
+                            text-align:center;
+                            white-space:nowrap;
+                        "
+                    >
+
+                        Auswahl
+
+                        <input
+                            type="checkbox"
+                            id="selectAllRepairs"
+                            title="Alle auswählen"
+                            style="
+                                width:18px;
+                                height:18px;
+                                margin-left:6px;
+                                vertical-align:middle;
+                                cursor:pointer;
+                            "
+                        >
+
+                    </th>
+
+                    {% endif %}
+
+                </tr>
+
+            </thead>
 
 
-    <td>
-        {{ reparatur.datum }}
-    </td>
+            <tbody>
 
 
-    <td>
+            {% for reparatur in reparaturen %}
 
-        {% if reparatur.status == "Offen" %}
-            <span class="badge bg-danger">🔴 Offen</span>
+            <tr
+                onclick="window.location.href='{% url 'reparatur_detail' reparatur.id %}?readonly=1';"
+                style="cursor:pointer;"
+            >
 
-        {% elif reparatur.status == "In Bearbeitung" %}
-            <span class="badge bg-warning text-dark">
-                🟡 In Bearbeitung
+
+                <!-- =====================================
+                     GERÄT
+                ====================================== -->
+
+                <td>
+                    {{ reparatur.geraet.name }}
+                </td>
+
+
+                <!-- =====================================
+                     INVENTARNUMMER
+                ====================================== -->
+
+                <td>
+                    {{ reparatur.geraet.inventory_number }}
+                </td>
+
+
+                <!-- =====================================
+                     SERIENNUMMER
+                ====================================== -->
+
+                <td>
+                    {{ reparatur.geraet.serial_number }}
+                </td>
+
+
+                <!-- =====================================
+                     PROBLEMMELDUNG
+                ====================================== -->
+
+                <td class="text-truncate">
+                    {{ reparatur.beschreibung }}
+                </td>
+
+
+                <!-- =====================================
+                     REPARATURAUSFÜHRUNG
+                ====================================== -->
+
+                <td class="text-truncate">
+                    {{ reparatur.ausfuehrung }}
+                </td>
+
+
+                <!-- =====================================
+                     DATUM
+                ====================================== -->
+
+                <td>
+                    {{ reparatur.datum }}
+                </td>
+
+
+                <!-- =====================================
+                     STATUS
+                ====================================== -->
+
+                <td>
+
+                    {% if reparatur.status == "Offen" %}
+
+                        <span class="badge bg-danger">
+                            🔴 Offen
+                        </span>
+
+                    {% elif reparatur.status == "In Bearbeitung" %}
+
+                        <span class="badge bg-warning text-dark">
+                            🟡 In Bearbeitung
+                        </span>
+
+                    {% elif reparatur.status == "Erledigt" %}
+
+                        <span class="badge bg-success">
+                            🟢 Erledigt
+                        </span>
+
+                    {% else %}
+
+                        {{ reparatur.status }}
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- =====================================
+                     AUSWAHL
+                     NUR CHECKBOX
+                ====================================== -->
+
+                {% if user.is_superuser %}
+
+                <td
+                    style="
+                        text-align:center;
+                    "
+                    onclick="event.stopPropagation();"
+                >
+
+                    <input
+                        type="checkbox"
+                        name="selected_repairs"
+                        value="{{ reparatur.id }}"
+                        class="repair-checkbox"
+                        style="
+                            width:18px;
+                            height:18px;
+                            cursor:pointer;
+                        "
+                    >
+
+                </td>
+
+                {% endif %}
+
+
+            </tr>
+
+
+            {% empty %}
+
+            <tr>
+
+                <td
+                    colspan="8"
+                    style="
+                        text-align:center;
+                        padding:20px;
+                    "
+                >
+                    Keine Reparaturen vorhanden
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+
+
+        <!-- =================================================
+             AUSGEWÄHLTE LÖSCHEN
+        ================================================= -->
+
+        {% if user.is_superuser %}
+
+        <div
+            style="
+                margin-top:15px;
+                display:flex;
+                align-items:center;
+                gap:12px;
+            "
+        >
+
+            <button
+                type="submit"
+                name="action"
+                value="delete_selected"
+                class="btn btn-danger"
+                id="deleteSelectedButton"
+                onclick="
+                    return confirm(
+                        'Ausgewählte Reparaturen wirklich löschen?'
+                    );
+                "
+            >
+
+                🗑️ Ausgewählte löschen
+
+            </button>
+
+
+            <span
+                id="selectedRepairCount"
+                style="
+                    font-weight:bold;
+                    color:#555;
+                "
+            >
+                0 ausgewählt
             </span>
 
-        {% elif reparatur.status == "Erledigt" %}
-            <span class="badge bg-success">
-                🟢 Erledigt
-            </span>
+        </div>
 
         {% endif %}
 
-    </td>
 
+    </form>
 
-    {% if user.is_superuser %}
-
-    <td onclick="event.stopPropagation();">
-
-        <input 
-            type="checkbox"
-            name="selected_repairs"
-            value="{{ reparatur.id }}">
-
-    </td>
-
-    {% endif %}
-
-
-</tr>
-
-
-{% empty %}
-
-<tr>
-    <td colspan="8">
-        Keine Reparaturen vorhanden
-    </td>
-</tr>
-
-
-{% endfor %}
-
-
-</table>
-
-
-{% if user.is_superuser %}
-
-<button type="submit"
-        class="btn btn-danger"
-        onclick="return confirm('Ausgewählte Reparaturen wirklich löschen?');">
-
-    🗑️ Ausgewählte löschen
-
-</button>
-
-{% endif %}
-
-
-</form>
 </div>
+
+
+
+<!-- =========================================================
+     SEARCH JAVASCRIPT
+========================================================= -->
+
 <script>
 
-const searchInput = document.getElementById("search-input");
-const searchForm = document.getElementById("search-form");
+const searchInput =
+    document.getElementById(
+        "search-input"
+    );
+
+const searchForm =
+    document.getElementById(
+        "search-form"
+    );
 
 
 let timer = null;
 
 
-searchInput.addEventListener("input", function(){
+searchInput.addEventListener(
+    "input",
+    function(){
 
-    clearTimeout(timer);
-
-
-    timer = setTimeout(function(){
-
-        if(searchInput.value.trim() === ""){
-
-            window.location.href = "{% url 'reparatur_historie' %}";
-
-        }
-        else{
-
-            searchForm.submit();
-
-        }
+        clearTimeout(timer);
 
 
-    }, 300);
+        timer = setTimeout(
+            function(){
 
+                if(
+                    searchInput.value.trim() === ""
+                ){
 
-});
+                    window.location.href =
+                        "{% url 'reparatur_historie' %}";
 
+                }
+                else{
+
+                    searchForm.submit();
+
+                }
+
+            },
+            300
+        );
+
+    }
+);
 
 </script>
+
+
+
+<!-- =========================================================
+     AUSWAHL / ALLE AUSWÄHLEN
+========================================================= -->
+
+{% if user.is_superuser %}
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const selectAll =
+            document.getElementById(
+                "selectAllRepairs"
+            );
+
+
+        const checkboxes =
+            document.querySelectorAll(
+                ".repair-checkbox"
+            );
+
+
+        const selectedCount =
+            document.getElementById(
+                "selectedRepairCount"
+            );
+
+
+        /* =========================================
+           AUSWAHL ZÄHLEN
+        ========================================= */
+
+        function updateSelectedCount(){
+
+            const selected =
+                document.querySelectorAll(
+                    ".repair-checkbox:checked"
+                ).length;
+
+
+            selectedCount.textContent =
+                selected + " ausgewählt";
+
+
+            if(
+                checkboxes.length > 0 &&
+                selected === checkboxes.length
+            ){
+
+                selectAll.checked = true;
+
+            }
+            else{
+
+                selectAll.checked = false;
+
+            }
+
+        }
+
+
+        /* =========================================
+           ALLE AUSWÄHLEN
+        ========================================= */
+
+        selectAll.addEventListener(
+            "click",
+            function(event){
+
+                event.stopPropagation();
+
+            }
+        );
+
+
+        selectAll.addEventListener(
+            "change",
+            function(){
+
+                checkboxes.forEach(
+                    function(checkbox){
+
+                        checkbox.checked =
+                            selectAll.checked;
+
+                    }
+                );
+
+
+                updateSelectedCount();
+
+            }
+        );
+
+
+        /* =========================================
+           EINZELNE CHECKBOX
+        ========================================= */
+
+        checkboxes.forEach(
+            function(checkbox){
+
+                checkbox.addEventListener(
+                    "click",
+                    function(event){
+
+                        event.stopPropagation();
+
+                    }
+                );
+
+
+                checkbox.addEventListener(
+                    "change",
+                    function(){
+
+                        updateSelectedCount();
+
+                    }
+                );
+
+            }
+        );
+
+
+        updateSelectedCount();
+
+    }
+);
+
+</script>
+
+{% endif %}
+
+
+
+<!-- =========================================================
+     SEARCH HIGHLIGHT
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const input =
+            document.getElementById(
+                "search-input"
+            );
+
+
+        let searchText =
+            input.value.trim();
+
+
+        if(
+            searchText === ""
+        ){
+
+            return;
+
+        }
+
+
+        /*
+         * Checkbox-Spalte nicht markieren
+         */
+
+        const cells =
+            document.querySelectorAll(
+                ".table tbody td"
+            );
+
+
+        cells.forEach(
+            function(cell){
+
+                /*
+                 * Wenn die Zelle einen Checkbox
+                 * enthält, nicht verändern.
+                 */
+
+                if(
+                    cell.querySelector(
+                        "input[type='checkbox']"
+                    )
+                ){
+
+                    return;
+
+                }
+
+
+                let text =
+                    cell.textContent;
+
+
+                let escapedSearch =
+                    searchText.replace(
+                        /[.*+?^${}()|[\]\\]/g,
+                        "\\$&"
+                    );
+
+
+                let regex =
+                    new RegExp(
+                        "(" +
+                        escapedSearch +
+                        ")",
+                        "gi"
+                    );
+
+
+                cell.innerHTML =
+                    text.replace(
+                        regex,
+                        "<mark>$1</mark>"
+                    );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+
+
+<!-- =========================================================
+     SUCHFELD FOCUS
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const input =
+            document.getElementById(
+                "search-input"
+            );
+
+
+        if(
+            input &&
+            input.value.trim() !== ""
+        ){
+
+            input.focus();
+
+
+            input.setSelectionRange(
+                input.value.length,
+                input.value.length
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+
+
+<!-- =========================================================
+     STYLE
+========================================================= -->
+
 <style>
 
 mark {
+
     background:#ffd54f;
+
     color:black;
+
     font-weight:bold;
+
     padding:2px 4px;
+
     border-radius:4px;
-}
-.text-truncate {
-    max-width: 300px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+
 }
 
-.table {
-    width: 100%;
-    overflow: visible;
-    table-layout: auto;
-    font-size: 14px;
+
+.text-truncate {
+
+    max-width:300px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
 }
+
+
+.table {
+
+    width:100%;
+
+    overflow:visible;
+
+    table-layout:auto;
+
+    font-size:14px;
+
+}
+
 
 .table th,
 .table td {
-    padding: 8px 10px;
+
+    padding:8px 10px;
+
 }
 
+
+.table th:last-child,
+.table td:last-child {
+
+    text-align:center;
+
+}
+
+
+.repair-checkbox,
+#selectAllRepairs {
+
+    accent-color:#2563eb;
+
+}
 
 </style>
 
 
-<script>
-
-document.addEventListener("DOMContentLoaded", function(){
-
-
-    const input = document.getElementById("search-input");
-
-    let searchText = input.value.trim();
-
-
-    if(searchText === ""){
-        return;
-    }
-
-
-    let cells = document.querySelectorAll(
-        ".table td"
-    );
-
-
-    cells.forEach(function(cell){
-
-
-        let text = cell.textContent;
-
-
-        let regex = new RegExp(
-            "(" + searchText + ")",
-            "gi"
-        );
-
-
-        cell.innerHTML = text.replace(
-            regex,
-            "<mark>$1</mark>"
-        );
-
-
-    });
-
-
-});
-
-</script>
-
-<script>
-
-document.addEventListener("DOMContentLoaded", function(){
-
-    const input = document.getElementById("search-input");
-
-    if(input && input.value.trim() !== ""){
-
-        input.focus();
-
-        // وضع المؤشر في نهاية النص
-        input.setSelectionRange(
-            input.value.length,
-            input.value.length
-        );
-
-    }
-
-});
-
-</script>
 {% endblock %}

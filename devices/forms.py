@@ -419,6 +419,7 @@ class ReparaturBearbeitenForm(forms.ModelForm):
         model = Reparatur
 
         fields = [
+            "geraet",
             "beschreibung",
             "melder",
             "status",
@@ -430,6 +431,13 @@ class ReparaturBearbeitenForm(forms.ModelForm):
         ]
 
         widgets = {
+
+            "geraet": forms.Select(
+                attrs={
+                    "class": "form-control",
+                    "id": "id_geraet"
+                }
+            ),
 
             "beschreibung": forms.Textarea(
                 attrs={
@@ -451,14 +459,12 @@ class ReparaturBearbeitenForm(forms.ModelForm):
                 }
             ),
 
-
             "techniker": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "id": "id_techniker"
                 }
             ),
-
 
             "reparatur_datum": forms.DateInput(
                 format="%Y-%m-%d",
@@ -468,7 +474,6 @@ class ReparaturBearbeitenForm(forms.ModelForm):
                     "id": "id_reparatur_datum"
                 }
             ),
-
 
             "ausfuehrung": forms.Textarea(
                 attrs={
@@ -485,8 +490,10 @@ class ReparaturBearbeitenForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.instance and self.instance.pk:
-            self.initial["reparatur_datum"] = self.instance.reparatur_datum
 
+            self.initial["reparatur_datum"] = (
+                self.instance.reparatur_datum
+            )
 
 from django import forms
 from .models import Filterwechsel

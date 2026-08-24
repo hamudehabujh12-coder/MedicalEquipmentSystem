@@ -1,0 +1,1041 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1>{{ title|default:"Rechnung Historie" }}</h1>
+
+
+    <!-- ==========================================
+         LIVE SEARCH
+    ========================================== -->
+
+    <div style="
+        margin-bottom:15px;
+        display:flex;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+    ">
+
+        <input
+            type="text"
+            id="rechnungSearch"
+            placeholder="Suche nach Rechnungsnummer, Kategorie, Betrag oder Lieferant..."
+            autocomplete="off"
+            style="
+                width:450px;
+                padding:10px;
+                border-radius:7px;
+                border:1px solid #ccc;
+                font-size:14px;
+            "
+        >
+
+        <button
+            type="button"
+            id="searchButton"
+            style="
+                padding:10px 18px;
+                border-radius:7px;
+                background:#1f2937;
+                color:white;
+                border:none;
+                cursor:pointer;
+                font-size:14px;
+            "
+        >
+            🔍 Suchen
+        </button>
+
+    </div>
+
+
+    <!-- ==========================================
+         DATUM FILTER
+    ========================================== -->
+
+    <form
+        method="get"
+        style="
+            margin-bottom:12px;
+            padding:10px 14px;
+            background:#f8f9fa;
+            border:1px solid #ddd;
+            border-radius:8px;
+        "
+    >
+
+        <div style="
+            display:flex;
+            align-items:end;
+            gap:10px;
+            flex-wrap:wrap;
+        ">
+
+
+            <!-- RECHNUNGSDATUM VON -->
+
+            <div>
+
+                <label
+                    for="datum_von"
+                    style="
+                        display:block;
+                        margin-bottom:4px;
+                        font-weight:bold;
+                        font-size:13px;
+                    "
+                >
+                    Rechnungsdatum von:
+                </label>
+
+                <input
+                    type="date"
+                    id="datum_von"
+                    name="datum_von"
+                    value="{{ datum_von }}"
+                    style="
+                        width:145px;
+                        padding:7px 9px;
+                        border-radius:6px;
+                        border:1px solid #ccc;
+                        font-size:14px;
+                    "
+                >
+
+            </div>
+
+
+            <!-- RECHNUNGSDATUM BIS -->
+
+            <div>
+
+                <label
+                    for="datum_bis"
+                    style="
+                        display:block;
+                        margin-bottom:4px;
+                        font-weight:bold;
+                        font-size:13px;
+                    "
+                >
+                    Rechnungsdatum bis:
+                </label>
+
+                <input
+                    type="date"
+                    id="datum_bis"
+                    name="datum_bis"
+                    value="{{ datum_bis }}"
+                    style="
+                        width:145px;
+                        padding:7px 9px;
+                        border-radius:6px;
+                        border:1px solid #ccc;
+                        font-size:14px;
+                    "
+                >
+
+            </div>
+
+
+            <!-- FILTERN -->
+
+            <button
+                type="submit"
+                style="
+                    padding:8px 16px;
+                    border-radius:6px;
+                    background:#2563eb;
+                    color:white;
+                    border:none;
+                    cursor:pointer;
+                    font-size:14px;
+                    font-weight:bold;
+                "
+            >
+                📅 Filtern
+            </button>
+
+
+            <!-- ZURÜCKSETZEN -->
+
+            <a
+                href="{% url 'rechnung_historie' %}"
+                style="
+                    padding:8px 16px;
+                    border-radius:6px;
+                    background:#6b7280;
+                    color:white;
+                    text-decoration:none;
+                    font-size:14px;
+                    font-weight:bold;
+                "
+            >
+                ↻ Zurücksetzen
+            </a>
+
+        </div>
+
+    </form>
+
+
+    <!-- ==========================================
+         GESAMTSUMME
+    ========================================== -->
+
+    <div
+        id="gesamtsummeBox"
+        style="
+            display:none;
+            margin:8px 0 12px;
+            text-align:right;
+            font-size:16px;
+            font-weight:bold;
+        "
+    >
+
+        💰 Gesamtsumme:
+
+        <span style="
+            color:#2563eb;
+            margin-left:8px;
+        ">
+            {{ gesamtsumme|floatformat:2 }} €
+        </span>
+
+    </div>
+
+
+    <!-- ==========================================
+         DELETE FORM
+    ========================================== -->
+
+    <form
+        method="post"
+        id="deleteRechnungenForm"
+    >
+
+        {% csrf_token %}
+
+
+        <!-- ==========================================
+             TABELLE
+        ========================================== -->
+
+        <table
+            id="rechnungHistorieTable"
+            class="table"
+        >
+
+            <thead>
+
+                <tr>
+
+
+                    <!-- RECHNUNGSNUMMER -->
+
+                    <th>
+                        Rechnungsnummer
+                    </th>
+
+
+                    <!-- RECHNUNGSDATUM -->
+
+                    <th>
+                        Rechnungsdatum
+                    </th>
+
+
+                    <!-- LIEFERANT -->
+
+                    <th>
+                        Lieferant
+                    </th>
+
+
+                    <!-- KATEGORIE -->
+
+                    <th>
+                        Kategorie
+                    </th>
+
+
+                    <!-- BETRAG -->
+
+                    <th>
+
+                        <div style="
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            gap:8px;
+                            white-space:nowrap;
+                        ">
+
+                            <span>
+                                Betrag
+                            </span>
+
+                            <button
+                                type="button"
+                                id="summeButton"
+                                title="Gesamtsumme anzeigen"
+                                style="
+                                    padding:4px 8px;
+                                    border-radius:5px;
+                                    background:#2563eb;
+                                    color:white;
+                                    border:none;
+                                    cursor:pointer;
+                                    font-size:12px;
+                                    font-weight:bold;
+                                "
+                            >
+                                Σ Summe
+                            </button>
+
+                        </div>
+
+                    </th>
+
+
+                    <!-- BEZAHLT AM -->
+
+                    <th>
+                        Bezahlt am
+                    </th>
+
+
+                    <!-- VERANTWORTLICHER -->
+
+                    <th>
+                        Verantwortlicher
+                    </th>
+
+
+                    <!-- STATUS -->
+
+                    <th>
+                        Status
+                    </th>
+
+
+                    <!-- ==================================
+                         AUSWAHL – LETZTE SPALTE
+                    ================================== -->
+
+                    <th
+                        style="
+                            width:100px;
+                            text-align:center;
+                            white-space:nowrap;
+                        "
+                    >
+
+                        Auswahl
+
+                        <input
+                            type="checkbox"
+                            id="selectAllRechnungen"
+                            title="Alle auswählen"
+                            style="
+                                width:18px;
+                                height:18px;
+                                margin-left:6px;
+                                vertical-align:middle;
+                                cursor:pointer;
+                            "
+                        >
+
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+            {% for r in rechnungen %}
+
+            <tr
+                class="rechnung-row"
+                onclick="window.location='{% url 'rechnung_detail' r.id %}'"
+                style="cursor:pointer;"
+            >
+
+
+                <!-- ==================================
+                     RECHNUNGSNUMMER
+                ================================== -->
+
+                <td>
+
+                    <strong>
+                        {{ r.rechnungsnummer }}
+                    </strong>
+
+                </td>
+
+
+                <!-- ==================================
+                     RECHNUNGSDATUM
+                ================================== -->
+
+                <td>
+
+                    {% if r.rechnungsdatum %}
+
+                        {{ r.rechnungsdatum|date:"d.m.Y" }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- ==================================
+                     LIEFERANT
+                ================================== -->
+
+                <td>
+                    {{ r.lieferant }}
+                </td>
+
+
+                <!-- ==================================
+                     KATEGORIE
+                ================================== -->
+
+                <td>
+
+                    {% if r.kategorie %}
+
+                        {{ r.kategorie }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- ==================================
+                     BETRAG
+                ================================== -->
+
+                <td>
+
+                    {{ r.rechnungsbetrag|floatformat:2 }} €
+
+                </td>
+
+
+                <!-- ==================================
+                     BEZAHLT AM
+                ================================== -->
+
+                <td>
+
+                    {% if r.bezahlt_am %}
+
+                        {{ r.bezahlt_am|date:"d.m.Y" }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- ==================================
+                     VERANTWORTLICHER
+                ================================== -->
+
+                <td>
+
+                    {% if r.verantwortlicher %}
+
+                        {{ r.verantwortlicher }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- ==================================
+                     STATUS
+                ================================== -->
+
+                <td>
+
+                    {% if r.status == "Erledigt" %}
+
+                        <span style="
+                            background:#28a745;
+                            color:white;
+                            padding:6px 12px;
+                            border-radius:15px;
+                        ">
+                            ✅ {{ r.status }}
+                        </span>
+
+
+                    {% elif r.status == "In Bearbeitung" %}
+
+                        <span style="
+                            background:#ffc107;
+                            color:black;
+                            padding:6px 12px;
+                            border-radius:15px;
+                        ">
+                            🔧 {{ r.status }}
+                        </span>
+
+
+                    {% elif r.status == "Offen" %}
+
+                        <span style="
+                            background:#dc3545;
+                            color:white;
+                            padding:6px 12px;
+                            border-radius:15px;
+                        ">
+                            ⚠️ {{ r.status }}
+                        </span>
+
+
+                    {% else %}
+
+                        {{ r.status }}
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- ==================================
+                     AUSWAHL – NUR CHECKBOX
+                ================================== -->
+
+                <td
+                    style="
+                        text-align:center;
+                    "
+                    onclick="event.stopPropagation();"
+                >
+
+                    <input
+                        type="checkbox"
+                        name="selected_rechnungen"
+                        value="{{ r.id }}"
+                        class="rechnung-checkbox"
+                        style="
+                            width:18px;
+                            height:18px;
+                            cursor:pointer;
+                        "
+                    >
+
+                </td>
+
+            </tr>
+
+
+            {% empty %}
+
+            <tr>
+
+                <td
+                    colspan="9"
+                    style="
+                        text-align:center;
+                        padding:20px;
+                    "
+                >
+                    Keine erledigten Rechnungen vorhanden
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+
+        <!-- ==========================================
+             AUSGEWÄHLTE LÖSCHEN
+        ========================================== -->
+
+        <button
+            type="submit"
+            name="action"
+            value="delete_selected"
+            class="btn btn-danger"
+            onclick="return confirm(
+                'Ausgewählte Rechnungen wirklich löschen?'
+            );"
+        >
+            🗑️ Ausgewählte löschen
+        </button>
+
+
+        <span
+            id="selectedCount"
+            style="
+                margin-left:10px;
+                font-weight:bold;
+                color:#555;
+            "
+        >
+            0 ausgewählt
+        </span>
+
+
+    </form>
+
+
+    <!-- ==========================================
+         JAVASCRIPT
+    ========================================== -->
+
+    <script>
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+
+            const searchInput =
+                document.getElementById(
+                    "rechnungSearch"
+                );
+
+
+            const searchButton =
+                document.getElementById(
+                    "searchButton"
+                );
+
+
+            const summeButton =
+                document.getElementById(
+                    "summeButton"
+                );
+
+
+            const gesamtsummeBox =
+                document.getElementById(
+                    "gesamtsummeBox"
+                );
+
+
+            const selectAll =
+                document.getElementById(
+                    "selectAllRechnungen"
+                );
+
+
+            const selectedCount =
+                document.getElementById(
+                    "selectedCount"
+                );
+
+
+            const checkboxes =
+                document.querySelectorAll(
+                    ".rechnung-checkbox"
+                );
+
+
+            const tableRows =
+                document.querySelectorAll(
+                    "#rechnungHistorieTable tbody tr.rechnung-row"
+                );
+
+
+            /* =====================================
+               ORIGINAL INHALT SPEICHERN
+            ===================================== */
+
+            tableRows.forEach(
+                function (row) {
+
+                    row.querySelectorAll(
+                        "td"
+                    ).forEach(
+                        function (cell) {
+
+                            cell.setAttribute(
+                                "data-original",
+                                cell.innerHTML
+                            );
+
+                        }
+                    );
+
+                }
+            );
+
+
+            /* =====================================
+               AUSWAHL ZÄHLEN
+            ===================================== */
+
+            function updateSelectedCount() {
+
+                const selected =
+                    document.querySelectorAll(
+                        ".rechnung-checkbox:checked"
+                    ).length;
+
+
+                selectedCount.textContent =
+                    selected + " ausgewählt";
+
+
+                if (
+                    selected === checkboxes.length &&
+                    checkboxes.length > 0
+                ) {
+
+                    selectAll.checked = true;
+
+                } else {
+
+                    selectAll.checked = false;
+
+                }
+
+            }
+
+
+            /* =====================================
+               EINZELNE CHECKBOX
+            ===================================== */
+
+            checkboxes.forEach(
+                function (checkbox) {
+
+
+                    checkbox.addEventListener(
+                        "click",
+                        function (event) {
+
+                            event.stopPropagation();
+
+                        }
+                    );
+
+
+                    checkbox.addEventListener(
+                        "change",
+                        updateSelectedCount
+                    );
+
+                }
+            );
+
+
+            /* =====================================
+               ALLE AUSWÄHLEN
+            ===================================== */
+
+            selectAll.addEventListener(
+                "click",
+                function (event) {
+
+                    event.stopPropagation();
+
+                }
+            );
+
+
+            selectAll.addEventListener(
+                "change",
+                function () {
+
+                    checkboxes.forEach(
+                        function (checkbox) {
+
+                            checkbox.checked =
+                                selectAll.checked;
+
+                        }
+                    );
+
+
+                    updateSelectedCount();
+
+                }
+            );
+
+
+            /* =====================================
+               LIVE SEARCH
+            ===================================== */
+
+            function performSearch() {
+
+
+                const search =
+                    searchInput.value.trim();
+
+
+                const searchLower =
+                    search.toLowerCase();
+
+
+                tableRows.forEach(
+                    function (row) {
+
+
+                        const cells =
+                            row.querySelectorAll(
+                                "td"
+                            );
+
+
+                        let searchableText =
+                            "";
+
+
+                        /*
+                         * Letzte Spalte
+                         * (Auswahl)
+                         * nicht durchsuchen
+                         */
+
+                        for (
+                            let i = 0;
+                            i < cells.length - 1;
+                            i++
+                        ) {
+
+                            searchableText +=
+                                " " +
+                                cells[i]
+                                    .innerText
+                                    .toLowerCase();
+
+                        }
+
+
+                        /*
+                         * Original wiederherstellen
+                         */
+
+                        cells.forEach(
+                            function (cell) {
+
+                                const original =
+                                    cell.getAttribute(
+                                        "data-original"
+                                    );
+
+                                if (
+                                    original !== null
+                                ) {
+
+                                    cell.innerHTML =
+                                        original;
+
+                                }
+
+                            }
+                        );
+
+
+                        /*
+                         * Suche leer
+                         */
+
+                        if (
+                            searchLower === ""
+                        ) {
+
+                            row.style.display =
+                                "";
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Kein Treffer
+                         */
+
+                        if (
+                            !searchableText.includes(
+                                searchLower
+                            )
+                        ) {
+
+                            row.style.display =
+                                "none";
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Treffer
+                         */
+
+                        row.style.display =
+                            "";
+
+
+                        /*
+                         * Suchtext markieren
+                         */
+
+                        for (
+                            let i = 0;
+                            i < cells.length - 1;
+                            i++
+                        ) {
+
+
+                            const cell =
+                                cells[i];
+
+
+                            const original =
+                                cell.innerHTML;
+
+
+                            const escapedSearch =
+                                search.replace(
+                                    /[.*+?^${}()|[\]\\]/g,
+                                    "\\$&"
+                                );
+
+
+                            const regex =
+                                new RegExp(
+                                    "(" +
+                                    escapedSearch +
+                                    ")",
+                                    "gi"
+                                );
+
+
+                            cell.innerHTML =
+                                original.replace(
+                                    regex,
+                                    '<mark style="background:#ffe066;color:#000;padding:2px 4px;border-radius:4px;">$1</mark>'
+                                );
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            /* =====================================
+               SEARCH INPUT
+            ===================================== */
+
+            searchInput.addEventListener(
+                "input",
+                performSearch
+            );
+
+
+            /* =====================================
+               SEARCH BUTTON
+            ===================================== */
+
+            searchButton.addEventListener(
+                "click",
+                performSearch
+            );
+
+
+            /* =====================================
+               SUMME BUTTON
+            ===================================== */
+
+            summeButton.addEventListener(
+                "click",
+                function (event) {
+
+                    event.stopPropagation();
+
+
+                    gesamtsummeBox.style.display =
+                        "block";
+
+
+                    summeButton.innerHTML =
+                        "Σ Summe ✓";
+
+                }
+            );
+
+
+            /* =====================================
+               INITIAL
+            ===================================== */
+
+            updateSelectedCount();
+
+        }
+    );
+
+    </script>
+
+
+    <style>
+
+    mark {
+        background:#ffd54f;
+        color:black;
+        font-weight:bold;
+        padding:2px 4px;
+        border-radius:4px;
+    }
+
+
+    .table {
+        width:100%;
+        overflow:visible;
+        table-layout:auto;
+        font-size:14px;
+    }
+
+
+    .table th,
+    .table td {
+        padding:8px 10px;
+    }
+
+
+    </style>
+
+
+</div>
+
+{% endblock %}

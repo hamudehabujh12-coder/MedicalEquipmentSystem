@@ -4,381 +4,710 @@
 
 <div class="container">
 
-<h1>📋 Filterwechsel Historie</h1>
-
-
-<!-- Suchfeld -->
-
-<form method="GET" id="search-form" style="margin-bottom:25px;">
-
-
-<input 
-
-type="text"
-
-id="search-input"
-
-name="search"
-
-value="{{ search|default:'' }}"
-
-placeholder="Suche nach Inventarnummer oder Filtercode..."
-
-style="
-width:450px;
-padding:12px;
-border-radius:8px;
-border:1px solid #ccc;
-"
-
-
->
-
-
-<button type="submit"
-
-style="
-padding:12px 20px;
-border-radius:8px;
-background:#1f2937;
-color:white;
-border:none;
-cursor:pointer;
-"
-
->
-
-🔍 Suchen
-
-</button>
-
-
-</form>
-
-
-
-
-
-<table class="table">
-
-
-<tr>
-
-<th>Inventarnummer</th>
-
-<th>Anzahl der Filter</th>
-
-<th>Filtercode</th>
-
-<th>Datum</th>
-
-<th>Durchgeführt von</th>
-
-<th>Aktion</th>
-
-</tr>
-
-
-
-{% for item in filterwechsel %}
-
-
-
-<tr>
-
-
-
-<td>
-{{ item.geraet.inventory_number }}
-</td>
-
-
-
-<td>
-{{ item.anzahl_filter }}
-</td>
-
-
-
-<td>
-{{ item.filtercode }}
-</td>
-
-
-
-<td>
-{{ item.datum }}
-</td>
-
-
-
-<td>
-{{ item.durchgeführt_von }}
-</td>
-
-
-
-
-<td>
-
-    <a href="{% url 'filterwechsel_update' item.id %}">
-        ✏️ Bearbeiten
-    </a>
-
-    |
-
-    {% if request.user.is_superuser %}
-
-    <form method="POST"
-          action="{% url 'filterwechsel_delete' item.id %}"
-          style="display:inline;"
-          onsubmit="return confirm('Filterwechsel wirklich löschen?');">
-
-        {% csrf_token %}
-
-        <button class="delete-btn" type="submit">
-            🗑️ Löschen
+    <h1>📋 Filterwechsel Historie</h1>
+
+
+    <!-- =====================================================
+         SUCHFELD
+    ===================================================== -->
+
+    <form
+        method="GET"
+        id="search-form"
+        style="margin-bottom:25px;"
+    >
+
+        <input
+            type="text"
+            id="search-input"
+            name="search"
+            value="{{ search|default:'' }}"
+            placeholder="Suche nach Inventarnummer oder Filtercode..."
+            autocomplete="off"
+            style="
+                width:450px;
+                padding:12px;
+                border-radius:8px;
+                border:1px solid #ccc;
+                font-size:14px;
+            "
+        >
+
+
+        <button
+            type="submit"
+            style="
+                padding:12px 20px;
+                border-radius:8px;
+                background:#1f2937;
+                color:white;
+                border:none;
+                cursor:pointer;
+            "
+        >
+            🔍 Suchen
         </button>
 
     </form>
 
-    {% endif %}
-
-</td>
 
 
+    <!-- =====================================================
+         FILTERWECHSEL FORM
+    ===================================================== -->
+
+    <form method="POST">
+
+        {% csrf_token %}
 
 
-</tr>
+        <table class="table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Inventarnummer
+                    </th>
+
+                    <th>
+                        Anzahl der Filter
+                    </th>
+
+                    <th>
+                        Filtercode
+                    </th>
+
+                    <th>
+                        Datum
+                    </th>
+
+                    <th>
+                        Durchgeführt von
+                    </th>
+
+                    <th>
+                        Aktion
+                    </th>
+
+
+                    {% if user.is_superuser %}
+
+                    <!-- =====================================
+                         AUSWAHL – LETZTE SPALTE
+                    ====================================== -->
+
+                    <th
+                        style="
+                            width:110px;
+                            text-align:center;
+                            white-space:nowrap;
+                        "
+                    >
+
+                        Auswahl
+
+                        <input
+                            type="checkbox"
+                            id="selectAllFilterwechsel"
+                            title="Alle auswählen"
+                            style="
+                                width:18px;
+                                height:18px;
+                                margin-left:6px;
+                                vertical-align:middle;
+                                cursor:pointer;
+                            "
+                        >
+
+                    </th>
+
+                    {% endif %}
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+            {% for item in filterwechsel %}
+
+            <tr>
+
+
+                <!-- =====================================
+                     INVENTARNUMMER
+                ====================================== -->
+
+                <td>
+                    {{ item.geraet.inventory_number }}
+                </td>
+
+
+                <!-- =====================================
+                     ANZAHL FILTER
+                ====================================== -->
+
+                <td>
+                    {{ item.anzahl_filter }}
+                </td>
+
+
+                <!-- =====================================
+                     FILTERCODE
+                ====================================== -->
+
+                <td>
+                    {{ item.filtercode }}
+                </td>
+
+
+                <!-- =====================================
+                     DATUM
+                ====================================== -->
+
+                <td>
+                    {{ item.datum }}
+                </td>
+
+
+                <!-- =====================================
+                     DURCHGEFÜHRT VON
+                ====================================== -->
+
+                <td>
+                    {{ item.durchgeführt_von }}
+                </td>
+
+
+                <!-- =====================================
+                     AKTION
+                ====================================== -->
+
+                <td>
+
+                    <a
+                        href="{% url 'filterwechsel_update' item.id %}"
+                    >
+                        ✏️ Bearbeiten
+                    </a>
+
+                    
 
 
 
-
-{% empty %}
-
+                </td>
 
 
-<tr>
+                <!-- =====================================
+                     AUSWAHL
+                     NUR CHECKBOX
+                ====================================== -->
 
-<td colspan="6">
+                {% if user.is_superuser %}
 
-Keine Filterwechsel vorhanden
+                <td
+                    style="
+                        text-align:center;
+                    "
+                >
 
-</td>
+                    <input
+                        type="checkbox"
+                        name="selected_filterwechsel"
+                        value="{{ item.id }}"
+                        class="filterwechsel-checkbox"
+                        style="
+                            width:18px;
+                            height:18px;
+                            cursor:pointer;
+                        "
+                    >
 
-</tr>
+                </td>
+
+                {% endif %}
+
+
+            </tr>
+
+
+            {% empty %}
+
+            <tr>
+
+                <td
+                    colspan="7"
+                    style="
+                        text-align:center;
+                        padding:20px;
+                    "
+                >
+                    Keine Filterwechsel vorhanden
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
 
 
 
-{% endfor %}
+        <!-- =================================================
+             AUSGEWÄHLTE LÖSCHEN
+        ================================================= -->
+
+        {% if user.is_superuser %}
+
+        <div
+            style="
+                margin-top:15px;
+                display:flex;
+                align-items:center;
+                gap:12px;
+            "
+        >
+
+            <button
+                type="submit"
+                name="action"
+                value="delete_selected"
+                class="btn btn-danger"
+                onclick="
+                    return confirm(
+                        'Ausgewählte Filterwechsel wirklich löschen?'
+                    );
+                "
+            >
+
+                🗑️ Ausgewählte löschen
+
+            </button>
 
 
+            <span
+                id="selectedFilterwechselCount"
+                style="
+                    font-weight:bold;
+                    color:#555;
+                "
+            >
+                0 ausgewählt
+            </span>
 
-</table>
+        </div>
 
+        {% endif %}
 
+    </form>
 
 </div>
 
 
 
-
+<!-- =========================================================
+     SEARCH JAVASCRIPT
+========================================================= -->
 
 <script>
 
+const searchInput =
+    document.getElementById(
+        "search-input"
+    );
 
-const searchInput = document.getElementById("search-input");
-
-const searchForm = document.getElementById("search-form");
+const searchForm =
+    document.getElementById(
+        "search-form"
+    );
 
 
 let timer = null;
 
 
+searchInput.addEventListener(
+    "input",
+    function(){
 
-searchInput.addEventListener("input", function(){
-
-
-clearTimeout(timer);
-
-
-
-timer = setTimeout(function(){
+        clearTimeout(timer);
 
 
+        timer = setTimeout(
+            function(){
 
-if(searchInput.value.trim() === ""){
+                if(
+                    searchInput.value.trim() === ""
+                ){
 
+                    window.location.href =
+                        "{% url 'filterwechsel_history' %}";
 
-window.location.href = "{% url 'filterwechsel_history' %}";
+                }
+                else{
 
+                    searchForm.submit();
 
-}
+                }
 
-else{
+            },
+            300
+        );
 
-
-searchForm.submit();
-
-
-}
-
-
-
-},300);
-
-
-
-});
-
-
+    }
+);
 
 </script>
 
 
 
+<!-- =========================================================
+     ALLE AUSWÄHLEN
+========================================================= -->
 
+{% if user.is_superuser %}
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const selectAll =
+            document.getElementById(
+                "selectAllFilterwechsel"
+            );
+
+
+        const checkboxes =
+            document.querySelectorAll(
+                ".filterwechsel-checkbox"
+            );
+
+
+        const selectedCount =
+            document.getElementById(
+                "selectedFilterwechselCount"
+            );
+
+
+        /* =========================================
+           AUSWAHL ZÄHLEN
+        ========================================= */
+
+        function updateSelectedCount(){
+
+            const selected =
+                document.querySelectorAll(
+                    ".filterwechsel-checkbox:checked"
+                ).length;
+
+
+            selectedCount.textContent =
+                selected + " ausgewählt";
+
+
+            if(
+                checkboxes.length > 0 &&
+                selected === checkboxes.length
+            ){
+
+                selectAll.checked = true;
+
+            }
+            else{
+
+                selectAll.checked = false;
+
+            }
+
+        }
+
+
+        /* =========================================
+           ALLE AUSWÄHLEN
+        ========================================= */
+
+        selectAll.addEventListener(
+            "change",
+            function(){
+
+                checkboxes.forEach(
+                    function(checkbox){
+
+                        checkbox.checked =
+                            selectAll.checked;
+
+                    }
+                );
+
+
+                updateSelectedCount();
+
+            }
+        );
+
+
+        /* =========================================
+           EINZELNE CHECKBOX
+        ========================================= */
+
+        checkboxes.forEach(
+            function(checkbox){
+
+                checkbox.addEventListener(
+                    "change",
+                    function(){
+
+                        updateSelectedCount();
+
+                    }
+                );
+
+            }
+        );
+
+
+        updateSelectedCount();
+
+    }
+);
+
+</script>
+
+{% endif %}
+
+
+
+<!-- =========================================================
+     SUCHTEXT MARKIEREN
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const input =
+            document.getElementById(
+                "search-input"
+            );
+
+
+        let searchText =
+            input.value.trim();
+
+
+        if(
+            searchText === ""
+        ){
+
+            return;
+
+        }
+
+
+        let escapedSearch =
+            searchText.replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&"
+            );
+
+
+        let regex =
+            new RegExp(
+                "(" +
+                escapedSearch +
+                ")",
+                "gi"
+            );
+
+
+        const cells =
+            document.querySelectorAll(
+                ".table tbody td"
+            );
+
+
+        cells.forEach(
+            function(cell){
+
+                /*
+                 * Checkbox-Spalte nicht verändern
+                 */
+
+                if(
+                    cell.querySelector(
+                        "input[type='checkbox']"
+                    )
+                ){
+
+                    return;
+
+                }
+
+
+                /*
+                 * Aktionsspalte nicht verändern
+                 */
+
+                if(
+                    cell.querySelector(
+                        "a, button"
+                    )
+                ){
+
+                    return;
+
+                }
+
+
+                let text =
+                    cell.textContent;
+
+
+                cell.innerHTML =
+                    text.replace(
+                        regex,
+                        "<mark>$1</mark>"
+                    );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+
+
+<!-- =========================================================
+     SUCHFELD FOCUS
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const input =
+            document.getElementById(
+                "search-input"
+            );
+
+
+        if(
+            input &&
+            input.value.trim() !== ""
+        ){
+
+            input.focus();
+
+
+            input.setSelectionRange(
+                input.value.length,
+                input.value.length
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+
+
+<!-- =========================================================
+     STYLE
+========================================================= -->
 
 <style>
 
-.delete-btn{
+.delete-btn {
+
     background:#dc2626;
+
     color:white;
+
     border:none;
+
     padding:6px 12px;
+
     border-radius:6px;
+
     cursor:pointer;
+
 }
 
-.delete-btn:hover{
+
+.delete-btn:hover {
+
     background:#b91c1c;
+
 }
+
+
 mark {
 
-background:#ffd54f;
+    background:#ffd54f;
 
-color:black;
+    color:black;
 
-font-weight:bold;
+    font-weight:bold;
 
-padding:2px 4px;
+    padding:2px 4px;
 
-border-radius:4px;
+    border-radius:4px;
 
 }
 
+
+.table {
+
+    width:100%;
+
+    overflow:visible;
+
+    table-layout:auto;
+
+    font-size:14px;
+
+}
+
+
+.table th,
+.table td {
+
+    padding:8px 10px;
+
+}
+
+
+.table th:last-child,
+.table td:last-child {
+
+    text-align:center;
+
+}
+
+
+.filterwechsel-checkbox,
+#selectAllFilterwechsel {
+
+    accent-color:#2563eb;
+
+}
 
 </style>
-
-
-
-
-
-<script>
-
-
-document.addEventListener("DOMContentLoaded", function(){
-
-
-
-const input = document.getElementById("search-input");
-
-
-let searchText = input.value.trim();
-
-
-
-if(searchText === ""){
-
-return;
-
-}
-
-
-
-let cells = document.querySelectorAll(
-".table td"
-);
-
-
-
-cells.forEach(function(cell){
-
-
-
-let text = cell.textContent;
-
-
-
-let regex = new RegExp(
-
-"(" + searchText + ")",
-
-"gi"
-
-);
-
-
-
-cell.innerHTML = text.replace(
-
-regex,
-
-"<mark>$1</mark>"
-
-);
-
-
-
-});
-
-
-
-});
-
-
-
-</script>
-
-
-
-
-
-<script>
-
-
-document.addEventListener("DOMContentLoaded", function(){
-
-
-const input = document.getElementById("search-input");
-
-
-
-if(input && input.value.trim() !== ""){
-
-
-input.focus();
-
-
-input.setSelectionRange(
-
-input.value.length,
-
-input.value.length
-
-);
-
-
-}
-
-
-
-});
-
-
-
-</script>
-
 
 
 {% endblock %}

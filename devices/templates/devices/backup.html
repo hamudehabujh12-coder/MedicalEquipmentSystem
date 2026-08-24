@@ -4,6 +4,11 @@
 
 <h1>💾 Backup</h1>
 
+
+<!-- =========================================================
+     BACKUP ERSTELLEN
+========================================================= -->
+
 <div class="backup-card">
 
     <h2>Datensicherung</h2>
@@ -12,11 +17,15 @@
         Erstellen und verwalten Sie Ihre Datenbanksicherungen.
     </p>
 
+
     <form method="POST" style="margin:25px 0;">
 
         {% csrf_token %}
 
-        <button type="submit" class="backup-btn">
+        <button
+            type="submit"
+            class="backup-btn"
+        >
             💾 Backup erstellen
         </button>
 
@@ -24,170 +33,844 @@
 
 </div>
 
+
+
+<!-- =========================================================
+     VORHANDENE BACKUPS
+========================================================= -->
+
 <div class="backup-table">
 
     <h2>Vorhandene Backups</h2>
 
-    <table class="table">
 
-        <thead>
+    {% if backups %}
 
-            <tr>
-                <th>Dateiname</th>
-                <th>Erstellt am</th>
-                <th>Größe</th>
-                <th>Aktionen</th>
-            </tr>
 
-        </thead>
+        <!-- =================================================
+             MASSENAKTIONEN
+        ================================================== -->
 
-        <tbody>
+        <form
+            method="POST"
+            action="{% url 'backup_delete_all' %}"
+            onsubmit="return confirmSelectedBackups();"
+        >
 
-        {% for backup in backups %}
+            {% csrf_token %}
 
-            <tr>
 
-                <td>{{ backup.name }}</td>
+            <!-- =================================================
+                 TOOLBAR
+            ================================================== -->
 
-                <td>{{ backup.date|date:"d.m.Y H:i" }}</td>
+            <div class="backup-toolbar">
 
-                <td>{{ backup.size }} MB</td>
 
-                <td>
+                <label class="select-all-label">
 
-                    <a href="{% url 'backup_download' backup.name %}">
-                       ⬇️ Download
-                    </a>
+                    <input
+                        type="checkbox"
+                        id="selectAllBackups"
+                        onchange="toggleAllBackups(this)"
+                    >
 
-                    |
+                    <span>
+                        Alle auswählen
+                    </span>
 
-                    <form method="POST"
-                          action="{% url 'backup_restore' backup.name %}"
-                          style="display:inline;"
-                          onsubmit="return confirm('Möchten Sie dieses Backup wirklich wiederherstellen? Die aktuelle Datenbank wird überschrieben.');">
+                </label>
 
-                        {% csrf_token %}
 
-                        <button type="submit" class="restore-btn">
-                             🔄 Wiederherstellen
-                        </button>
+                <button
+                    type="submit"
+                    class="delete-all-btn"
+                >
+                    🗑️ Ausgewählte löschen
+                </button>
 
-                    </form>
 
-                    |
+            </div>
 
-                    <form method="POST"
-                          action="{% url 'backup_delete' backup.name %}"
-                          style="display:inline;"
-                          onsubmit="return confirm('Backup wirklich löschen?');">
 
-                        {% csrf_token %}
 
-                        <button type="submit" class="delete-btn">
-                              🗑️ Löschen
-                        </button>
+            <!-- =================================================
+                 TABELLE
+            ================================================= -->
 
-                    </form>>
+            <div class="table-wrapper">
 
-                </td>
+                <table class="table">
 
-            </tr>
+                    <thead>
 
-        {% empty %}
+                        <tr>
 
-            <tr>
+                            <th class="checkbox-column">
+                                Auswahl
+                            </th>
 
-                <td colspan="4">
+                            <th>
+                                Dateiname
+                            </th>
 
-                    Keine Backups vorhanden.
+                            <th>
+                                Erstellt am
+                            </th>
 
-                </td>
+                            <th>
+                                Größe
+                            </th>
 
-            </tr>
+                            <th>
+                                Aktionen
+                            </th>
 
-        {% endfor %}
+                        </tr>
 
-        </tbody>
+                    </thead>
 
-    </table>
+
+                    <tbody>
+
+
+                    {% for backup in backups %}
+
+                        <tr>
+
+
+                            <!-- =================================
+                                 CHECKBOX
+                            ================================== -->
+
+                            <td class="checkbox-cell">
+
+                                <input
+                                    type="checkbox"
+                                    name="selected_backups"
+                                    value="{{ backup.name }}"
+                                    class="backup-checkbox"
+                                    onchange="updateSelectAll()"
+                                >
+
+                            </td>
+
+
+                            <!-- =================================
+                                 DATEINAME
+                            ================================== -->
+
+                            <td>
+
+                                📄 {{ backup.name }}
+
+                            </td>
+
+
+                            <!-- =================================
+                                 DATUM
+                            ================================== -->
+
+                            <td>
+
+                                {{ backup.date|date:"d.m.Y H:i" }}
+
+                            </td>
+
+
+                            <!-- =================================
+                                 GRÖSSE
+                            ================================== -->
+
+                            <td>
+
+                                {{ backup.size }} MB
+
+                            </td>
+
+
+                            <!-- =================================
+                                 AKTIONEN
+                            ================================== -->
+
+                            <td class="actions-cell">
+
+
+                                <!-- DOWNLOAD -->
+
+                                <a
+                                    href="{% url 'backup_download' backup.name %}"
+                                    class="download-btn"
+                                >
+                                    ⬇️ Download
+                                </a>
+
+
+                                <!-- WIEDERHERSTELLEN -->
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'backup_restore' backup.name %}"
+                                    class="inline-form"
+                                    onsubmit="return confirm(
+                                        'Möchten Sie dieses Backup wirklich wiederherstellen? Die aktuelle Datenbank wird überschrieben.'
+                                    );"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="restore-btn"
+                                    >
+                                        🔄 Wiederherstellen
+                                    </button>
+
+                                </form>
+
+
+                                <!-- EINZELN LÖSCHEN -->
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'backup_delete' backup.name %}"
+                                    class="inline-form"
+                                    onsubmit="return confirm(
+                                        'Backup wirklich löschen?'
+                                    );"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="delete-btn"
+                                    >
+                                        🗑️ Löschen
+                                    </button>
+
+                                </form>
+
+
+                            </td>
+
+                        </tr>
+
+
+                    {% endfor %}
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </form>
+
+
+    {% else %}
+
+
+        <!-- =================================================
+             KEINE BACKUPS
+        ================================================== -->
+
+        <div class="empty-backups">
+
+            📂 Keine Backups vorhanden.
+
+        </div>
+
+
+    {% endif %}
 
 </div>
 
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+
+/*
+=============================================================
+ALLE BACKUPS AUSWÄHLEN
+=============================================================
+*/
+
+function toggleAllBackups(masterCheckbox) {
+
+    const checkboxes = document.querySelectorAll(
+        ".backup-checkbox"
+    );
+
+
+    checkboxes.forEach(function(checkbox) {
+
+        checkbox.checked =
+            masterCheckbox.checked;
+
+    });
+
+}
+
+
+
+/*
+=============================================================
+ALLE-AUSWAHL AKTUALISIEREN
+=============================================================
+*/
+
+function updateSelectAll() {
+
+    const checkboxes = document.querySelectorAll(
+        ".backup-checkbox"
+    );
+
+
+    const selectAll =
+        document.getElementById(
+            "selectAllBackups"
+        );
+
+
+    if (checkboxes.length === 0) {
+
+        selectAll.checked = false;
+
+        return;
+
+    }
+
+
+    const allChecked =
+        Array.from(checkboxes).every(
+            function(checkbox) {
+
+                return checkbox.checked;
+
+            }
+        );
+
+
+    selectAll.checked = allChecked;
+
+}
+
+
+
+/*
+=============================================================
+LÖSCHEN BESTÄTIGEN
+=============================================================
+*/
+
+function confirmSelectedBackups() {
+
+    const selected =
+        document.querySelectorAll(
+            ".backup-checkbox:checked"
+        );
+
+
+    /*
+    ---------------------------------------------------------
+    KEIN BACKUP AUSGEWÄHLT
+    ---------------------------------------------------------
+    */
+
+    if (selected.length === 0) {
+
+        alert(
+            "⚠️ Bitte wählen Sie mindestens ein Backup aus."
+        );
+
+        return false;
+
+    }
+
+
+    /*
+    ---------------------------------------------------------
+    BESTÄTIGUNG
+    ---------------------------------------------------------
+    */
+
+    return confirm(
+        "⚠️ Möchten Sie wirklich " +
+        selected.length +
+        " Backup(s) löschen?\n\n" +
+        "Dieser Vorgang kann nicht rückgängig gemacht werden."
+    );
+
+}
+
+</script>
+
+
+
 <style>
 
-.delete-btn{
-    background:#dc2626;
-    color:white;
-    border:none;
-    padding:6px 12px;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:bold;
-}
 
-.delete-btn:hover{
-    background:#b91c1c;
-}
+/* =========================================================
+   BACKUP CARD
+========================================================= */
 
-.restore-btn{
-    background:#2563eb;
-    color:white;
-    border:none;
-    padding:6px 12px;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:bold;
-    margin:0 6px;
-}
+.backup-card {
 
-.restore-btn:hover{
-    background:#1d4ed8;
-}
+    background: white;
 
-.backup-card{
+    padding: 25px;
 
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    margin-bottom:30px;
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    border-radius: 15px;
+
+    margin-bottom: 30px;
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.08);
 
 }
 
-.backup-btn{
 
-    background:#2563eb;
-    color:white;
-    border:none;
-    padding:14px 22px;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:16px;
+.backup-card h2 {
+
+    margin-top: 0;
 
 }
 
-.backup-btn:hover{
 
-    background:#1d4ed8;
+.backup-card p {
 
-}
-
-.backup-table{
-
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    color: #6b7280;
 
 }
 
-.backup-table a{
 
-    text-decoration:none;
-    font-weight:bold;
+
+/* =========================================================
+   BACKUP BUTTON
+========================================================= */
+
+.backup-btn {
+
+    background: #2563eb;
+
+    color: white;
+
+    border: none;
+
+    padding: 14px 22px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+}
+
+
+.backup-btn:hover {
+
+    background: #1d4ed8;
+
+}
+
+
+
+/* =========================================================
+   BACKUP TABLE CONTAINER
+========================================================= */
+
+.backup-table {
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+.backup-table h2 {
+
+    margin-top: 0;
+
+}
+
+
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.backup-toolbar {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 20px;
+
+    padding: 15px;
+
+    background: #f8fafc;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    flex-wrap: wrap;
+
+}
+
+
+
+/* =========================================================
+   ALLE AUSWÄHLEN
+========================================================= */
+
+.select-all-label {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+.select-all-label input {
+
+    width: 20px;
+
+    height: 20px;
+
+    cursor: pointer;
+
+}
+
+
+
+/* =========================================================
+   DELETE ALL
+========================================================= */
+
+.delete-all-btn {
+
+    background: #dc2626;
+
+    color: white;
+
+    border: none;
+
+    padding: 10px 16px;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+}
+
+
+.delete-all-btn:hover {
+
+    background: #b91c1c;
+
+}
+
+
+
+/* =========================================================
+   TABLE WRAPPER
+========================================================= */
+
+.table-wrapper {
+
+    width: 100%;
+
+    overflow-x: auto;
+
+}
+
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+}
+
+
+.table th {
+
+    background: #1f2937;
+
+    color: white;
+
+    padding: 12px;
+
+    text-align: left;
+
+    white-space: nowrap;
+
+}
+
+
+.table td {
+
+    padding: 12px;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    vertical-align: middle;
+
+}
+
+
+.table tr:hover {
+
+    background: #f8fafc;
+
+}
+
+
+
+/* =========================================================
+   CHECKBOX
+========================================================= */
+
+.checkbox-column {
+
+    width: 80px;
+
+    text-align: center !important;
+
+}
+
+
+.checkbox-cell {
+
+    text-align: center;
+
+}
+
+
+.backup-checkbox {
+
+    width: 20px;
+
+    height: 20px;
+
+    cursor: pointer;
+
+}
+
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.actions-cell {
+
+    white-space: nowrap;
+
+}
+
+
+.inline-form {
+
+    display: inline;
+
+}
+
+
+
+/* =========================================================
+   DOWNLOAD
+========================================================= */
+
+.download-btn {
+
+    display: inline-block;
+
+    text-decoration: none;
+
+    background: #16a34a;
+
+    color: white;
+
+    padding: 6px 10px;
+
+    border-radius: 6px;
+
+    font-weight: bold;
+
+    font-size: 13px;
+
+    margin-right: 5px;
+
+}
+
+
+.download-btn:hover {
+
+    background: #15803d;
+
+}
+
+
+
+/* =========================================================
+   RESTORE
+========================================================= */
+
+.restore-btn {
+
+    background: #2563eb;
+
+    color: white;
+
+    border: none;
+
+    padding: 6px 10px;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+    margin-right: 5px;
+
+}
+
+
+.restore-btn:hover {
+
+    background: #1d4ed8;
+
+}
+
+
+
+/* =========================================================
+   DELETE
+========================================================= */
+
+.delete-btn {
+
+    background: #dc2626;
+
+    color: white;
+
+    border: none;
+
+    padding: 6px 10px;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+}
+
+
+.delete-btn:hover {
+
+    background: #b91c1c;
+
+}
+
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty-backups {
+
+    padding: 30px;
+
+    text-align: center;
+
+    color: #6b7280;
+
+    background: #f9fafb;
+
+    border-radius: 10px;
+
+}
+
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 800px) {
+
+
+    .backup-table {
+
+        padding: 15px;
+
+    }
+
+
+    .backup-toolbar {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    .delete-all-btn {
+
+        width: 100%;
+
+    }
+
+
+    .table {
+
+        min-width: 900px;
+
+    }
 
 }
 
 </style>
+
 
 {% endblock %}
