@@ -1,0 +1,126 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1>
+        {% if edit %}
+            ✏️ Messmittel bearbeiten
+        {% else %}
+            📏 Messmittel hinzufügen
+        {% endif %}
+    </h1>
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+
+        <div class="form-group">
+
+            <label for="id_name">
+                Messmittel
+            </label>
+
+            <input
+                type="text"
+                id="id_name"
+                name="name"
+                class="form-control"
+                placeholder="Messmittel eingeben"
+                value="{% if edit %}{{ messmittel.name }}{% endif %}"
+                required
+                autofocus
+            >
+
+        </div>
+
+
+        <div style="margin-top:25px;">
+
+            <button
+                type="submit"
+                class="save-btn"
+            >
+                💾 Speichern
+            </button>
+
+
+            <a
+                href="{% url 'messmittel_list' %}"
+                class="cancel-btn"
+            >
+                ❌ Abbrechen
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<style>
+
+.form-group{
+    margin-top:25px;
+    max-width:600px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:bold;
+    color:#1f2937;
+}
+
+.form-control{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    font-size:16px;
+    box-sizing:border-box;
+}
+
+.form-control:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 2px rgba(37,99,235,.15);
+}
+
+.save-btn{
+    background:#16a34a;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:15px;
+}
+
+.save-btn:hover{
+    background:#15803d;
+}
+
+.cancel-btn{
+    display:inline-block;
+    margin-left:10px;
+    background:#6b7280;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.cancel-btn:hover{
+    background:#4b5563;
+}
+
+</style>
+
+{% endblock %}

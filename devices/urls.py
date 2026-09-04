@@ -166,23 +166,6 @@ urlpatterns = [
     name="contact"
     ),
 
-    path(
-    "faellige-stk",
-    views.faellige_stk,
-    name="faellige_stk"
-    ),
-
-    path(
-    "wartung/mtk/",
-    views.faellige_mtk,
-    name="faellige_mtk"
-    ),
-
-    path(
-    "wartung/dguv/",
-    views.faellige_dguv,
-    name="faellige_dguv"
-    ),
 
     path(
     "faellige-pruefung/<int:pruefart_id>/",
@@ -326,6 +309,30 @@ urlpatterns = [
         views.rechnung_historie_delete,
         name="rechnung_historie_delete"
     ),
+    path(
+        "messmittel/",
+        views.messmittel_list,
+        name="messmittel_list"
+    ),
+
+    path(
+        "messmittel/create/",
+        views.messmittel_create,
+        name="messmittel_create"
+    ),
+
+    path(
+        "messmittel/<int:pk>/bearbeiten/",
+        views.messmittel_update,
+        name="messmittel_update"
+    ),
+
+    path(
+        "messmittel/<int:pk>/loeschen/",
+        views.messmittel_delete,
+        name="messmittel_delete"
+    ),
+
 
     path(
     "reparatur/",

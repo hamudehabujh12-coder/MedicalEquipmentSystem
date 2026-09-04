@@ -3,141 +3,950 @@
 {% block content %}
 
 <div class="container">
-<h1>
-    📋 Fällige {{ pruefart.name }}
-</h1>
-<p style="margin-bottom:20px;">
-    Prüfungen, deren Termin innerhalb der nächsten 30 Tage liegt.
-</p>
-<table class="table table-hover">
-    <thead>
-        <tr>
-            <th>Inventarnummer</th>
-            <th>Seriennummer</th>
-            <th>Gerätebezeichnung</th>
-            <th>Geräteart</th>
-            <th>Standort</th>
-            <th>Nächste Prüfung</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for pruefung in pruefungen %}
-        <tr
-            onclick="window.location='{% url 'device_detail' pruefung.device.id %}'"
-            style="cursor:pointer;"
-        >
-            <!-- Inventarnummer -->
-            <td>
-                {{ pruefung.device.inventory_number }}
-            </td>
-            <!-- Seriennummer -->
-            <td>
-                {{ pruefung.device.serial_number }}
-            </td>
-            <!-- Gerätebezeichnung -->
-            <td>
-                {{ pruefung.device.name }}
-            </td>
-            <!-- Geräteart -->
-            <td>
-                {% if pruefung.device.geraetart %}
-                    {{ pruefung.device.geraetart.name }}
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-            <!-- Standort -->
-            <td>
-                {% if pruefung.device.practice %}
-                    {{ pruefung.device.practice.name }}
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-            <!-- Nächste Prüfung -->
-            <td>
-                {% if pruefung.naechstes_datum %}
-                    <strong>
-                        {{ pruefung.naechstes_datum|date:"d.m.Y" }}
-                    </strong>
-                
-                {% endif %}
-            </td>
-            <!-- Status -->
-            <td>
-                {% if pruefung.naechstes_datum < heute %}
 
-                    <span style="
-                        color:#dc2626;
-                        font-weight:bold;
-                    ">
-                        🔴 Überfällig
-                    </span>
+    <!-- =====================================================
+         TITEL
+    ====================================================== -->
 
-                {% else %}
+    <h1>
+        📋 {{ pruefart.name }}
+    </h1>
 
-                    <span style="
-                        color:#d97706;
-                        font-weight:bold;
-                    ">
-                        🟡 Fällig
-                    </span>
+    <p class="page-description">
+        Alle Geräte mit der Prüfungsart
+        <strong>{{ pruefart.name }}</strong>.
+    </p>
 
-                {% endif %}
-            </td>
-        </tr>
-    {% empty %}
-        <tr>
-            <td
-                colspan="7"
-                style="
-                    text-align:center;
-                    padding:30px;
-                "
+
+    <!-- =====================================================
+         TABELLE
+    ====================================================== -->
+
+    <div class="table-wrapper">
+
+        <table class="table">
+
+            <thead>
+
+                <tr>
+
+                    <!-- =================================================
+                         GERÄTART
+                    ================================================== -->
+
+                    <th class="filter">
+
+                        Gerätart ▼
+
+                        <div class="filter-menu">
+
+                            <!-- ALLE -->
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-filter-type="geraetart"
+                                data-filter-value=""
+                            >
+                                Alle
+                            </a>
+
+
+                            <!-- GERÄTEARTEN AUS EINSTELLUNGEN -->
+
+                            {% for art in geraetearten %}
+
+                                <a
+                                    href="#"
+                                    class="filter-link"
+                                    data-filter-type="geraetart"
+                                    data-filter-value="{{ art.id }}"
+                                >
+                                    {{ art.name }}
+                                </a>
+
+                            {% empty %}
+
+                                <span class="filter-empty">
+                                    Keine Gerätearten vorhanden.
+                                </span>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </th>
+
+
+                    <!-- =================================================
+                         GERÄTEBEZEICHNUNG
+                    ================================================== -->
+
+                    <th>
+                        Gerätebezeichnung
+                    </th>
+
+
+                    <!-- =================================================
+                         INVENTARNUMMER
+                    ================================================== -->
+
+                    <th>
+                        Inventarnummer
+                    </th>
+
+
+                    <!-- =================================================
+                         SERIENNUMMER
+                    ================================================== -->
+
+                    <th>
+                        Seriennummer
+                    </th>
+
+
+                    <!-- =================================================
+                         STANDORT
+                    ================================================== -->
+
+                    <th class="filter">
+
+                        Standort ▼
+
+                        <div class="filter-menu">
+
+                            <!-- ALLE -->
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-filter-type="standort"
+                                data-filter-value=""
+                            >
+                                Alle
+                            </a>
+
+
+                            <!-- STANDORTE AUS EINSTELLUNGEN -->
+
+                            {% for standort in standorte %}
+
+                                <a
+                                    href="#"
+                                    class="filter-link"
+                                    data-filter-type="standort"
+                                    data-filter-value="{{ standort.id }}"
+                                >
+                                    🏥 {{ standort.name }}
+                                </a>
+
+                            {% empty %}
+
+                                <span class="filter-empty">
+                                    Keine Standorte vorhanden.
+                                </span>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </th>
+
+
+                    <!-- =================================================
+                         NÄCHSTE PRÜFUNG
+                    ================================================== -->
+
+                    <th>
+                        Nächste Prüfung
+                    </th>
+
+
+                    <!-- =================================================
+                         STATUS
+                    ================================================== -->
+
+                    <th class="filter">
+
+                        Status ▼
+
+                        <div class="filter-menu status-menu">
+
+                            <!-- ALLE -->
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-filter-type="status"
+                                data-filter-value=""
+                            >
+                                Alle
+                            </a>
+
+
+                            <!-- GÜLTIG -->
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-filter-type="status"
+                                data-filter-value="Gültig"
+                            >
+                                🟢 Gültig
+                            </a>
+
+
+                            <!-- FÄLLIG -->
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-filter-type="status"
+                                data-filter-value="Fällig"
+                            >
+                                🟡 Fällig
+                            </a>
+
+
+                            <!-- ÜBERFÄLLIG -->
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-filter-type="status"
+                                data-filter-value="Überfällig"
+                            >
+                                🔴 Überfällig
+                            </a>
+
+                        </div>
+
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <!-- =====================================================
+                 TABLE BODY
+            ====================================================== -->
+
+            <tbody id="pruefungenTable">
+
+            {% for pruefung in pruefungen %}
+
+                <tr
+                    class="pruefung-row"
+
+                    data-geraetart="
+                        {% if pruefung.device.geraetart %}
+                            {{ pruefung.device.geraetart.id }}
+                        {% endif %}
+                    "
+
+                    data-standort="
+                        {% if pruefung.device.practice %}
+                            {{ pruefung.device.practice.id }}
+                        {% endif %}
+                    "
+
+                    data-status="
+                        {% if pruefung.naechstes_datum < heute %}
+                            Überfällig
+                        {% elif pruefung.naechstes_datum <= grenze %}
+                            Fällig
+                        {% else %}
+                            Gültig
+                        {% endif %}
+                    "
+
+                    onclick="
+                        window.location='{% url 'device_detail' pruefung.device.id %}'
+                    "
+                >
+
+                    <!-- =================================================
+                         GERÄTART
+                    ================================================== -->
+
+                    <td>
+
+                        {% if pruefung.device.geraetart %}
+
+                            {{ pruefung.device.geraetart.name }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         GERÄTEBEZEICHNUNG
+                    ================================================== -->
+
+                    <td>
+
+                        {{ pruefung.device.name|default:"-" }}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         INVENTARNUMMER
+                    ================================================== -->
+
+                    <td>
+
+                        {{ pruefung.device.inventory_number|default:"-" }}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         SERIENNUMMER
+                    ================================================== -->
+
+                    <td>
+
+                        {{ pruefung.device.serial_number|default:"-" }}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         STANDORT
+                    ================================================== -->
+
+                    <td>
+
+                        {% if pruefung.device.practice %}
+
+                            {{ pruefung.device.practice.name }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         NÄCHSTE PRÜFUNG
+                    ================================================== -->
+
+                    <td>
+
+                        {% if pruefung.naechstes_datum %}
+
+                            <strong>
+                                {{ pruefung.naechstes_datum|date:"d.m.Y" }}
+                            </strong>
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         STATUS
+                    ================================================== -->
+
+                    <td>
+
+                        {% if pruefung.naechstes_datum < heute %}
+
+                            <span class="status status-overdue">
+                                🔴 Überfällig
+                            </span>
+
+                        {% elif pruefung.naechstes_datum <= grenze %}
+
+                            <span class="status status-due">
+                                🟡 Fällig
+                            </span>
+
+                        {% else %}
+
+                            <span class="status status-valid">
+                                🟢 Gültig
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+            {% empty %}
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        class="empty-row"
+                    >
+
+                        📭 Keine Geräte mit der Prüfungsart
+                        <strong>{{ pruefart.name }}</strong>
+                        vorhanden.
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+
+            <!-- =====================================================
+                 KEINE FILTERERGEBNISSE
+            ====================================================== -->
+
+            <tr
+                id="noFilterResults"
+                style="display:none;"
             >
-                ✅ Keine fälligen
-                {{ pruefart.name }}-Prüfungen
-                innerhalb der nächsten 30 Tage.
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+
+                <td
+                    colspan="7"
+                    class="empty-row"
+                >
+
+                    🔍 Keine Geräte entsprechen den ausgewählten Filtern.
+
+                </td>
+
+            </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
 </div>
+
+
+<!-- =========================================================
+     CSS
+========================================================= -->
+
 <style>
+/* ========================================================= */
+/* FILTER */
+/* ========================================================= */
+
+.filter {
+    position: relative;
+    cursor: pointer;
+    white-space: nowrap;
+    height: 40px;
+}
+
+.filter-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    min-width: 180px;
+    width: max-content;
+    max-width: 250px;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.25);
+    z-index: 9999;
+}
+
+.filter-menu.show {
+    display: block;
+}
+
+.filter-menu a {
+    display: block;
+    padding: 6px 8px;
+    font-size: 14px;
+    text-decoration: none;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
+.filter-menu a:hover {
+    background: #e5e7eb;
+}
+
+
 /* ========================================================= */
 /* CONTAINER */
 /* ========================================================= */
+
 .container {
     position: relative;
     overflow: visible;
 }
+
+
 /* ========================================================= */
-/* TABLE */
+/* TABLE COMPACT */
 /* ========================================================= */
+
 .table {
     width: 100%;
     overflow: visible;
+    table-layout: auto;
+    font-size: 14px;
 }
+
+.table th,
+.table td {
+    padding: 8px 10px;
+}
+
+
 /* ========================================================= */
-/* TABLE HEADER */
+/* STATUS SPALTE */
 /* ========================================================= */
-.table th {
+
+.table th:last-child,
+.table td:last-child {
+    min-width: 105px;
     white-space: nowrap;
 }
+
+
 /* ========================================================= */
-/* TABLE CELLS */
+/* FILTER MENÜ DARF ÜBER DIE TABELLE HINAUSGEHEN */
 /* ========================================================= */
-.table td {
-    vertical-align: middle;
+
+.table th.filter {
+    position: relative;
 }
+
+
 /* ========================================================= */
-/* HOVER */
+/* SEARCH HIGHLIGHT */
 /* ========================================================= */
-.table tbody tr:hover {
-    background-color: #f3f4f6;
+
+.highlight {
+    background: yellow;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
 }
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status {
+
+    font-weight: bold;
+
+    white-space: nowrap;
+
+}
+
+
+.status-overdue {
+
+    color: #dc2626;
+
+}
+
+
+.status-due {
+
+    color: #d97706;
+
+}
+
+
+.status-valid {
+
+    color: #16a34a;
+
+}
+
+
+/* =========================================================
+   EMPTY ROW
+========================================================= */
+
+.empty-row {
+
+    text-align: center;
+
+    padding: 30px !important;
+
+    color: #6b7280;
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .table {
+
+        min-width: 950px;
+
+    }
+
+    .filter-menu {
+
+        position: fixed;
+
+        top: 120px;
+
+        left: 10px;
+
+        right: 10px;
+
+        min-width: auto;
+
+        max-width: none;
+
+        max-height: 350px;
+
+    }
+
+}
+
 </style>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        /* =====================================================
+           AKTIVE FILTER
+        ===================================================== */
+
+        const activeFilters = {
+
+            geraetart: "",
+
+            standort: "",
+
+            status: ""
+
+        };
+
+
+        /* =====================================================
+           FILTER MENÜ ÖFFNEN
+        ===================================================== */
+
+        document
+            .querySelectorAll(".filter")
+            .forEach(function (filter) {
+
+
+                filter.addEventListener(
+                    "click",
+                    function (event) {
+
+
+                        event.stopPropagation();
+
+
+                        const menu =
+                            this.querySelector(
+                                ".filter-menu"
+                            );
+
+
+                        if (!menu) {
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Alle anderen Menüs schließen
+                         */
+
+                        document
+                            .querySelectorAll(
+                                ".filter-menu"
+                            )
+                            .forEach(
+                                function (otherMenu) {
+
+                                    if (
+                                        otherMenu !== menu
+                                    ) {
+
+                                        otherMenu.classList.remove(
+                                            "show"
+                                        );
+
+                                    }
+
+                                }
+                            );
+
+
+                        /*
+                         * Aktuelles Menü
+                         */
+
+                        menu.classList.toggle(
+                            "show"
+                        );
+
+                    }
+                );
+
+            });
+
+
+        /* =====================================================
+           FILTER AUSWÄHLEN
+        ===================================================== */
+
+        document
+            .querySelectorAll(".filter-link")
+            .forEach(function (link) {
+
+
+                link.addEventListener(
+                    "click",
+                    function (event) {
+
+
+                        event.preventDefault();
+
+                        event.stopPropagation();
+
+
+                        const type =
+                            this.dataset.filterType;
+
+
+                        const value =
+                            this.dataset.filterValue;
+
+
+                        /*
+                         * Nur diesen Filter ändern
+                         */
+
+                        activeFilters[type] =
+                            value;
+
+
+                        /*
+                         * Tabelle filtern
+                         */
+
+                        applyFilters();
+
+
+                        /*
+                         * Menü schließen
+                         */
+
+                        const menu =
+                            this.closest(
+                                ".filter-menu"
+                            );
+
+
+                        if (menu) {
+
+                            menu.classList.remove(
+                                "show"
+                            );
+
+                        }
+
+                    }
+                );
+
+            });
+
+
+        /* =====================================================
+           FILTER ANWENDEN
+        ===================================================== */
+
+        function applyFilters() {
+
+
+            const rows =
+                document.querySelectorAll(
+                    ".pruefung-row"
+                );
+
+
+            let visibleRows = 0;
+
+
+            rows.forEach(function (row) {
+
+
+                /* =============================================
+                   DATEN DER ZEILE
+                ============================================= */
+
+                const rowGeraetart =
+                    (
+                        row.dataset.geraetart || ""
+                    ).trim();
+
+
+                const rowStandort =
+                    (
+                        row.dataset.standort || ""
+                    ).trim();
+
+
+                const rowStatus =
+                    (
+                        row.dataset.status || ""
+                    ).trim();
+
+
+                /* =============================================
+                   GERÄTART
+                ============================================= */
+
+                const geraetartMatch =
+                    activeFilters.geraetart === ""
+                    ||
+                    rowGeraetart ===
+                    activeFilters.geraetart;
+
+
+                /* =============================================
+                   STANDORT
+                ============================================= */
+
+                const standortMatch =
+                    activeFilters.standort === ""
+                    ||
+                    rowStandort ===
+                    activeFilters.standort;
+
+
+                /* =============================================
+                   STATUS
+                ============================================= */
+
+                const statusMatch =
+                    activeFilters.status === ""
+                    ||
+                    rowStatus ===
+                    activeFilters.status;
+
+
+                /* =============================================
+                   ALLE FILTER MÜSSEN PASSEN
+                ============================================= */
+
+                if (
+                    geraetartMatch
+                    &&
+                    standortMatch
+                    &&
+                    statusMatch
+                ) {
+
+                    row.style.display = "";
+
+                    visibleRows++;
+
+                } else {
+
+                    row.style.display = "none";
+
+                }
+
+            });
+
+
+            /* =============================================
+               KEINE ERGEBNISSE
+            ============================================= */
+
+            const noResults =
+                document.getElementById(
+                    "noFilterResults"
+                );
+
+
+            if (noResults) {
+
+                if (visibleRows === 0) {
+
+                    noResults.style.display =
+                        "table-row";
+
+                } else {
+
+                    noResults.style.display =
+                        "none";
+
+                }
+
+            }
+
+        }
+
+
+        /* =====================================================
+           AUSSERHALB KLICKEN
+        ===================================================== */
+
+        document.addEventListener(
+            "click",
+            function () {
+
+
+                document
+                    .querySelectorAll(
+                        ".filter-menu"
+                    )
+                    .forEach(
+                        function (menu) {
+
+                            menu.classList.remove(
+                                "show"
+                            );
+
+                        }
+                    );
+
+            }
+        );
+
+    }
+);
+
+</script>
 
 {% endblock %}

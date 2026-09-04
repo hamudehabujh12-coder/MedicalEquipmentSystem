@@ -96,7 +96,7 @@ class Device(models.Model):
     inventory_number = models.CharField(
         "Inventarnummer",
         max_length=100,
-        unique=True
+        
     )
 
 
@@ -223,6 +223,14 @@ class Device(models.Model):
         null=True
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["inventory_number"],
+                condition=models.Q(status="Aktiv"),
+                name="unique_active_inventory_number"
+            )
+        ]
 
     def __str__(self):
         return f"{self.inventory_number} - {self.name}"
@@ -602,6 +610,23 @@ class HomeSlider(models.Model):
     def __str__(self):
         return "Home Slider"
 
+
+class Messmittel(models.Model):
+
+    name = models.CharField(
+        "Messmittel",
+        max_length=200
+    )
+
+    aktiv = models.BooleanField(
+        default=True
+    )
+
+    def __str__(self):
+        return self.name
+
+
+
 class Reparatur(models.Model):
 
     STATUS_CHOICES = [
@@ -656,7 +681,35 @@ class Reparatur(models.Model):
         blank=True
     )
 
+    messmittel = models.ManyToManyField(
+        Messmittel,
+        blank=True,
+        verbose_name="Messmittel"
+    )
 
+    elektrische_pruefung = models.BooleanField(
+        "Elektrische Prüfung",
+        default=False
+    )
+
+    ELEKTRISCHE_PRUEFUNG_ART_CHOICES = [
+        ("Betten", "Betten"),
+        ("Maschinen", "Maschinen"),
+    ]
+
+    elektrische_pruefung_art = models.CharField(
+        "Art der elektrischen Prüfung",
+        max_length=20,
+        choices=ELEKTRISCHE_PRUEFUNG_ART_CHOICES,
+        blank=True
+    )
+
+    elektrische_pruefung_daten = models.JSONField(
+        "Daten der elektrischen Prüfung",
+        default=dict,
+        blank=True
+    )
+    
     reparatur_datum = models.DateField(
         "Reparaturdatum",
         null=True,
@@ -679,6 +732,8 @@ class Reparatur(models.Model):
     null=True
     )
 
+
+    
 class Standort(models.Model):
 
     name = models.CharField(
@@ -967,27 +1022,23 @@ class HomeImage(models.Model):
 
 class DashboardWidget(models.Model):
 
+    # =========================================================
+    # WIDGET-TYPEN
+    # =========================================================
+
     WIDGET_TYPES = [
 
         ("devices_overview", "Geräteübersicht"),
 
         ("devices", "Geräte"),
 
-        ("repairs_open", "Offene Reparaturen"),
-
-        ("repairs_progress", "Reparaturen in Bearbeitung"),
-
-        ("repairs_done", "Reparaturen erledigt"),
-
-        ("repair_history", "Reparaturhistorie"),
+        ("repairs", "Reparaturen"),
 
         ("filter_history", "Filterwechselhistorie"),
 
-        ("stk", "STK fällig"),
+        ("pruefart", "Prüfungsart"),
 
-        ("mtk", "MTK fällig"),
-
-        ("dguv", "DGUV fällig"),
+        ("rechnung", "Rechnungen"),
 
         ("device_documents", "Medizingeräte Dokumente"),
 
@@ -1000,7 +1051,23 @@ class DashboardWidget(models.Model):
         max_length=50,
         choices=WIDGET_TYPES
     )
+    # =========================================================
+    # BENUTZER
+    # Jeder Benutzer hat eigene Dashboard Widgets
+    # =========================================================
 
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="dashboard_widgets",
+        null=True,
+        blank=True,
+        verbose_name="Benutzer"
+    )
+
+    # =========================================================
+    # EIGENER TITEL
+    # =========================================================
 
     title = models.CharField(
         max_length=200,
@@ -1009,21 +1076,125 @@ class DashboardWidget(models.Model):
     )
 
 
+    # =========================================================
+    # STANDORT
+    # Nur für Geräte
+    # =========================================================
+
     standort = models.ForeignKey(
         Standort,
         on_delete=models.CASCADE,
         null=True,
-        blank=True
+        blank=True,
+        verbose_name="Standort"
     )
 
+
+    # =========================================================
+    # GERÄTART
+    # Nur für Geräte
+    # =========================================================
 
     geraetart = models.ForeignKey(
         Geraetart,
         on_delete=models.CASCADE,
         null=True,
-        blank=True
+        blank=True,
+        verbose_name="Geräteart"
     )
 
+
+    # =========================================================
+    # REPARATUR STATUS
+    # Für Widget "Reparaturen"
+    # =========================================================
+
+    REPARATUR_STATUS_CHOICES = [
+
+        ("offen", "🔵 Offen"),
+
+        ("in_bearbeitung", "🟡 In Bearbeitung"),
+
+        ("erledigt", "🟢 Erledigt"),
+
+    ]
+
+
+    reparatur_status = models.CharField(
+        max_length=30,
+        choices=REPARATUR_STATUS_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name="Reparaturstatus"
+    )
+
+
+    # =========================================================
+    # PRÜFUNGSART
+    # Für Widget "Prüfungsart"
+    # =========================================================
+
+    pruefart = models.ForeignKey(
+        Pruefart,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="Prüfungsart"
+    )
+
+
+    # =========================================================
+    # PRÜFUNGS STATUS
+    # =========================================================
+
+    PRUEF_STATUS_CHOICES = [
+
+        ("gueltig", "🟢 Gültig"),
+
+        ("faellig", "🟡 Fällig"),
+
+        ("ueberfaellig", "🔴 Überfällig"),
+
+    ]
+
+
+    pruef_status = models.CharField(
+        max_length=20,
+        choices=PRUEF_STATUS_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name="Prüfungsstatus"
+    )
+
+
+    # =========================================================
+    # RECHNUNG STATUS
+    # Für Widget "Rechnungen"
+    # =========================================================
+
+    RECHNUNG_STATUS_CHOICES = [
+
+        ("offen", "🔵 Offen"),
+
+        ("in_bearbeitung", "🟡 In Bearbeitung"),
+
+        ("erledigt", "🟢 Erledigt"),
+
+    ]
+
+
+    rechnung_status = models.CharField(
+        max_length=30,
+        choices=RECHNUNG_STATUS_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name="Rechnungsstatus"
+    )
+
+
+    # =========================================================
+    # SICHTBARKEIT
+    # =========================================================
 
     visible = models.BooleanField(
         default=True,
@@ -1031,10 +1202,18 @@ class DashboardWidget(models.Model):
     )
 
 
+    # =========================================================
+    # REIHENFOLGE
+    # =========================================================
+
     order = models.PositiveIntegerField(
         default=0
     )
 
+
+    # =========================================================
+    # FARBEN
+    # =========================================================
 
     COLOR_CHOICES = [
 
@@ -1072,25 +1251,27 @@ class DashboardWidget(models.Model):
     )
 
 
+    # =========================================================
+    # ICONS
+    # =========================================================
+
     ICON_CHOICES = [
 
         ("bi-grid", "📊 Übersicht"),
 
         ("bi-hospital", "🏥 Krankenhaus"),
 
-        ("bi-heart-pulse", "❤️ Medizin"),
-
         ("bi-tools", "🛠 Reparaturen"),
-
-        ("bi-wrench", "🔧 Wartung"),
 
         ("bi-filter", "🧪 Filterwechsel"),
 
-        ("bi-file-earmark-text", "📄 Dokumente"),
+        ("bi-calendar-check", "📅 Prüfungen"),
 
-        ("bi-building", "🏢 Firma"),
+        ("bi-file-earmark-text", "📄 Rechnungen"),
 
-        ("bi-folder", "📁 Ordner"),
+        ("bi-heart-pulse", "❤️ Medizin"),
+
+        ("bi-folder", "📁 Dokumente"),
 
         ("bi-gear", "⚙ Einstellungen"),
 
@@ -1104,6 +1285,10 @@ class DashboardWidget(models.Model):
     )
 
 
+    # =========================================================
+    # META
+    # =========================================================
+
     class Meta:
 
         ordering = [
@@ -1111,64 +1296,184 @@ class DashboardWidget(models.Model):
         ]
 
 
+    # =========================================================
+    # DISPLAY TITLE
+    # =========================================================
+
     @property
     def display_title(self):
+
+        # -----------------------------------------------------
+        # Eigener Titel
+        # -----------------------------------------------------
 
         if self.title:
 
             return self.title
 
 
-        if (
-            self.widget_type == "devices"
-            and self.standort
-            and self.geraetart
-        ):
+        # -----------------------------------------------------
+        # Geräte
+        # -----------------------------------------------------
 
-            return f"{self.geraetart.name} - {self.standort.name}"
+        if self.widget_type == "devices":
 
+            if self.geraetart and self.standort:
+
+                return (
+                    f"{self.geraetart.name} - "
+                    f"{self.standort.name}"
+                )
+
+            if self.geraetart:
+
+                return self.geraetart.name
+
+            if self.standort:
+
+                return self.standort.name
+
+
+        # -----------------------------------------------------
+        # Reparaturen
+        # -----------------------------------------------------
+
+        if self.widget_type == "repairs":
+
+            if self.reparatur_status:
+
+                return (
+                    f"Reparaturen - "
+                    f"{self.get_reparatur_status_display()}"
+                )
+
+
+        # -----------------------------------------------------
+        # Prüfungsart
+        # -----------------------------------------------------
+
+        if self.widget_type == "pruefart":
+
+            if self.pruefart and self.pruef_status:
+
+                return (
+                    f"{self.pruefart.name} - "
+                    f"{self.get_pruef_status_display()}"
+                )
+
+            if self.pruefart:
+
+                return self.pruefart.name
+
+
+        # -----------------------------------------------------
+        # Rechnungen
+        # -----------------------------------------------------
+
+        if self.widget_type == "rechnung":
+
+            if self.rechnung_status:
+
+                return (
+                    f"Rechnungen - "
+                    f"{self.get_rechnung_status_display()}"
+                )
+
+
+        # -----------------------------------------------------
+        # Standard
+        # -----------------------------------------------------
 
         return self.get_widget_type_display()
+
+
+    # =========================================================
+    # SAVE
+    # =========================================================
+
     def save(self, *args, **kwargs):
 
+        # -----------------------------------------------------
+        # Geräteübersicht
+        # -----------------------------------------------------
+
         if self.widget_type == "devices_overview":
+
             self.icon = "bi-grid"
 
+
+        # -----------------------------------------------------
+        # Geräte
+        # -----------------------------------------------------
+
         elif self.widget_type == "devices":
+
             self.icon = "bi-hospital"
 
-        elif self.widget_type in [
-            "repairs_open",
-            "repairs_progress",
-            "repairs_done",
-            "repair_history"
-        ]:
+
+        # -----------------------------------------------------
+        # Reparaturen
+        # -----------------------------------------------------
+
+        elif self.widget_type == "repairs":
+
             self.icon = "bi-tools"
 
+
+        # -----------------------------------------------------
+        # Filterwechsel
+        # -----------------------------------------------------
+
         elif self.widget_type == "filter_history":
+
             self.icon = "bi-filter"
 
-        elif self.widget_type in [
-            "stk",
-            "mtk",
-            "dguv"
-        ]:
+
+        # -----------------------------------------------------
+        # Prüfungsart
+        # -----------------------------------------------------
+
+        elif self.widget_type == "pruefart":
+
             self.icon = "bi-calendar-check"
 
+
+        # -----------------------------------------------------
+        # Rechnungen
+        # -----------------------------------------------------
+
+        elif self.widget_type == "rechnung":
+
+            self.icon = "bi-file-earmark-text"
+
+
+        # -----------------------------------------------------
+        # Dokumente
+        # -----------------------------------------------------
+
         elif self.widget_type in [
+
             "device_documents",
             "technician_documents"
+
         ]:
+
             self.icon = "bi-file-earmark-text"
 
 
         super().save(*args, **kwargs)
 
+
+    # =========================================================
+    # STRING
+    # =========================================================
+
     def __str__(self):
 
         return self.display_title
 
-
+    
+    
 class SystemUpdate(models.Model):
 
     STATUS_CHOICES = [
@@ -1233,6 +1538,27 @@ class SystemUpdate(models.Model):
 
     def __str__(self):
         return f"{self.version} - {self.status}"
+
+
+class RechnungKategorie(models.Model):
+
+    name = models.CharField(
+        max_length=100,
+        unique=True
+    )
+
+    erstellt_am = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Rechnung Kategorie"
+        verbose_name_plural = "Rechnung Kategorien"    
+
 
 
 class Rechnung(models.Model):
@@ -1313,10 +1639,13 @@ class Rechnung(models.Model):
         blank=True
     )
 
-    kategorie = models.CharField(
-        "Kategorie",
-        max_length=100,
-        blank=True
+    kategorie = models.ForeignKey(
+        RechnungKategorie,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Kategorie",
+        related_name="rechnungen"
     )
 
     verantwortlicher = models.CharField(
@@ -1358,16 +1687,7 @@ class Rechnung(models.Model):
         blank=True
     )
 
-    # ==========================================
-    # RECHNUNGSDOKUMENT
-    # ==========================================
-
-    rechnung_datei = models.FileField(
-        "Rechnung",
-        upload_to="rechnungen/",
-        blank=True,
-        null=True
-    )
+   
 
     # ==========================================
     # SYSTEMDATEN
@@ -1416,24 +1736,7 @@ class Rechnung(models.Model):
     def __str__(self):
         return f"{self.rechnungsnummer} - {self.lieferant}"
 
-class RechnungKategorie(models.Model):
 
-    name = models.CharField(
-        max_length=100,
-        unique=True
-    )
-
-    erstellt_am = models.DateTimeField(
-        auto_now_add=True
-    )
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ["name"]
-        verbose_name = "Rechnung Kategorie"
-        verbose_name_plural = "Rechnung Kategorien"    
 
 
 class UserPermission(models.Model):

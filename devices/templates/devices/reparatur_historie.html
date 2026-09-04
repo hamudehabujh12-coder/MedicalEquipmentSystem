@@ -14,7 +14,7 @@
     <form
         method="GET"
         id="search-form"
-        style="margin-bottom:25px;"
+        style="margin-bottom:8px;"
     >
 
         <input
@@ -56,7 +56,7 @@
          REPARATUR FORM
     ===================================================== -->
 
-    <form method="post">
+    <form method="POST">
 
         {% csrf_token %}
 
@@ -73,30 +73,181 @@
 
                     <tr>
 
-                        <th>Gerät</th>
 
-                        <th>Inventarnummer</th>
+                        <!-- =================================================
+                             GERÄTEART FILTER
+                        ================================================= -->
 
-                        <th>Seriennummer</th>
+                        <th
+                            class="filter geraetart-filter"
+                            id="geraetartFilter"
+                        >
 
-                        <th>Problemmeldung</th>
+                            <span class="geraetart-title">
 
-                        <th>Reparaturausführung</th>
+                                Geräteart
+                                {% if geraetart %}
+                                    ▼
+                                {% else %}
+                                    ▼
+                                {% endif %}
 
-                        <th>Datum</th>
+                            </span>
 
-                        <th>Status</th>
 
+                            <div
+                                class="filter-menu"
+                                id="geraetartFilterMenu"
+                            >
+
+                                {% for art in geraetearten %}
+
+                                    <a
+                                        href="#"
+                                        class="geraetart-filter-link"
+                                        data-param="geraetart"
+                                        data-value="{{ art.id }}"
+                                    >
+
+                                        🏥 {{ art.name }}
+
+                                    </a>
+
+                                {% endfor %}
+
+
+                                <a
+                                    href="#"
+                                    class="geraetart-filter-link"
+                                    data-param="geraetart"
+                                    data-value=""
+                                >
+
+                                    Alle
+
+                                </a>
+
+                            </div>
+
+                        </th>
+
+
+                        <!-- =================================================
+                             GERÄTBEZEICHNUNG
+                        ================================================= -->
+
+                        <th>
+                            Gerätbezeichnung
+                        </th>
+
+
+                        <!-- =================================================
+                             SERIENNUMMER
+                        ================================================= -->
+
+                        <th>
+                            Seriennummer
+                        </th>
+
+
+                        <!-- =================================================
+                             PROBLEMMELDUNG
+                        ================================================= -->
+
+                        <th>
+                            Problemmeldung
+                        </th>
+
+
+                        <!-- =================================================
+                             REPARATURAUSFÜHRUNG
+                        ================================================= -->
+
+                        <th>
+                            Reparaturausführung
+                        </th>
+
+
+                        <!-- =================================================
+                             DATUM
+                        ================================================= -->
+
+                        <th>
+                            Rep. Datum
+                        </th>
+
+
+                        <!-- =================================================
+                             STANDORT FILTER
+                        ================================================= -->
+
+                        <th
+                            class="filter standort-filter"
+                            id="standortFilter"
+                        >
+
+                            <span class="standort-title">
+                                Standort ▼
+                            </span>
+
+
+                            <div
+                                class="filter-menu"
+                                id="standortFilterMenu"
+                            >
+
+                                {% for standort in standorte %}
+
+                                    <a
+                                        href="#"
+                                        class="filter-link"
+                                        data-param="practice"
+                                        data-value="{{ standort.id }}"
+                                    >
+
+                                        🏥 {{ standort.name }}
+
+                                    </a>
+
+                                {% endfor %}
+
+
+                                <a
+                                    href="#"
+                                    class="filter-link"
+                                    data-param="practice"
+                                    data-value=""
+                                >
+
+                                    Alle
+
+                                </a>
+
+                            </div>
+
+                        </th>
+
+
+                        <!-- =================================================
+                             STATUS
+                        ================================================= -->
+
+                        <th>
+                            Status
+                        </th>
+
+
+                        <!-- =================================================
+                             AUSWAHL
+                        ================================================= -->
 
                         {% if user.is_superuser %}
 
-                        <!-- =====================================
-                             AUSWAHL – LETZTE SPALTE
-                        ====================================== -->
-
                         <th class="auswahl-header">
 
-                            <span>Auswahl</span>
+                            <span>
+                                Auswahl
+                            </span>
 
                             <input
                                 type="checkbox"
@@ -118,54 +269,91 @@
                 {% for reparatur in reparaturen %}
 
                 <tr
-                    onclick="window.location.href='{% url 'reparatur_detail' reparatur.id %}?readonly=1';"
-                    style="cursor:pointer;"
+                    class="repair-row"
+                    data-url="{% url 'reparatur_detail' reparatur.id %}?readonly=1"
                 >
 
 
-                    <!-- GERÄT -->
+                    <!-- =================================================
+                         GERÄTEART
+                    ================================================= -->
 
                     <td>
+
+                        {{ reparatur.geraet.geraetart.name }}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         GERÄTBEZEICHNUNG
+                    ================================================= -->
+
+                    <td>
+
                         {{ reparatur.geraet.name }}
+
                     </td>
 
 
-                    <!-- INVENTARNUMMER -->
+                    <!-- =================================================
+                         SERIENNUMMER
+                    ================================================= -->
 
                     <td>
-                        {{ reparatur.geraet.inventory_number }}
-                    </td>
 
-
-                    <!-- SERIENNUMMER -->
-
-                    <td>
                         {{ reparatur.geraet.serial_number }}
+
                     </td>
 
 
-                    <!-- PROBLEMMELDUNG -->
+                    <!-- =================================================
+                         PROBLEMMELDUNG
+                    ================================================= -->
 
                     <td class="text-truncate">
+
                         {{ reparatur.beschreibung }}
+
                     </td>
 
 
-                    <!-- REPARATURAUSFÜHRUNG -->
+                    <!-- =================================================
+                         REPARATURAUSFÜHRUNG
+                    ================================================= -->
 
                     <td class="text-truncate">
+
                         {{ reparatur.ausfuehrung }}
+
                     </td>
 
 
-                    <!-- DATUM -->
+                    <!-- =================================================
+                         DATUM
+                    ================================================= -->
 
                     <td>
-                        {{ reparatur.datum }}
+
+                        {{ reparatur.reparatur_datum }}
+
                     </td>
 
 
-                    <!-- STATUS -->
+                    <!-- =================================================
+                         STANDORT
+                    ================================================= -->
+
+                    <td>
+
+                        {{ reparatur.geraet.practice.name }}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         STATUS
+                    ================================================= -->
 
                     <td>
 
@@ -196,17 +384,13 @@
                     </td>
 
 
-                    <!-- =====================================
+                    <!-- =================================================
                          AUSWAHL
-                         NUR CHECKBOX
-                    ====================================== -->
+                    ================================================= -->
 
                     {% if user.is_superuser %}
 
-                    <td
-                        class="auswahl-cell"
-                        onclick="event.stopPropagation();"
-                    >
+                    <td class="auswahl-cell">
 
                         <input
                             type="checkbox"
@@ -228,13 +412,15 @@
                 <tr>
 
                     <td
-                        colspan="8"
+                        colspan="9"
                         style="
                             text-align:center;
                             padding:20px;
                         "
                     >
+
                         Keine Reparaturen vorhanden
+
                     </td>
 
                 </tr>
@@ -248,9 +434,9 @@
         </div>
 
 
-        <!-- =================================================
+        <!-- =====================================================
              AUSGEWÄHLTE LÖSCHEN
-        ================================================= -->
+        ===================================================== -->
 
         {% if user.is_superuser %}
 
@@ -276,9 +462,7 @@
                     );
                 "
             >
-
                 🗑️ Ausgewählte löschen
-
             </button>
 
 
@@ -296,56 +480,86 @@
 
         {% endif %}
 
-
     </form>
 
 </div>
 
 
 <!-- =========================================================
-     SEARCH JAVASCRIPT
+     SUCHEN
 ========================================================= -->
 
 <script>
 
-const searchInput =
-    document.getElementById(
-        "search-input"
-    );
-
-const searchForm =
-    document.getElementById(
-        "search-form"
-    );
-
-let timer = null;
-
-
-searchInput.addEventListener(
-    "input",
+document.addEventListener(
+    "DOMContentLoaded",
     function(){
 
-        clearTimeout(timer);
+        const searchInput =
+            document.getElementById(
+                "search-input"
+            );
 
-        timer = setTimeout(
+
+        const searchForm =
+            document.getElementById(
+                "search-form"
+            );
+
+
+        if(
+            !searchInput ||
+            !searchForm
+        ){
+
+            return;
+
+        }
+
+
+        let timer = null;
+
+
+        searchInput.addEventListener(
+            "input",
             function(){
 
-                if(
-                    searchInput.value.trim() === ""
-                ){
+                clearTimeout(timer);
 
-                    window.location.href =
-                        "{% url 'reparatur_historie' %}";
 
-                }
-                else{
+                timer = setTimeout(
+                    function(){
 
-                    searchForm.submit();
+                        if(
+                            searchInput.value.trim() === ""
+                        ){
 
-                }
+                            const url =
+                                new URL(
+                                    window.location.href
+                                );
 
-            },
-            300
+
+                            url.searchParams.delete(
+                                "search"
+                            );
+
+
+                            window.location.href =
+                                url.toString();
+
+                        }
+                        else{
+
+                            searchForm.submit();
+
+                        }
+
+                    },
+                    300
+                );
+
+            }
         );
 
     }
@@ -355,7 +569,7 @@ searchInput.addEventListener(
 
 
 <!-- =========================================================
-     AUSWAHL / ALLE AUSWÄHLEN
+     ALLE AUSWÄHLEN
 ========================================================= -->
 
 {% if user.is_superuser %}
@@ -371,10 +585,12 @@ document.addEventListener(
                 "selectAllRepairs"
             );
 
+
         const checkboxes =
             document.querySelectorAll(
                 ".repair-checkbox"
             );
+
 
         const selectedCount =
             document.getElementById(
@@ -382,9 +598,15 @@ document.addEventListener(
             );
 
 
-        /* =========================================
-           AUSWAHL ZÄHLEN
-        ========================================= */
+        if(
+            !selectAll ||
+            !selectedCount
+        ){
+
+            return;
+
+        }
+
 
         function updateSelectedCount(){
 
@@ -393,30 +615,17 @@ document.addEventListener(
                     ".repair-checkbox:checked"
                 ).length;
 
+
             selectedCount.textContent =
                 selected + " ausgewählt";
 
 
-            if(
+            selectAll.checked =
                 checkboxes.length > 0 &&
-                selected === checkboxes.length
-            ){
-
-                selectAll.checked = true;
-
-            }
-            else{
-
-                selectAll.checked = false;
-
-            }
+                selected === checkboxes.length;
 
         }
 
-
-        /* =========================================
-           ALLE AUSWÄHLEN
-        ========================================= */
 
         selectAll.addEventListener(
             "click",
@@ -441,15 +650,12 @@ document.addEventListener(
                     }
                 );
 
+
                 updateSelectedCount();
 
             }
         );
 
-
-        /* =========================================
-           EINZELNE CHECKBOX
-        ========================================= */
 
         checkboxes.forEach(
             function(checkbox){
@@ -488,7 +694,474 @@ document.addEventListener(
 
 
 <!-- =========================================================
-     SEARCH HIGHLIGHT
+     REPARATUR ZEILE ÖFFNEN
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const rows =
+            document.querySelectorAll(
+                ".repair-row"
+            );
+
+
+        rows.forEach(
+            function(row){
+
+                row.addEventListener(
+                    "click",
+                    function(event){
+
+                        /*
+                         * Checkbox nicht öffnen
+                         */
+
+                        if(
+                            event.target.closest(
+                                ".auswahl-cell"
+                            )
+                        ){
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Geräteart Filter nicht öffnen
+                         */
+
+                        if(
+                            event.target.closest(
+                                "#geraetartFilter"
+                            )
+                        ){
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Standort Filter nicht öffnen
+                         */
+
+                        if(
+                            event.target.closest(
+                                "#standortFilter"
+                            )
+                        ){
+
+                            return;
+
+                        }
+
+
+                        const url =
+                            this.dataset.url;
+
+
+                        if(url){
+
+                            window.location.href =
+                                url;
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+
+<!-- =========================================================
+     GERÄTEART FILTER
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const filter =
+            document.getElementById(
+                "geraetartFilter"
+            );
+
+
+        const menu =
+            document.getElementById(
+                "geraetartFilterMenu"
+            );
+
+
+        if(
+            !filter ||
+            !menu
+        ){
+
+            console.error(
+                "Geräteart Filter wurde nicht gefunden."
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * Geräteart öffnen / schließen
+         */
+
+        filter.addEventListener(
+            "click",
+            function(event){
+
+                event.preventDefault();
+                event.stopPropagation();
+
+
+                /*
+                 * Standort-Menü schließen
+                 */
+
+                const standortMenu =
+                    document.getElementById(
+                        "standortFilterMenu"
+                    );
+
+
+                if(standortMenu){
+
+                    standortMenu.classList.remove(
+                        "show"
+                    );
+
+                }
+
+
+                menu.classList.toggle(
+                    "show"
+                );
+
+            }
+        );
+
+
+        /*
+         * Klick innerhalb des Menüs
+         */
+
+        menu.addEventListener(
+            "click",
+            function(event){
+
+                event.stopPropagation();
+
+            }
+        );
+
+
+        /*
+         * Geräteart auswählen
+         */
+
+        const links =
+            menu.querySelectorAll(
+                ".geraetart-filter-link"
+            );
+
+
+        links.forEach(
+            function(link){
+
+                link.addEventListener(
+                    "click",
+                    function(event){
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+
+                        const param =
+                            this.dataset.param;
+
+
+                        const value =
+                            this.dataset.value;
+
+
+                        const url =
+                            new URL(
+                                window.location.href
+                            );
+
+
+                        /*
+                         * Filter entfernen
+                         */
+
+                        if(
+                            value === ""
+                        ){
+
+                            url.searchParams.delete(
+                                param
+                            );
+
+                        }
+
+
+                        /*
+                         * Geräteart setzen
+                         */
+
+                        else{
+
+                            url.searchParams.set(
+                                param,
+                                value
+                            );
+
+                        }
+
+
+                        /*
+                         * Seite neu laden
+                         */
+
+                        window.location.href =
+                            url.toString();
+
+                    }
+                );
+
+            }
+        );
+
+
+        /*
+         * Klick außerhalb
+         */
+
+        document.addEventListener(
+            "click",
+            function(){
+
+                menu.classList.remove(
+                    "show"
+                );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+
+<!-- =========================================================
+     STANDORT FILTER
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const filter =
+            document.getElementById(
+                "standortFilter"
+            );
+
+
+        const menu =
+            document.getElementById(
+                "standortFilterMenu"
+            );
+
+
+        if(
+            !filter ||
+            !menu
+        ){
+
+            console.error(
+                "Standort Filter wurde nicht gefunden."
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * Standort öffnen / schließen
+         */
+
+        filter.addEventListener(
+            "click",
+            function(event){
+
+                event.preventDefault();
+                event.stopPropagation();
+
+
+                /*
+                 * Geräteart-Menü schließen
+                 */
+
+                const geraetartMenu =
+                    document.getElementById(
+                        "geraetartFilterMenu"
+                    );
+
+
+                if(geraetartMenu){
+
+                    geraetartMenu.classList.remove(
+                        "show"
+                    );
+
+                }
+
+
+                menu.classList.toggle(
+                    "show"
+                );
+
+            }
+        );
+
+
+        /*
+         * Klick innerhalb des Menüs
+         */
+
+        menu.addEventListener(
+            "click",
+            function(event){
+
+                event.stopPropagation();
+
+            }
+        );
+
+
+        /*
+         * Standort auswählen
+         */
+
+        const links =
+            menu.querySelectorAll(
+                ".filter-link"
+            );
+
+
+        links.forEach(
+            function(link){
+
+                link.addEventListener(
+                    "click",
+                    function(event){
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+
+                        const param =
+                            this.dataset.param;
+
+
+                        const value =
+                            this.dataset.value;
+
+
+                        const url =
+                            new URL(
+                                window.location.href
+                            );
+
+
+                        /*
+                         * Filter entfernen
+                         */
+
+                        if(
+                            value === ""
+                        ){
+
+                            url.searchParams.delete(
+                                param
+                            );
+
+                        }
+
+
+                        /*
+                         * Standort setzen
+                         */
+
+                        else{
+
+                            url.searchParams.set(
+                                param,
+                                value
+                            );
+
+                        }
+
+
+                        /*
+                         * Seite neu laden
+                         */
+
+                        window.location.href =
+                            url.toString();
+
+                    }
+                );
+
+            }
+        );
+
+
+        /*
+         * Klick außerhalb
+         */
+
+        document.addEventListener(
+            "click",
+            function(){
+
+                menu.classList.remove(
+                    "show"
+                );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+
+<!-- =========================================================
+     SUCHMARKIERUNG
 ========================================================= -->
 
 <script>
@@ -503,7 +1176,14 @@ document.addEventListener(
             );
 
 
-        let searchText =
+        if(!input){
+
+            return;
+
+        }
+
+
+        const searchText =
             input.value.trim();
 
 
@@ -516,6 +1196,22 @@ document.addEventListener(
         }
 
 
+        const escapedSearch =
+            searchText.replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&"
+            );
+
+
+        const regex =
+            new RegExp(
+                "(" +
+                escapedSearch +
+                ")",
+                "gi"
+            );
+
+
         const cells =
             document.querySelectorAll(
                 ".reparatur-table tbody td"
@@ -524,10 +1220,6 @@ document.addEventListener(
 
         cells.forEach(
             function(cell){
-
-                /*
-                 * Checkbox-Spalte nicht verändern
-                 */
 
                 if(
                     cell.querySelector(
@@ -540,24 +1232,8 @@ document.addEventListener(
                 }
 
 
-                let text =
+                const text =
                     cell.textContent;
-
-
-                let escapedSearch =
-                    searchText.replace(
-                        /[.*+?^${}()|[\]\\]/g,
-                        "\\$&"
-                    );
-
-
-                let regex =
-                    new RegExp(
-                        "(" +
-                        escapedSearch +
-                        ")",
-                        "gi"
-                    );
 
 
                 cell.innerHTML =
@@ -598,6 +1274,7 @@ document.addEventListener(
 
             input.focus();
 
+
             input.setSelectionRange(
                 input.value.length,
                 input.value.length
@@ -616,6 +1293,10 @@ document.addEventListener(
 ========================================================= -->
 
 <style>
+
+/* =========================================================
+   SUCHMARKIERUNG
+========================================================= */
 
 mark {
 
@@ -636,15 +1317,15 @@ mark {
    TABLE WRAPPER
 ========================================================= */
 
-.table-wrapper {
+.table {
 
     width:100%;
 
-    overflow-x:auto;
+    overflow:visible;
 
-    overflow-y:visible;
+    table-layout:auto;
 
-    box-sizing:border-box;
+    font-size:14px;
 
 }
 
@@ -663,11 +1344,13 @@ mark {
 
     font-size:14px;
 
+    overflow:visible !important;
+
 }
 
 
 /* =========================================================
-   CELLS
+   TABLE CELLS
 ========================================================= */
 
 .reparatur-table th,
@@ -683,16 +1366,31 @@ mark {
 
 
 /* =========================================================
+   REPARATUR ROW
+========================================================= */
+
+.repair-row {
+
+    cursor:pointer;
+
+}
+
+
+/* =========================================================
    COLUMN WIDTHS
 ========================================================= */
+
+/* GERÄTEART */
 
 .reparatur-table th:nth-child(1),
 .reparatur-table td:nth-child(1) {
 
-    width:14%;
+    width:12%;
 
 }
 
+
+/* GERÄTBEZEICHNUNG */
 
 .reparatur-table th:nth-child(2),
 .reparatur-table td:nth-child(2) {
@@ -702,42 +1400,62 @@ mark {
 }
 
 
+/* SERIENNUMMER */
+
 .reparatur-table th:nth-child(3),
 .reparatur-table td:nth-child(3) {
 
-    width:12%;
+    width:11%;
 
 }
 
+
+/* PROBLEMMELDUNG */
 
 .reparatur-table th:nth-child(4),
 .reparatur-table td:nth-child(4) {
 
-    width:20%;
+    width:17%;
 
 }
 
+
+/* REPARATURAUSFÜHRUNG */
 
 .reparatur-table th:nth-child(5),
 .reparatur-table td:nth-child(5) {
 
-    width:20%;
+    width:17%;
 
 }
 
+
+/* DATUM */
 
 .reparatur-table th:nth-child(6),
 .reparatur-table td:nth-child(6) {
 
-    width:10%;
+    width:9%;
 
 }
 
 
+/* STANDORT */
+
 .reparatur-table th:nth-child(7),
 .reparatur-table td:nth-child(7) {
 
-    width:12%;
+    width:11%;
+
+}
+
+
+/* STATUS */
+
+.reparatur-table th:nth-child(8),
+.reparatur-table td:nth-child(8) {
+
+    width:10%;
 
 }
 
@@ -809,6 +1527,286 @@ mark {
 
 
 /* =========================================================
+   GERÄTEART FILTER HEADER
+========================================================= */
+
+.reparatur-table th.geraetart-filter {
+
+    position:relative;
+
+    cursor:pointer;
+
+    white-space:nowrap;
+
+    user-select:none;
+
+    overflow:visible !important;
+
+    z-index:99999;
+
+}
+
+
+/* =========================================================
+   GERÄTEART FILTER MENU
+========================================================= */
+
+.reparatur-table th.geraetart-filter
+.filter-menu {
+
+    display:none;
+
+    position:absolute;
+
+    top:100%;
+
+    left:0;
+
+    background:#ffffff;
+
+    min-width:200px;
+
+    width:max-content;
+
+    max-width:300px;
+
+    max-height:350px;
+
+    overflow-y:auto;
+
+    overflow-x:hidden;
+
+    padding:8px;
+
+    margin-top:4px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:8px;
+
+    box-shadow:
+        0 6px 18px
+        rgba(0,0,0,.25);
+
+    z-index:999999;
+
+}
+
+
+/* =========================================================
+   GERÄTEART MENU ÖFFNEN
+========================================================= */
+
+.reparatur-table th.geraetart-filter
+.filter-menu.show {
+
+    display:block !important;
+
+}
+
+
+/* =========================================================
+   GERÄTEART FILTER LINKS
+========================================================= */
+
+.reparatur-table th.geraetart-filter
+.filter-menu
+a {
+
+    display:block;
+
+    width:100%;
+
+    box-sizing:border-box;
+
+    padding:9px 12px;
+
+    margin:0;
+
+    border-radius:6px;
+
+    font-size:14px;
+
+    line-height:1.3;
+
+    text-decoration:none;
+
+    color:#1f2937;
+
+    background:#ffffff;
+
+    white-space:nowrap;
+
+    cursor:pointer;
+
+}
+
+
+/* =========================================================
+   GERÄTEART HOVER
+========================================================= */
+
+.reparatur-table th.geraetart-filter
+.filter-menu
+a:hover {
+
+    background:#e5e7eb;
+
+}
+
+
+/* =========================================================
+   GERÄTEART DARF NICHT ABGESCHNITTEN WERDEN
+========================================================= */
+
+.reparatur-table th.geraetart-filter {
+
+    overflow:visible !important;
+
+}
+
+
+/* =========================================================
+   STANDORT HEADER
+========================================================= */
+
+.reparatur-table th.standort-filter {
+
+    position:relative;
+
+    cursor:pointer;
+
+    white-space:nowrap;
+
+    user-select:none;
+
+    overflow:visible !important;
+
+    z-index:99999;
+
+}
+
+
+/* =========================================================
+   STANDORT MENU
+========================================================= */
+
+.reparatur-table th.standort-filter
+.filter-menu {
+
+    display:none;
+
+    position:absolute;
+
+    top:100%;
+
+    left:0;
+
+    background:#ffffff;
+
+    min-width:200px;
+
+    width:max-content;
+
+    max-width:300px;
+
+    max-height:350px;
+
+    overflow-y:auto;
+
+    overflow-x:hidden;
+
+    padding:8px;
+
+    margin-top:4px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:8px;
+
+    box-shadow:
+        0 6px 18px
+        rgba(0,0,0,.25);
+
+    z-index:999999;
+
+}
+
+
+/* =========================================================
+   STANDORT MENU ÖFFNEN
+========================================================= */
+
+.reparatur-table th.standort-filter
+.filter-menu.show {
+
+    display:block !important;
+
+}
+
+
+/* =========================================================
+   STANDORT FILTER LINKS
+========================================================= */
+
+.reparatur-table th.standort-filter
+.filter-menu
+a {
+
+    display:block;
+
+    width:100%;
+
+    box-sizing:border-box;
+
+    padding:9px 12px;
+
+    margin:0;
+
+    border-radius:6px;
+
+    font-size:14px;
+
+    line-height:1.3;
+
+    text-decoration:none;
+
+    color:#1f2937;
+
+    background:#ffffff;
+
+    white-space:nowrap;
+
+    cursor:pointer;
+
+}
+
+
+/* =========================================================
+   STANDORT HOVER
+========================================================= */
+
+.reparatur-table th.standort-filter
+.filter-menu
+a:hover {
+
+    background:#e5e7eb;
+
+}
+
+
+/* =========================================================
+   STANDORT DARF NICHT ABGESCHNITTEN WERDEN
+========================================================= */
+
+.reparatur-table th.standort-filter {
+
+    overflow:visible !important;
+
+}
+
+
+/* =========================================================
    TEXT TRUNCATE
 ========================================================= */
 
@@ -842,6 +1840,52 @@ mark {
     .reparatur-table td {
 
         padding:5px 4px;
+
+    }
+
+
+    .reparatur-table th.geraetart-filter
+    .filter-menu {
+
+        min-width:180px;
+
+        max-width:240px;
+
+        max-height:300px;
+
+    }
+
+
+    .reparatur-table th.geraetart-filter
+    .filter-menu
+    a {
+
+        font-size:13px;
+
+        padding:8px 10px;
+
+    }
+
+
+    .reparatur-table th.standort-filter
+    .filter-menu {
+
+        min-width:180px;
+
+        max-width:240px;
+
+        max-height:300px;
+
+    }
+
+
+    .reparatur-table th.standort-filter
+    .filter-menu
+    a {
+
+        font-size:13px;
+
+        padding:8px 10px;
 
     }
 

@@ -33,24 +33,17 @@
 
             <div class="filter-row">
 
-
-                <!-- =================================================
-                     GERÄTART
-                ================================================= -->
-
                 <div class="field">
 
                     <label>
                         Geräteart
                     </label>
 
-
                     <select name="geraetart">
 
                         <option value="">
                             Alle Gerätarten
                         </option>
-
 
                         {% for art in geraetearten %}
 
@@ -69,6 +62,262 @@
                     </select>
 
                 </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Standort
+                    </label>
+
+                    <select name="standort">
+
+                        <option value="">
+                            Alle Standorte
+                        </option>
+
+                        {% for ort in standorte %}
+
+                            <option value="{{ ort.id }}">
+                                {{ ort.name }}
+                            </option>
+
+                        {% empty %}
+
+                            <option value="">
+                                Keine Standorte vorhanden
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="export-btn"
+                >
+                    📤 Export
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+
+    <!-- =====================================================
+        REPARATURHISTORIE
+    ====================================================== -->
+
+    <div class="export-card">
+
+        <h2>🛠️ Reparaturhistorie</h2>
+
+        <p>
+            Reparaturhistorie nach Geräteart, Inventarnummer, Standort und Zeitraum exportieren.
+        </p>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="export_typ"
+                value="reparatur"
+            >
+
+
+            <div class="filter-row">
+
+                <!-- =================================================
+                    GERÄTEART
+                ================================================= -->
+
+                <div class="field">
+
+                    <label>
+                        Geräteart
+                    </label>
+
+                    <select
+                        name="geraetart"
+                        required
+                    >
+
+                        <option value="">
+                            Geräteart auswählen
+                        </option>
+
+                        {% for art in geraetearten %}
+
+                            <option value="{{ art.id }}">
+                                {{ art.name }}
+                            </option>
+
+                        {% empty %}
+
+                            <option value="">
+                                Keine Gerätearten vorhanden
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- =================================================
+                    INVENTARNUMMER
+                ================================================= -->
+
+                <div class="field">
+
+                    <label>
+                        Inventarnummer
+                        <span style="
+                            font-weight: normal;
+                            color: #6b7280;
+                        ">
+                            (optional)
+                        </span>
+                    </label>
+
+                    <input
+                        type="text"
+                        name="inventarnummer"
+                        placeholder="Inventarnummer eingeben"
+                    >
+
+                </div>
+
+
+                <!-- =================================================
+                    STANDORT
+                ================================================= -->
+
+                <div class="field">
+
+                    <label>
+                        Standort
+                    </label>
+
+                    <select
+                        name="standort"
+                        required
+                    >
+
+                        <option value="">
+                            Standort auswählen
+                        </option>
+
+                        {% for ort in standorte %}
+
+                            <option value="{{ ort.id }}">
+                                {{ ort.name }}
+                            </option>
+
+                        {% empty %}
+
+                            <option value="">
+                                Keine Standorte vorhanden
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- =================================================
+                    VON
+                ================================================= -->
+
+                <div class="field">
+
+                    <label>
+                        Von
+                    </label>
+
+                    <input
+                        type="date"
+                        name="datum_von"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- =================================================
+                    BIS
+                ================================================= -->
+
+                <div class="field">
+
+                    <label>
+                        Bis
+                    </label>
+
+                    <input
+                        type="date"
+                        name="datum_bis"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- =================================================
+                    EXPORT
+                ================================================= -->
+
+                <button
+                    type="submit"
+                    class="export-btn"
+                >
+                    📤 Export
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTERWECHSEL HISTORIE
+    ====================================================== -->
+
+    <div class="export-card">
+
+        <h2>🔄 Filterwechselhistorie</h2>
+
+        <p>
+            Filterwechsel nach Standort und Zeitraum exportieren.
+        </p>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="export_typ"
+                value="filterwechsel"
+            >
+
+
+            <div class="filter-row">
 
 
                 <!-- =================================================
@@ -108,53 +357,16 @@
                 </div>
 
 
-                <button
-                    type="submit"
-                    class="export-btn"
-                >
-                    📤 Export
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         REPARATURHISTORIE
-    ====================================================== -->
-
-    <div class="export-card">
-
-        <h2>🛠️ Reparaturhistorie</h2>
-
-        <p>
-            Reparaturen nach Zeitraum exportieren.
-        </p>
-
-
-        <form method="POST">
-
-            {% csrf_token %}
-
-            <input
-                type="hidden"
-                name="export_typ"
-                value="reparatur"
-            >
-
-
-            <div class="filter-row">
-
+                <!-- =================================================
+                     ZEITRAUM VON
+                ================================================= -->
 
                 <div class="field">
 
                     <label>
-                        Von
+                        Zeitraum von
                     </label>
+
 
                     <input
                         type="date"
@@ -164,11 +376,16 @@
                 </div>
 
 
+                <!-- =================================================
+                     ZEITRAUM BIS
+                ================================================= -->
+
                 <div class="field">
 
                     <label>
-                        Bis
+                        Zeitraum bis
                     </label>
+
 
                     <input
                         type="date"
@@ -178,81 +395,17 @@
                 </div>
 
 
-                <button
-                    type="submit"
-                    class="export-btn"
-                >
-                    📤 Export
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         FILTERWECHSEL
-    ====================================================== -->
-
-    <div class="export-card">
-
-        <h2>🔄 Filterwechselhistorie</h2>
-
-        <p>
-            Filterwechsel nach Zeitraum exportieren.
-        </p>
-
-
-        <form method="POST">
-
-            {% csrf_token %}
-
-            <input
-                type="hidden"
-                name="export_typ"
-                value="filterwechsel"
-            >
-
-
-            <div class="filter-row">
-
-
-                <div class="field">
-
-                    <label>
-                        Von
-                    </label>
-
-                    <input
-                        type="date"
-                        name="datum_von"
-                    >
-
-                </div>
-
-
-                <div class="field">
-
-                    <label>
-                        Bis
-                    </label>
-
-                    <input
-                        type="date"
-                        name="datum_bis"
-                    >
-
-                </div>
-
+                <!-- =================================================
+                     EXPORT
+                ================================================= -->
 
                 <button
                     type="submit"
                     class="export-btn"
                 >
+
                     📤 Export
+
                 </button>
 
             </div>
@@ -265,227 +418,14 @@
 
     <!-- =====================================================
         WARTUNG / PRÜFUNGEN
-    ===================================================== -->
+    ====================================================== -->
 
     <div class="export-card">
 
         <h2>📋 Wartung / Prüfungen</h2>
 
         <p>
-            Exportieren Sie die jeweilige Prüfart.
-        </p>
-
-
-        <div class="pruefarten-list">
-
-
-            {% for pruefart in pruefarten %}
-
-
-                <form method="POST">
-
-                    {% csrf_token %}
-
-
-                    <!-- Export-Typ -->
-
-                    <input
-                        type="hidden"
-                        name="export_typ"
-                        value="wartung"
-                    >
-
-
-                    <!-- Prüfart-ID -->
-
-                    <input
-                        type="hidden"
-                        name="pruefart_id"
-                        value="{{ pruefart.id }}"
-                    >
-
-
-                    <div class="pruefart-row">
-
-
-                        <!-- Prüfart Name -->
-
-                        <span class="pruefart-name">
-
-                            📋 {{ pruefart.name }}
-
-                        </span>
-
-
-                        <!-- Export Button -->
-
-                        <button
-                            type="submit"
-                            class="export-small-btn"
-                        >
-
-                            📤 Export
-
-                        </button>
-
-
-                    </div>
-
-
-                </form>
-
-
-            {% empty %}
-
-
-                <div class="empty-message">
-
-                    Keine Prüfarten vorhanden.
-
-                </div>
-
-
-            {% endfor %}
-
-
-        </div>
-
-    </div>
-
-
-<!-- =====================================================
-     STYLE FÜR WARTUNG / PRÜFUNGEN
-===================================================== -->
-
-<style>
-
-.pruefarten-list {
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 8px;
-
-}
-
-
-.pruefarten-list form {
-
-    margin: 0;
-
-    width: 100%;
-
-}
-
-
-.pruefart-row {
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    gap: 15px;
-
-    padding: 11px 13px;
-
-    border: 1px solid #e5e7eb;
-
-    border-radius: 8px;
-
-    background: #f9fafb;
-
-}
-
-
-.pruefart-name {
-
-    font-weight: 600;
-
-    color: #1f2937;
-
-}
-
-
-.export-small-btn {
-
-    padding: 7px 13px;
-
-    border: none;
-
-    border-radius: 6px;
-
-    background: #2563eb;
-
-    color: white;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
-    white-space: nowrap;
-
-}
-
-
-.export-small-btn:hover {
-
-    background: #1d4ed8;
-
-}
-
-
-.empty-message {
-
-    padding: 15px;
-
-    color: #6b7280;
-
-    background: #f9fafb;
-
-    border-radius: 8px;
-
-}
-
-
-/* =====================================================
-   MOBILE
-===================================================== */
-
-@media (max-width: 700px) {
-
-    .pruefart-row {
-
-        flex-direction: column;
-
-        align-items: stretch;
-
-    }
-
-
-    .export-small-btn {
-
-        width: 100%;
-
-    }
-
-}
-
-</style>
-
-
-    <!-- =====================================================
-         RECHNUNG HISTORIE
-    ====================================================== -->
-
-    <div class="export-card">
-
-        <h2>🧾 Rechnungshistorie</h2>
-
-        <p>
-            Rechnungshistorie nach Rechnungsdatum exportieren.
+            Exportieren Sie die ausgewählte Prüfart.
         </p>
 
 
@@ -493,6 +433,122 @@
 
             {% csrf_token %}
 
+            <input
+                type="hidden"
+                name="export_typ"
+                value="wartung"
+            >
+
+
+            <div class="filter-row">
+
+
+                <!-- =================================================
+                    PRÜFART
+                ================================================= -->
+
+                <div class="field">
+
+                    <label>
+                        Prüfart
+                    </label>
+
+                    <select name="pruefart_id" required>
+
+                        <option value="">
+                            Prüfart auswählen
+                        </option>
+
+
+                        {% for pruefart in pruefarten %}
+
+                            <option value="{{ pruefart.id }}">
+                                {{ pruefart.name }}
+                            </option>
+
+                        {% empty %}
+
+                            <option value="">
+                                Keine Prüfarten vorhanden
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- =================================================
+                    STATUS
+                ================================================= -->
+
+                <div class="field">
+
+                    <label>
+                        Status
+                    </label>
+
+                    <select name="status">
+
+                        <option value="">
+                            Alle
+                        </option>
+
+                        <option value="gueltig">
+                            Gültig
+                        </option>
+
+                        <option value="faellig">
+                            Fällig
+                        </option>
+
+                        <option value="ueberfaellig">
+                            Überfällig
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- =================================================
+                    EXPORT
+                ================================================= -->
+
+                <button
+                    type="submit"
+                    class="export-btn"
+                >
+
+                    📤 Export
+
+                </button>
+
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- =====================================================
+        RECHNUNG HISTORIE
+    ====================================================== -->
+
+    <div class="export-card">
+
+        <h2>🧾 Rechnung</h2>
+
+        <p>
+            Rechnungshistorie nach Kategorie, Status und Rechnungsdatum exportieren.
+        </p>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
 
             <input
                 type="hidden"
@@ -503,6 +559,81 @@
 
             <div class="filter-row">
 
+
+                <!-- =================================================
+                    KATEGORIE
+                ================================================= -->
+
+                <div class="field">
+
+                    <label>
+                        Kategorie
+                    </label>
+
+
+                    <select name="kategorie">
+
+                        <option value="">
+                            Alle Kategorien
+                        </option>
+
+
+                        {% for kategorie in kategorien %}
+
+                            <option value="{{ kategorie.id }}">
+                                {{ kategorie.name }}
+                            </option>
+
+                        {% empty %}
+
+                            <option value="">
+                                Keine Kategorien vorhanden
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- =================================================
+                    STATUS
+                ================================================= -->
+
+                <div class="field">
+
+                    <label>
+                        Status
+                    </label>
+
+
+                    <select name="status">
+
+                        <option value="">
+                            All
+                        </option>
+
+                        <option value="offen">
+                            offen
+                        </option>
+
+                        <option value="in Bearbeitung">
+                            in Bearbeitung
+                        </option>
+
+                        <option value="erledigt">
+                            erledigt
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- =================================================
+                    RECHNUNGSDATUM VON
+                ================================================= -->
 
                 <div class="field">
 
@@ -519,6 +650,10 @@
                 </div>
 
 
+                <!-- =================================================
+                    RECHNUNGSDATUM BIS
+                ================================================= -->
+
                 <div class="field">
 
                     <label>
@@ -534,6 +669,10 @@
                 </div>
 
 
+                <!-- =================================================
+                    EXPORT
+                ================================================= -->
+
                 <button
                     type="submit"
                     class="export-btn"
@@ -543,13 +682,11 @@
 
                 </button>
 
-
             </div>
 
         </form>
 
     </div>
-
 
 
     <!-- =====================================================
@@ -564,7 +701,6 @@
 
 
         <table class="table">
-
 
             <thead>
 
@@ -593,12 +729,9 @@
 
             <tbody>
 
-
                 {% for export in exports %}
 
-
                     <tr>
-
 
                         <td>
                             📄 {{ export.name }}
@@ -617,7 +750,6 @@
 
                         <td>
 
-
                             <a
                                 href="{% url 'export_download' export.name %}"
                                 class="download-btn"
@@ -626,8 +758,7 @@
                             </a>
 
 
-                            {% if user.is_superuser %}
-
+                           
 
                                 <form
                                     method="POST"
@@ -638,7 +769,6 @@
 
                                     {% csrf_token %}
 
-
                                     <button
                                         type="submit"
                                         class="delete-btn"
@@ -648,18 +778,13 @@
 
                                 </form>
 
-
-                            {% endif %}
-
+                            
 
                         </td>
 
-
                     </tr>
 
-
                 {% empty %}
-
 
                     <tr>
 
@@ -674,12 +799,9 @@
 
                     </tr>
 
-
                 {% endfor %}
 
-
             </tbody>
-
 
         </table>
 
@@ -853,6 +975,8 @@
 
     margin: 0;
 
+    width: 100%;
+
 }
 
 
@@ -881,6 +1005,8 @@
 
     font-weight: 600;
 
+    color: #1f2937;
+
 }
 
 
@@ -900,6 +1026,8 @@
 
     cursor: pointer;
 
+    white-space: nowrap;
+
 }
 
 
@@ -909,10 +1037,6 @@
 
 }
 
-
-/* =========================================================
-   EMPTY
-========================================================= */
 
 .empty-message {
 

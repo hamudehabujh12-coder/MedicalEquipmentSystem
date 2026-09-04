@@ -38,6 +38,8 @@
 
         <div class="grid">
 
+            <!-- BENUTZERNAME -->
+
             <div>
 
                 <label>
@@ -54,6 +56,8 @@
             </div>
 
 
+            <!-- E-MAIL -->
+
             <div>
 
                 <label>
@@ -68,6 +72,8 @@
 
             </div>
 
+
+            <!-- VORNAME -->
 
             <div>
 
@@ -84,6 +90,8 @@
             </div>
 
 
+            <!-- NACHNAME -->
+
             <div>
 
                 <label>
@@ -99,34 +107,57 @@
             </div>
 
 
+            <!-- =================================================
+                 ROLLE
+            ================================================== -->
+
             <div>
 
                 <label>
                     Rolle
                 </label>
 
-                <select name="role">
 
-                    <option
-                        value="user"
-                        {% if not edit_user.is_superuser %}
-                            selected
-                        {% endif %}
+                {% if is_admin %}
+
+                    <!-- ADMIN DARF ROLLE ÄNDERN -->
+
+                    <select name="role">
+
+                        <option
+                            value="user"
+                            {% if not edit_user.is_superuser %}
+                                selected
+                            {% endif %}
+                        >
+                            Benutzer
+                        </option>
+
+
+                        <option
+                            value="admin"
+                            {% if edit_user.is_superuser %}
+                                selected
+                            {% endif %}
+                        >
+                            Administrator
+                        </option>
+
+                    </select>
+
+
+                {% else %}
+
+                    <!-- NORMALER BENUTZER NUR ANZEIGEN -->
+
+                    <input
+                        type="text"
+                        value="{% if edit_user.is_superuser %}Administrator{% else %}Benutzer{% endif %}"
+                        readonly
+                        class="readonly-field"
                     >
-                        Benutzer
-                    </option>
 
-
-                    <option
-                        value="admin"
-                        {% if edit_user.is_superuser %}
-                            selected
-                        {% endif %}
-                    >
-                        Administrator
-                    </option>
-
-                </select>
+                {% endif %}
 
             </div>
 
@@ -144,15 +175,30 @@
             </h2>
 
 
-            <p class="permissions-info">
+            {% if is_admin %}
 
-                Wählen Sie aus, welche Bereiche dieser Benutzer
-                sehen und verwenden darf.
+                <p class="permissions-info">
 
-            </p>
+                    Wählen Sie aus, welche Bereiche dieser Benutzer
+                    sehen und verwenden darf.
+
+                </p>
+
+            {% else %}
+
+                <p class="permissions-info">
+
+                    Die folgenden Berechtigungen wurden vom
+                    Administrator festgelegt.
+
+                </p>
+
+            {% endif %}
 
 
-            <!-- MEDIZINISCHE GERÄTE -->
+            <!-- =================================================
+                 MEDIZINISCHE GERÄTE
+            ================================================== -->
 
             <div class="permission-group">
 
@@ -169,6 +215,10 @@
                         {% if permissions.permission_geraete %}
                             checked
                         {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
+                        {% endif %}
                     >
 
                     <span>
@@ -180,7 +230,9 @@
             </div>
 
 
-            <!-- REPARATUREN -->
+            <!-- =================================================
+                 REPARATUREN
+            ================================================== -->
 
             <div class="permission-group">
 
@@ -197,6 +249,10 @@
                         {% if permissions.permission_reparaturen %}
                             checked
                         {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
+                        {% endif %}
                     >
 
                     <span>
@@ -208,7 +264,9 @@
             </div>
 
 
-            <!-- FILTERWECHSEL -->
+            <!-- =================================================
+                 FILTERWECHSEL
+            ================================================== -->
 
             <div class="permission-group">
 
@@ -225,6 +283,10 @@
                         {% if permissions.permission_filter %}
                             checked
                         {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
+                        {% endif %}
                     >
 
                     <span>
@@ -236,7 +298,9 @@
             </div>
 
 
-            <!-- WARTUNG -->
+            <!-- =================================================
+                 WARTUNG
+            ================================================== -->
 
             <div class="permission-group">
 
@@ -253,6 +317,10 @@
                         {% if permissions.permission_wartung %}
                             checked
                         {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
+                        {% endif %}
                     >
 
                     <span>
@@ -264,7 +332,9 @@
             </div>
 
 
-            <!-- DOKUMENTE -->
+            <!-- =================================================
+                 DOKUMENTE
+            ================================================== -->
 
             <div class="permission-group">
 
@@ -281,6 +351,10 @@
                         {% if permissions.permission_dokumente %}
                             checked
                         {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
+                        {% endif %}
                     >
 
                     <span>
@@ -292,7 +366,9 @@
             </div>
 
 
-            <!-- RECHNUNG -->
+            <!-- =================================================
+                 RECHNUNG
+            ================================================== -->
 
             <div class="permission-group">
 
@@ -309,6 +385,10 @@
                         {% if permissions.permission_rechnung %}
                             checked
                         {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
+                        {% endif %}
                     >
 
                     <span>
@@ -320,7 +400,9 @@
             </div>
 
 
-            <!-- FIRMENINFOS -->
+            <!-- =================================================
+                 FIRMENINFOS
+            ================================================== -->
 
             <div class="permission-group">
 
@@ -337,6 +419,10 @@
                         {% if permissions.permission_firmeninfos %}
                             checked
                         {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
+                        {% endif %}
                     >
 
                     <span>
@@ -348,7 +434,9 @@
             </div>
 
 
-            <!-- KONTAKT -->
+            <!-- =================================================
+                 KONTAKT
+            ================================================== -->
 
             <div class="permission-group">
 
@@ -365,6 +453,10 @@
                         {% if permissions.permission_kontakt %}
                             checked
                         {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
+                        {% endif %}
                     >
 
                     <span>
@@ -376,7 +468,9 @@
             </div>
 
 
-            <!-- EINSTELLUNGEN -->
+            <!-- =================================================
+                 EINSTELLUNGEN
+            ================================================== -->
 
             <div class="permission-group">
 
@@ -392,6 +486,10 @@
 
                         {% if permissions.permission_einstellungen %}
                             checked
+                        {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
                         {% endif %}
                     >
 
@@ -412,6 +510,9 @@
 
         <div class="form-buttons">
 
+
+            <!-- SPEICHERN -->
+
             <button
                 type="submit"
                 class="save-btn">
@@ -420,6 +521,8 @@
 
             </button>
 
+
+            <!-- ZURÜCK -->
 
             <button
                 type="button"
@@ -430,6 +533,8 @@
 
             </button>
 
+
+            <!-- PASSWORT -->
 
             <button
                 type="button"
@@ -449,11 +554,20 @@
 
 <style>
 
+/* =========================================================
+   TITEL
+========================================================= */
+
 .page-title{
     text-align:center;
     margin-bottom:30px;
     color:#1f2937;
 }
+
+
+/* =========================================================
+   FORM CARD
+========================================================= */
 
 .form-card{
     max-width:1000px;
@@ -464,6 +578,11 @@
     box-shadow:0 5px 15px rgba(0,0,0,.12);
 }
 
+
+/* =========================================================
+   SECTION
+========================================================= */
+
 .section-title{
     color:#1f2937;
     margin-top:0;
@@ -472,11 +591,17 @@
     border-bottom:2px solid #e5e7eb;
 }
 
+
+/* =========================================================
+   GRID
+========================================================= */
+
 .grid{
     display:grid;
     grid-template-columns:repeat(2,1fr);
     gap:20px;
 }
+
 
 .grid label{
     display:block;
@@ -484,6 +609,7 @@
     font-weight:bold;
     color:#374151;
 }
+
 
 .grid input,
 .grid select{
@@ -496,15 +622,33 @@
     background:white;
 }
 
+
+/* =========================================================
+   READONLY
+========================================================= */
+
+.readonly-field{
+    background:#f3f4f6 !important;
+    color:#6b7280;
+    cursor:not-allowed;
+}
+
+
+/* =========================================================
+   PERMISSIONS
+========================================================= */
+
 .permissions-section{
     margin-top:40px;
 }
+
 
 .permissions-info{
     color:#6b7280;
     margin-bottom:25px;
     font-size:15px;
 }
+
 
 .permission-group{
     border:1px solid #e5e7eb;
@@ -514,6 +658,7 @@
     background:#f9fafb;
 }
 
+
 .permission-header{
     padding:13px 16px;
     background:#f3f4f6;
@@ -521,25 +666,65 @@
     color:#1f2937;
 }
 
+
 .permission-item{
     display:flex;
     align-items:center;
     gap:12px;
     padding:15px 16px;
-    cursor:pointer;
     background:white;
     transition:.2s;
 }
 
-.permission-item:hover{
-    background:#f0f9ff;
-}
 
 .permission-item input{
     width:20px;
     height:20px;
+}
+
+
+/* =========================================================
+   ADMIN
+========================================================= */
+
+.permission-item:not(:has(input:disabled)){
     cursor:pointer;
 }
+
+
+.permission-item:not(:has(input:disabled)):hover{
+    background:#f0f9ff;
+}
+
+
+/* =========================================================
+   NORMAL USER
+========================================================= */
+
+.permission-item:has(input:disabled){
+    cursor:default;
+}
+
+
+.permission-item:has(input:disabled):hover{
+    background:white;
+}
+
+
+.permission-item input:disabled{
+    opacity:1;
+    cursor:not-allowed;
+}
+
+
+.permission-item input:disabled:checked{
+    accent-color:#16a34a;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
 
 .form-buttons{
     display:flex;
@@ -547,6 +732,7 @@
     margin-top:35px;
     flex-wrap:wrap;
 }
+
 
 .save-btn,
 .cancel-btn,
@@ -559,32 +745,43 @@
     font-weight:bold;
 }
 
+
 .save-btn{
     background:#16a34a;
     color:white;
 }
 
+
 .save-btn:hover{
     background:#15803d;
 }
+
 
 .cancel-btn{
     background:#6b7280;
     color:white;
 }
 
+
 .cancel-btn:hover{
     background:#4b5563;
 }
+
 
 .password-btn{
     background:#f59e0b;
     color:white;
 }
 
+
 .password-btn:hover{
     background:#d97706;
 }
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
 
 .message{
     padding:12px;
@@ -592,15 +789,22 @@
     margin-bottom:20px;
 }
 
+
 .message.success{
     background:#dcfce7;
     color:#166534;
 }
 
+
 .message.error{
     background:#fee2e2;
     color:#991b1b;
 }
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media(max-width:700px){
 

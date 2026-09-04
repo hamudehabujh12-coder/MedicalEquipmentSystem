@@ -6,578 +6,2617 @@
 
     <h1>🔧 Reparatur bearbeiten</h1>
 
-    <!-- معلومات البلاغ -->
+    <!-- ==========================================
+        MELDUNG
+    =========================================== -->
+
     <div class="card" style="padding:20px; margin-bottom:25px;">
 
-    <form method="post" enctype="multipart/form-data" id="reparatur-form">
+        <form method="post"
+            enctype="multipart/form-data"
+            id="reparatur-form">
 
-    {% csrf_token %}
+            {% csrf_token %}
 
-    <h2>📋 Meldung</h2>
+            <h2>📋 Meldung</h2>
 
-<table class="table">
+            <table class="table">
 
-<tr>
-    <th>Gerät</th>
-    <td>
+                <tr>
+                    <th>Gerät</th>
 
-        <input
-            type="text"
-            id="geraet-search"
-            class="form-control"
-            placeholder="🔍 Gerät suchen..."
-            autocomplete="off"
-            style="margin-bottom:10px;"
-        >
+                    <td>
 
-        {{ form.geraet.as_hidden}}
+                        <input
+                            type="text"
+                            id="geraet-search"
+                            class="form-control"
+                            placeholder="🔍 Gerät suchen..."
+                            autocomplete="off"
+                            style="margin-bottom:10px;"
+                        >
 
-        <div
-            id="geraet-results"
-            style="
-                border:1px solid #ddd;
-                border-radius:6px;
-                display:none;
-                max-height:250px;
-                overflow-y:auto;
-                background:white;
-                position:relative;
-                z-index:1000;
-            ">
-        </div>
+                        {{ form.geraet.as_hidden }}
 
-    </td>
-</tr>
+                        <div
+                            id="geraet-results"
+                            style="
+                                border:1px solid #ddd;
+                                border-radius:6px;
+                                display:none;
+                                max-height:250px;
+                                overflow-y:auto;
+                                background:white;
+                                position:relative;
+                                z-index:1000;
+                            ">
+                        </div>
+
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Inventarnummer</th>
+
+                    <td>
+                        <span id="geraet-inventory">
+                            {{ reparatur.geraet.inventory_number }}
+                        </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Seriennummer</th>
+
+                    <td>
+                        <span id="geraet-serial">
+                            {{ reparatur.geraet.serial_number }}
+                        </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Standort</th>
+
+                    <td>
+                        <span id="geraet-standort">
+                            {{ reparatur.geraet.practice }}
+                        </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Status</th>
+
+                    <td>
+
+                        <select
+                            name="status"
+                            id="status-select"
+                            class="form-control"
+                        >
+
+                            <option
+                                value="Offen"
+                                {% if reparatur.status == "Offen" %}
+                                    selected
+                                {% endif %}
+                            >
+                                🔴 Offen
+                            </option>
+
+                            <option
+                                value="In Bearbeitung"
+                                {% if reparatur.status == "In Bearbeitung" %}
+                                    selected
+                                {% endif %}
+                            >
+                                🟡 In Bearbeitung
+                            </option>
+
+                            <option
+                                value="Erledigt"
+                                {% if reparatur.status == "Erledigt" %}
+                                    selected
+                                {% endif %}
+                            >
+                                🟢 Erledigt
+                            </option>
+
+                        </select>
+
+                    </td>
+                </tr>
+
+            </table>
 
 
-<tr>
-    <th>Inventarnummer</th>
-    <td>
-        <span id="geraet-inventory">
-            {{ reparatur.geraet.inventory_number }}
-        </span>
-    </td>
-</tr>
+            <!-- ==========================================
+                PROBLEMMELDUNG
+            =========================================== -->
 
-<tr>
-    <th>Seriennummer</th>
-    <td>
-        <span id="geraet-serial">
-            {{ reparatur.geraet.serial_number }}
-        </span>
-    </td>
-</tr>
+            <div
+                class="card"
+                style="
+                    padding:20px;
+                    margin-top:20px;
+                "
+            >
 
-<tr>
-    <th>Standort</th>
-    <td>
-        <span id="geraet-standort">
-            {{ reparatur.geraet.practice }}
-        </span>
-    </td>
-</tr>
+                <h2>📝 Problemmeldung</h2>
 
-<tr>
-    <th>Status</th>
-    <td>
-
-<select name="status" id="status-select" class="form-control">
-
-<option value="Offen"
-{% if reparatur.status == "Offen" %}selected{% endif %}>
-🔴 Offen
-</option>
-
-
-<option value="In Bearbeitung"
-{% if reparatur.status == "In Bearbeitung" %}selected{% endif %}>
-🟡 In Bearbeitung
-</option>
-
-
-<option value="Erledigt"
-{% if reparatur.status == "Erledigt" %}selected{% endif %}>
-🟢 Erledigt
-</option>
-
-
-</select>
-
-    </td>
-</tr>
-
-
-</table>
-    
-<div class="card" style="padding:20px; margin-top:20px;">
-
-    <h2>📝 Problemmeldung</h2>
-
-    <div class="form-group" style="margin-bottom:20px;">
-
-        <label>Problembeschreibung</label>
-
-        {{ form.beschreibung }}
-
-    </div>
-
-
-    <div class="form-group" style="margin-bottom:20px;">
-
-        <label>Melder</label>
-
-        {{ form.melder }}
-
-    </div>
-
-    <div class="form-group">
-        <label>Meldedatum</label>
-            <input
-                type="text"
-                class="form-control"
-                value="{{ reparatur.datum|date:'d.m.Y' }}"
-                readonly>
-        </div>
-    
-       <div class="form-group" style="margin-top:20px;">
-
-            <label style="
-                display:flex;
-                align-items:center;
-                gap:10px;
-                cursor:pointer;
-                font-weight:500;
-            ">
-
-                <input
-                    type="checkbox"
-                    name="techniker_gelesen"
-                    {% if reparatur.techniker_gelesen %}checked{% endif %}
-                    {% if not user.is_superuser %}disabled{% endif %}
-                    style="
-                        width:20px;
-                        height:20px;
-                        accent-color:green;
-                        cursor:pointer;
-                    "
+                <div
+                    class="form-group"
+                    style="margin-bottom:20px;"
                 >
 
-                <span>Vom Techniker gelesen</span>
+                    <label>Problembeschreibung</label>
 
-            </label>
+                    {{ form.beschreibung }}
 
-        </div>
-</div>
+                </div>
 
-</div>
-   
+                <div
+                    class="form-group"
+                    style="margin-bottom:20px;"
+                >
 
-   <div class="card" id="bearbeitung-section" style="padding:20px;
-    {% if reparatur.status == 'Offen' %}display:none;{% endif %}">
+                    <label>Melder</label>
 
-    <h2>🛠 Bearbeitung</h2>
-        <div id="techniker-fields">
+                    {{ form.melder }}
 
+                </div>
 
-            <div class="form-group" style="margin-bottom:20px;">
+                <div class="form-group">
 
-                <label>Techniker</label>
+                    <label>Meldedatum</label>
 
-                {{ form.techniker }}
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="{{ reparatur.datum|date:'d.m.Y' }}"
+                        readonly
+                    >
 
-                <div id="techniker-error" style="color:red; display:none;">
-                    Techniker muss eingegeben werden.
+                </div>
+
+                <div
+                    class="form-group"
+                    style="margin-top:20px;"
+                >
+
+                    <label
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:10px;
+                            cursor:pointer;
+                            font-weight:500;
+                        "
+                    >
+
+                        <input
+                            type="checkbox"
+                            name="techniker_gelesen"
+
+                            {% if reparatur.techniker_gelesen %}
+                                checked
+                            {% endif %}
+
+                            {% if not user.is_superuser %}
+                                disabled
+                            {% endif %}
+
+                            style="
+                                width:20px;
+                                height:20px;
+                                accent-color:green;
+                                cursor:pointer;
+                            "
+                        >
+
+                        <span>
+                            Vom Techniker gelesen
+                        </span>
+
+                    </label>
+
                 </div>
 
             </div>
 
 
+            <!-- ==========================================
+                BEARBEITUNG
+            =========================================== -->
 
-            <div class="form-group" style="margin-bottom:20px;">
+            <div
+                class="card"
+                id="bearbeitung-section"
+                style="
+                    padding:20px;
 
-                <label>Reparaturdatum</label>
-
-                {{ form.reparatur_datum }}
-
-                <div id="datum-error" style="color:red; display:none;">
-                    Reparaturdatum muss eingegeben werden.
-                </div>
-
-            </div>
-
-
-
-            <div class="form-group" style="margin-bottom:20px;">
-
-                <label>Ausführung</label>
-
-                {{ form.ausfuehrung }}
-
-                <div id="ausfuehrung-error" style="color:red; display:none;">
-                    Ausführung muss eingegeben werden.
-                </div>
-
-            </div>
-
-            <div class="form-group" style="margin-bottom:20px;">
-
-                <label>📄 Reparaturbericht (PDF)</label>
-
-                {% if readonly %}
-
-                    {% if reparatur.reparaturbericht %}
-                        <a href="{{ reparatur.reparaturbericht.url }}" target="_blank">
-                             📄 Reparaturbericht.pdf
-                        </a>
-                    {% else %}
-                        <p>Kein Reparaturbericht vorhanden.</p>
+                    {% if reparatur.status == 'Offen' %}
+                        display:none;
                     {% endif %}
+                "
+            >
 
-                {% else %}
+                <h2>🛠 Bearbeitung</h2>
 
-                    {{ form.reparaturbericht }}
+                <div id="techniker-fields">
 
-                {% endif %}
+
+                    <!-- TECHNIKER -->
+
+                    <div
+                        class="form-group"
+                        style="margin-bottom:20px;"
+                    >
+
+                        <label>Techniker</label>
+
+                        {{ form.techniker }}
+
+                        <div
+                            id="techniker-error"
+                            style="
+                                color:red;
+                                display:none;
+                            "
+                        >
+                            Techniker muss eingegeben werden.
+                        </div>
+
+                    </div>
+
+
+                    <!-- REPARATURDATUM -->
+
+                    <div
+                        class="form-group"
+                        style="margin-bottom:20px;"
+                    >
+
+                        <label>Reparaturdatum</label>
+
+                        {{ form.reparatur_datum }}
+
+                        <div
+                            id="datum-error"
+                            style="
+                                color:red;
+                                display:none;
+                            "
+                        >
+                            Reparaturdatum muss eingegeben werden.
+                        </div>
+
+                    </div>
+
+
+                    <!-- AUSFÜHRUNG -->
+
+                    <div
+                        class="form-group"
+                        style="margin-bottom:20px;"
+                    >
+
+                        <label>Ausführung</label>
+
+                        {{ form.ausfuehrung }}
+
+                        <div
+                            id="ausfuehrung-error"
+                            style="
+                                color:red;
+                                display:none;
+                            "
+                        >
+                            Ausführung muss eingegeben werden.
+                        </div>
+
+                    </div>
+
+
+                    <!-- ==========================================
+                        MESSMITTEL
+                    =========================================== -->
+
+                    <div
+                        class="form-group"
+                        style="
+                            margin-bottom:20px;
+                            max-width:600px;
+                        "
+                    >
+
+                        <label>
+                            Messmittel
+                        </label>
+
+
+                        <!-- Django ManyToMany Field
+                            bleibt für das Speichern vorhanden -->
+                        {{ form.messmittel }}
+
+
+                        <!-- ==========================================
+                            CUSTOM MESSMITTEL DROPDOWN
+                        =========================================== -->
+
+                        <div
+                            id="messmittel-dropdown"
+                            style="
+                                position:relative;
+                                width:100%;
+                            "
+                        >
+
+                            <!-- BUTTON -->
+
+                            <button
+                                type="button"
+                                id="messmittel-dropdown-button"
+                                style="
+                                    width:100%;
+                                    min-height:46px;
+                                    padding:10px 14px;
+                                    background:white;
+                                    border:1px solid #d1d5db;
+                                    border-radius:8px;
+                                    text-align:left;
+                                    cursor:pointer;
+                                    font-size:16px;
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:space-between;
+                                "
+                            >
+
+                                <span id="messmittel-selected-text">
+                                    Messmittel auswählen...
+                                </span>
+
+                                <span id="messmittel-arrow">
+                                    ▼
+                                </span>
+
+                            </button>
+
+
+                            <!-- ==========================================
+                                DROPDOWN MENU
+                            =========================================== -->
+
+                            <div
+                                id="messmittel-dropdown-menu"
+                                style="
+                                    display:none;
+                                    position:absolute;
+                                    left:0;
+                                    right:0;
+                                    top:calc(100% + 5px);
+                                    background:white;
+                                    border:1px solid #d1d5db;
+                                    border-radius:8px;
+                                    box-shadow:0 5px 15px rgba(0,0,0,.15);
+                                    max-height:250px;
+                                    overflow-y:auto;
+                                    z-index:9999;
+                                    padding:8px 0;
+                                "
+                            >
+
+                                {% for messmittel in form.messmittel.field.queryset %}
+
+                                    <label
+                                        style="
+                                            display:flex;
+                                            align-items:center;
+                                            gap:10px;
+                                            padding:10px 14px;
+                                            cursor:pointer;
+                                            margin:0;
+                                        "
+                                    >
+
+                                        <input
+                                            type="checkbox"
+                                            class="messmittel-checkbox"
+                                            value="{{ messmittel.pk }}"
+
+                                            style="
+                                                width:20px;
+                                                height:20px;
+                                                cursor:pointer;
+                                                flex-shrink:0;
+                                            "
+                                        >
+
+                                        <span>
+                                            {{ messmittel.name }}
+                                        </span>
+
+                                    </label>
+
+                                {% empty %}
+
+                                    <div
+                                        style="
+                                            padding:12px;
+                                            color:#6b7280;
+                                        "
+                                    >
+                                        Keine Messmittel vorhanden.
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    
+                    <!-- ==========================================
+                        ELEKTRISCHE PRÜFUNG
+                    =========================================== -->
+
+                    <div
+                        style="
+                            margin-top:-5px;
+                            margin-bottom:20px;
+                        "
+                    >
+
+                        <label
+                            style="
+                                display:flex;
+                                align-items:center;
+                                justify-content:flex-start;
+                                gap:8px;
+                                cursor:pointer;
+                                font-weight:500;
+                                margin:0;
+                            "
+                        >
+
+                            {{ form.elektrische_pruefung }}
+
+                            <span>
+                                Elektrische Prüfung
+                            </span>
+
+                        </label>
+
+
+                        <!-- ART -->
+
+                        <div
+                            id="elektrische-pruefung-art-container"
+                            style="
+                                margin-top:15px;
+                                display:none;
+                            "
+                        >
+
+                            <label
+                                for="id_elektrische_pruefung_art"
+                            >
+                                Art
+                            </label>
+
+                            {{ form.elektrische_pruefung_art }}
+
+                        </div>
+
+
+                        <!-- ======================================
+                            BETTEN
+                        ======================================= -->
+
+                        <div
+                            id="elektrische-pruefung-betten"
+                            style="
+                                display:none;
+                                margin-top:25px;
+                            "
+                        >
+
+                            <h3 style="margin-bottom:15px;">
+                                🛏 Elektrische Prüfung – Betten
+                            </h3>
+
+
+                            <div
+                                style="
+                                    overflow-x:auto;
+                                    border:1px solid #ddd;
+                                    border-radius:8px;
+                                "
+                            >
+
+                                <table
+                                    class="table"
+                                    style="
+                                        width:100%;
+                                        margin:0;
+                                        border-collapse:collapse;
+                                    "
+                                >
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>
+                                                Elektrostimulation
+                                            </th>
+
+                                            <th>
+                                                Grenzwert
+                                            </th>
+
+                                            <th>
+                                                Messwert
+                                            </th>
+
+                                            <th
+                                                style="
+                                                    text-align:center;
+                                                    width:80px;
+                                                "
+                                            >
+                                                OK
+                                            </th>
+
+                                        </tr>
+
+                                    </thead>
+
+                                    <tbody>
+
+                                        <tr>
+
+                                            <td rowspan="3">
+
+                                                <strong>
+                                                    Potentialausgleichswiderstand
+                                                    (anhand der Messpunkte)
+                                                    
+                                                </strong>
+
+                                            </td>
+
+                                            <td rowspan="3">
+                                                &lt; 0,2 Ω
+                                            </td>
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:10px;
+                                                    "
+                                                >
+
+                                                    <strong>1</strong>
+
+                                                    <input
+                                                        type="text"
+                                                        name="potentialausgleichswiderstand_1"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.betten.potentialausgleichswiderstand.1.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                </div>
+
+                                            </td>
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="potentialausgleichswiderstand_1_ok"
+
+                                                    {% if elektrische_daten.betten.potentialausgleichswiderstand.1.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <tr>
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:10px;
+                                                    "
+                                                >
+
+                                                    <strong>2</strong>
+
+                                                    <input
+                                                        type="text"
+                                                        name="potentialausgleichswiderstand_2"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.betten.potentialausgleichswiderstand.2.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                </div>
+
+                                            </td>
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="potentialausgleichswiderstand_2_ok"
+
+                                                    {% if elektrische_daten.betten.potentialausgleichswiderstand.2.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <tr>
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:10px;
+                                                    "
+                                                >
+
+                                                    <strong>3</strong>
+
+                                                    <input
+                                                        type="text"
+                                                        name="potentialausgleichswiderstand_3"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.betten.potentialausgleichswiderstand.3.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                </div>
+
+                                            </td>
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="potentialausgleichswiderstand_3_ok"
+
+                                                    {% if elektrische_daten.betten.potentialausgleichswiderstand.3.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <tr>
+
+                                            <td rowspan="4">
+
+                                                <strong>
+                                                    Geräteableitstrom
+                                                    Ersatzmessung
+                                                </strong>
+
+                                            </td>
+
+                                            <td>
+                                                Intrakardiale Anwendung: &lt; 50 µA
+                                                        
+                                            </td>
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:10px;
+                                                        flex-wrap:wrap;
+                                                    "
+                                                >
+
+                                                    
+
+                                                    <input
+                                                        type="text"
+                                                        name="intrakardiale_anwendung"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.betten.geraeteableitstrom_ersatzmessung.intrakardiale_anwendung.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                </div>
+
+                                            </td>
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="intrakardiale_anwendung_ok"
+
+                                                    {% if elektrische_daten.betten.geraeteableitstrom_ersatzmessung.intrakardiale_anwendung.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <tr>
+
+                                            <td>
+                                               Messung nach Typ B: &lt; 500 µA
+                                            </td>
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:10px;
+                                                        flex-wrap:wrap;
+                                                    "
+                                                >
+
+                                                
+                                                    <input
+                                                        type="text"
+                                                        name="typ_b_messwert"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.betten.geraeteableitstrom_ersatzmessung.typ_b.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                </div>
+
+                                            </td>
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="typ_b_ok"
+
+                                                    {% if elektrische_daten.betten.geraeteableitstrom_ersatzmessung.typ_b.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <tr>
+
+                                            <td>
+                                               Messung Laserlampe mit eigenem Netzstecker: &lt; 50 µA
+                                            
+                                                        
+                                            </td>
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:10px;
+                                                        flex-wrap:wrap;
+                                                    "
+                                                >
+
+                                                    
+
+                                                    <input
+                                                        type="text"
+                                                        name="laserlampe_messwert"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.betten.geraeteableitstrom_ersatzmessung.laserlampe.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                </div>
+
+                                            </td>
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="laserlampe_ok"
+
+                                                    {% if elektrische_daten.betten.geraeteableitstrom_ersatzmessung.laserlampe.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <tr>
+
+                                            <td>
+                                                Netzspannung: 230 V (EU)
+                                            </td>
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:10px;
+                                                        flex-wrap:wrap;
+                                                    "
+                                                >
+
+                                                    
+
+                                                    <input
+                                                        type="text"
+                                                        name="netzspannung_messwert"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.betten.geraeteableitstrom_ersatzmessung.netzspannung.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                </div>
+
+                                            </td>
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="netzspannung_ok"
+
+                                                    {% if elektrische_daten.betten.geraeteableitstrom_ersatzmessung.netzspannung.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ======================================
+                            MASCHINEN
+                        ======================================= -->
+
+                        <div
+                            id="elektrische-pruefung-maschinen"
+                            style="
+                                display:none;
+                                margin-top:25px;
+                            "
+                        >
+
+                            <h3 style="margin-bottom:15px;">
+                                🏭 Elektrische Prüfung – Maschinen
+                            </h3>
+
+
+                            <div
+                                style="
+                                    overflow-x:auto;
+                                    border:1px solid #ddd;
+                                    border-radius:8px;
+                                "
+                            >
+
+                                <table
+                                    class="table"
+                                    style="
+                                        width:100%;
+                                        margin:0;
+                                        border-collapse:collapse;
+                                    "
+                                >
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>
+                                                Prüfung
+                                            </th>
+
+                                            <th>
+                                                Grenzwert / Bedingung
+                                            </th>
+
+                                            <th>
+                                                Messwert
+                                            </th>
+
+                                            <th
+                                                style="
+                                                    text-align:center;
+                                                    width:80px;
+                                                "
+                                            >
+                                                OK
+                                            </th>
+
+                                        </tr>
+
+                                    </thead>
+
+
+                                    <tbody>
+
+
+                                        <!-- =====================================
+                                            1. SCHUTZLEITERWIDERSTAND
+                                        ====================================== -->
+
+                                        <tr>
+
+                                            <td>
+
+                                                <strong>
+                                                    Schutzleiterwiderstand
+                                                </strong>
+
+                                            </td>
+
+
+                                            <td>
+                                                ≤ 0,3 Ω
+                                            </td>
+
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:8px;
+                                                    "
+                                                >
+
+                                                    <input
+                                                        type="text"
+                                                        name="maschinen_schutzleiterwiderstand"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.maschinen.schutzleiterwiderstand.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                    <span>Ω</span>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="maschinen_schutzleiterwiderstand_ok"
+
+                                                    {% if elektrische_daten.maschinen.schutzleiterwiderstand.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+
+                                        <!-- =====================================
+                                            2. TYP B
+                                        ====================================== -->
+
+                                        <tr>
+
+                                            <td colspan="4">
+
+                                                <div style="
+                                                    text-align:left;
+                                                    width:100%;
+                                                ">
+
+                                                    <strong>
+                                                        Typ des Anwendungsteils:
+                                                    </strong>
+
+                                                    Typ B
+
+
+                                                    <br><br>
+
+
+                                                    Gerätableitströme von Anwendungsteil
+                                                    des Typs B gemessen auf Nennspannung
+                                                    normiert und unter Berücksichtigung der
+                                                    Zusatzbedingungen geprüft.
+
+
+                                                    <br><br>
+
+
+                                                    <strong>
+                                                        Sollwert:
+                                                    </strong>
+
+                                                    I<sub>N</sub> ≤ 500 µA
+
+
+                                                    <br><br>
+
+
+                                                    <!-- =====================================
+                                                        MESSVERFAHREN
+                                                    ====================================== -->
+
+                                                    <strong>
+                                                        Messverfahren:
+                                                    </strong>
+
+
+                                                    <div style="
+                                                        margin-top:10px;
+                                                        margin-left:0;
+                                                        padding-left:0;
+                                                    ">
+
+
+                                                        <!-- Differenzstrommessung -->
+
+                                                        <label
+                                                            style="
+                                                                display:flex;
+                                                                align-items:center;
+                                                                justify-content:flex-start;
+                                                                gap:8px;
+                                                                margin:0 0 10px 0;
+                                                                padding:0;
+                                                                cursor:pointer;
+                                                            "
+                                                        >
+
+                                                            <input
+                                                                type="checkbox"
+                                                                name="maschinen_differenz_ok"
+
+                                                                {% if elektrische_daten.maschinen.differenzstrommessung.ok %}
+                                                                    checked
+                                                                {% endif %}
+
+                                                                style="
+                                                                    width:20px;
+                                                                    height:20px;
+                                                                    margin:0;
+                                                                    cursor:pointer;
+                                                                "
+                                                            >
+
+                                                            <span>
+                                                                Differenzstrommessung nach Bild 8
+                                                            </span>
+
+                                                        </label>
+
+
+                                                        <!-- Direktmessung -->
+
+                                                        <label
+                                                            style="
+                                                                display:flex;
+                                                                align-items:center;
+                                                                justify-content:flex-start;
+                                                                gap:8px;
+                                                                margin:0;
+                                                                padding:0;
+                                                                cursor:pointer;
+                                                            "
+                                                        >
+
+                                                            <input
+                                                                type="checkbox"
+                                                                name="maschinen_direkt_ok"
+
+                                                                {% if elektrische_daten.maschinen.direktmessung.ok %}
+                                                                    checked
+                                                                {% endif %}
+
+                                                                style="
+                                                                    width:20px;
+                                                                    height:20px;
+                                                                    margin:0;
+                                                                    cursor:pointer;
+                                                                "
+                                                            >
+
+                                                            <span>
+                                                                Direktmessung nach Bild 7
+                                                            </span>
+
+                                                        </label>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+
+
+
+                                        <!-- =====================================
+                                            3. NENNSPANNUNG
+                                        ====================================== -->
+
+                                        <tr>
+
+                                            <td>
+
+                                                <strong>
+                                                    Nennspannung der Netzversorgung
+                                                    U<sub>0</sub>
+                                                </strong>
+
+                                            </td>
+
+
+                                            <td>
+                                                Nennspannung
+                                            </td>
+
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:8px;
+                                                    "
+                                                >
+
+                                                    <input
+                                                        type="text"
+                                                        name="maschinen_nennspannung"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.maschinen.nennspannung.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                    <span>V</span>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="maschinen_nennspannung_ok"
+
+                                                    {% if elektrische_daten.maschinen.nennspannung.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+
+                                        <!-- =====================================
+                                            4. POLARITÄT L – N
+                                        ====================================== -->
+
+                                        <tr>
+
+                                            <td
+                                                rowspan="3"
+                                                style="vertical-align:top;"
+                                            >
+
+                                                <strong>
+                                                    Polarität der Netzversorgung
+                                                    L – N
+                                                </strong>
+
+                                            </td>
+
+
+                                            <!-- I Bmax -->
+
+                                            <td>
+
+                                                Maximaler Geräteableitstrom
+                                                I<sub>Bmax</sub>
+
+                                            </td>
+
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:8px;
+                                                    "
+                                                >
+
+                                                    <input
+                                                        type="text"
+                                                        name="maschinen_ln_ibmax"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.maschinen.polaritaet_l_n.ibmax.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                    <span>µA</span>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="maschinen_ln_ibmax_ok"
+
+                                                    {% if elektrische_daten.maschinen.polaritaet_l_n.ibmax.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <!-- U Bmax -->
+
+                                        <tr>
+
+                                            <td>
+
+                                                Zugehörige Netzspannung
+                                                U<sub>Bmax</sub>
+
+                                            </td>
+
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:8px;
+                                                    "
+                                                >
+
+                                                    <input
+                                                        type="text"
+                                                        name="maschinen_ln_ubmax"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.maschinen.polaritaet_l_n.ubmax.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                    <span>V</span>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="maschinen_ln_ubmax_ok"
+
+                                                    {% if elektrische_daten.maschinen.polaritaet_l_n.ubmax.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <!-- I N -->
+
+                                        <tr>
+
+                                            <td>
+
+                                                Auf Nennspannung normierter
+                                                Geräteableitstrom
+
+                                                <br><br>
+
+                                                <strong>
+                                                    I<sub>N</sub> =
+                                                    (U<sub>0</sub> × I<sub>Bmax</sub>)
+                                                    : U<sub>Bmax</sub>
+                                                </strong>
+
+                                            </td>
+
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:8px;
+                                                    "
+                                                >
+
+                                                    <input
+                                                        type="text"
+                                                        name="maschinen_ln_in"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.maschinen.polaritaet_l_n.in.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                    <span>µA</span>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="maschinen_ln_in_ok"
+
+                                                    {% if elektrische_daten.maschinen.polaritaet_l_n.in.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+
+                                        <!-- =====================================
+                                            5. POLARITÄT N – L
+                                        ====================================== -->
+
+                                        <tr>
+
+                                            <td
+                                                rowspan="3"
+                                                style="vertical-align:top;"
+                                            >
+
+                                                <strong>
+                                                    Polarität der Netzversorgung
+                                                    N – L
+                                                </strong>
+
+                                            </td>
+
+
+                                            <!-- I Bmax -->
+
+                                            <td>
+
+                                                Maximaler Geräteableitstrom
+                                                I<sub>Bmax</sub>
+
+                                            </td>
+
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:8px;
+                                                    "
+                                                >
+
+                                                    <input
+                                                        type="text"
+                                                        name="maschinen_nl_ibmax"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.maschinen.polaritaet_n_l.ibmax.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                    <span>µA</span>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="maschinen_nl_ibmax_ok"
+
+                                                    {% if elektrische_daten.maschinen.polaritaet_n_l.ibmax.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <!-- U Bmax -->
+
+                                        <tr>
+
+                                            <td>
+
+                                                Zugehörige Netzspannung
+                                                U<sub>Bmax</sub>
+
+                                            </td>
+
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:8px;
+                                                    "
+                                                >
+
+                                                    <input
+                                                        type="text"
+                                                        name="maschinen_nl_ubmax"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.maschinen.polaritaet_n_l.ubmax.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                    <span>V</span>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="maschinen_nl_ubmax_ok"
+
+                                                    {% if elektrische_daten.maschinen.polaritaet_n_l.ubmax.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <!-- I N -->
+
+                                        <tr>
+
+                                            <td>
+
+                                                Auf Nennspannung normierter
+                                                Geräteableitstrom
+
+                                                <br><br>
+
+                                                <strong>
+                                                    I<sub>N</sub> =
+                                                    (U<sub>0</sub> × I<sub>Bmax</sub>)
+                                                    : U<sub>Bmax</sub>
+                                                </strong>
+
+                                            </td>
+
+
+                                            <td>
+
+                                                <div
+                                                    style="
+                                                        display:flex;
+                                                        align-items:center;
+                                                        gap:8px;
+                                                    "
+                                                >
+
+                                                    <input
+                                                        type="text"
+                                                        name="maschinen_nl_in"
+                                                        class="form-control"
+                                                        value="{{ elektrische_daten.maschinen.polaritaet_n_l.in.messwert|default:'' }}"
+                                                        style="max-width:200px;"
+                                                    >
+
+                                                    <span>µA</span>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            <td style="text-align:center;">
+
+                                                <input
+                                                    type="checkbox"
+                                                    name="maschinen_nl_in_ok"
+
+                                                    {% if elektrische_daten.maschinen.polaritaet_n_l.in.ok %}
+                                                        checked
+                                                    {% endif %}
+
+                                                    style="
+                                                        width:20px;
+                                                        height:20px;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+
+                                            </td>
+
+                                        </tr>
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ==========================================
+                        REPARATURBERICHT
+                    =========================================== -->
+
+                    <div
+                        class="form-group"
+                        style="margin-bottom:20px;"
+                    >
+
+                        <label>
+                            📄 Reparaturbericht (PDF)
+                        </label>
+
+                        {% if readonly %}
+
+                            {% if reparatur.reparaturbericht %}
+
+                                <a
+                                    href="{{ reparatur.reparaturbericht.url }}"
+                                    target="_blank"
+                                >
+                                    📄 Reparaturbericht.pdf
+                                </a>
+
+                            {% else %}
+
+                                <p>
+                                    Kein Reparaturbericht vorhanden.
+                                </p>
+
+                            {% endif %}
+
+                        {% else %}
+
+                            {{ form.reparaturbericht }}
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- ==========================================
+                        REPARATURBILD
+                    =========================================== -->
+
+                    <div
+                        class="form-group"
+                        style="margin-bottom:20px;"
+                    >
+
+                        <label>
+                            📷 Reparaturbild
+                        </label>
+
+                        {% if readonly %}
+
+                            {% if reparatur.reparaturbild %}
+
+                                <img
+                                    src="{{ reparatur.reparaturbild.url }}"
+                                    style="max-width:250px;"
+                                >
+
+                            {% else %}
+
+                                <p>
+                                    Kein Bild vorhanden.
+                                </p>
+
+                            {% endif %}
+
+                        {% else %}
+
+                            {% if reparatur.reparaturbild %}
+
+                                <img
+                                    src="{{ reparatur.reparaturbild.url }}"
+                                    style="
+                                        max-width:200px;
+                                        margin-bottom:10px;
+                                    "
+                                >
+
+                            {% endif %}
+
+                            {{ form.reparaturbild }}
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
 
             </div>
-            
-            <div class="form-group" style="margin-bottom:20px;">
-
-                <label>📷 Reparaturbild</label>
-
-            {% if readonly %}
-
-                {% if reparatur.reparaturbild %}
-                    <img src="{{ reparatur.reparaturbild.url }}"
-                         style="max-width:250px;">
-                {% else %}
-                   <p>Kein Bild vorhanden.</p>
-                {% endif %}
-
-            {% else %}
-
-                {% if reparatur.reparaturbild %}
-                    <img src="{{ reparatur.reparaturbild.url }}"
-                         style="max-width:200px; margin-bottom:10px;">
-                {% endif %}
-
-                {{ form.reparaturbild }}
-
-            {% endif %}
-
-        </div>
-
-        </div>
 
 
-        </div> <!-- نهاية bearbeitung-section -->
+            <!-- ==========================================
+                BUTTONS
+            =========================================== -->
 
-        <div
-            style="
-                display:flex;
-                gap:10px;
-                margin-top:30px;
-                margin-bottom:30px;
-            "
-        >
-
-            <button
-                type="submit"
-                name="action"
-                value="save"
-                class="btn btn-success"
+            <div
+                style="
+                    display:flex;
+                    gap:10px;
+                    margin-top:30px;
+                    margin-bottom:30px;
+                "
             >
-                💾 Speichern
-            </button>
 
+                <button
+                    type="submit"
+                    name="action"
+                    value="save"
+                    class="btn btn-success"
+                >
+                    💾 Speichern
+                </button>
 
-            <button
-                type="button"
-                class="btn btn-danger"
-                id="delete-reparatur-btn"
-            >
-                🗑️ Löschen
-            </button>
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    id="delete-reparatur-btn"
+                >
+                    🗑️ Löschen
+                </button>
 
+                <a
+                    href="{% url 'reparatur' %}"
+                    class="btn btn-secondary"
+                >
+                    ❌ Abbrechen
+                </a>
 
-            <a
-                href="{% url 'reparatur' %}"
-                class="btn btn-secondary"
-            >
-                ❌ Abbrechen
-            </a>
+            </div>
 
-        </div>
-        
-</div>
+        </form>
 
+    </div>
 
-
+<div>
 <script>
 
-const statusSelect = document.getElementById("status-select");
-const bearbeitungSection = document.getElementById("bearbeitung-section");
+/* =========================================================
+   STATUS
+========================================================= */
 
-const form = document.getElementById("reparatur-form");
+const statusSelect =
+    document.getElementById("status-select");
 
-const techniker = document.getElementById("id_techniker");
-const datum = document.getElementById("id_reparatur_datum");
-const ausfuehrung = document.getElementById("id_ausfuehrung");
+const bearbeitungSection =
+    document.getElementById("bearbeitung-section");
 
 
-function toggleBearbeitung(){
+function toggleBearbeitung() {
 
-    if(
+    if (
         statusSelect.value === "In Bearbeitung" ||
         statusSelect.value === "Erledigt"
-    ){
+    ) {
 
-        bearbeitungSection.style.display = "block";
+        bearbeitungSection.style.display =
+            "block";
 
     } else {
 
-        bearbeitungSection.style.display = "none";
+        bearbeitungSection.style.display =
+            "none";
 
     }
 
 }
 
 
-// عند تغيير Status
 statusSelect.addEventListener(
     "change",
     toggleBearbeitung
 );
 
-
-// عند فتح الصفحة
 toggleBearbeitung();
 
 
 
-form.addEventListener("submit", function(e) {
+/* =========================================================
+   FORM VALIDIERUNG
+========================================================= */
 
-    // 🗑️ Löschen → keine normale Validierung durchführen
-    if (
-        e.submitter &&
-        e.submitter.name === "delete" &&
-        e.submitter.value === "1"
-    ) {
-        return;
-    }
+const form =
+    document.getElementById("reparatur-form");
 
+const techniker =
+    document.getElementById("id_techniker");
 
-    // 💾 Speichern → normale Validierung
-    if (
-        statusSelect.value === "In Bearbeitung" ||
-        statusSelect.value === "Erledigt"
-    ) {
+const datum =
+    document.getElementById("id_reparatur_datum");
 
-        let valid = true;
+const ausfuehrung =
+    document.getElementById("id_ausfuehrung");
 
 
-        if (techniker.value.trim() === "") {
-
-            techniker.style.border = "2px solid red";
-
-            valid = false;
-
-        } else {
-
-            techniker.style.border = "";
-
-        }
-
-
-        if (datum.value === "") {
-
-            datum.style.border = "2px solid red";
-
-            valid = false;
-
-        } else {
-
-            datum.style.border = "";
-
-        }
-
-
-        if (ausfuehrung.value.trim() === "") {
-
-            ausfuehrung.style.border = "2px solid red";
-
-            valid = false;
-
-        } else {
-
-            ausfuehrung.style.border = "";
-
-        }
-
-
-        if (!valid) {
-
-            e.preventDefault();
-
-        }
-
-    }
-
-});
-
-const geraetSearch = document.getElementById("geraet-search");
-const geraetSelect = document.getElementById("id_geraet");
-const geraetResults = document.getElementById("geraet-results");
-
-
-geraetSearch.addEventListener("input", function () {
-
-    const query = this.value.trim();
-
-    geraetResults.innerHTML = "";
-    geraetResults.style.display = "none";
-
-    if (query.length < 2) {
-        return;
-    }
-
-    fetch(
-        "{% url 'search_reparatur_device' %}?q=" +
-        encodeURIComponent(query)
-    )
-    .then(response => response.json())
-    .then(data => {
-
-        if (!data.length) {
-
-            geraetResults.innerHTML =
-                '<div style="padding:10px;">Kein Gerät gefunden.</div>';
-
-            geraetResults.style.display = "block";
-
-            return;
-        }
-
-
-        data.forEach(device => {
-
-            const item = document.createElement("div");
-
-            item.style.padding = "10px";
-            item.style.cursor = "pointer";
-            item.style.borderBottom = "1px solid #eee";
-
-            item.innerHTML =
-                "<strong>" +
-                device.inventory +
-                "</strong> - " +
-                device.name +
-                "<br>" +
-                "<small>" +
-                "Seriennummer: " +
-                device.serial +
-                " | Standort: " +
-                device.standort +
-                "</small>";
-
-
-            item.addEventListener("click", function () {
-
-                // Gerät auswählen
-                geraetSelect.value = device.id;
-
-                // Suchfeld aktualisieren
-                geraetSearch.value =
-                    device.inventory +
-                    " - " +
-                    device.name;
-
-                // Inventarnummer sofort aktualisieren
-                document.getElementById("geraet-inventory").textContent =
-                    device.inventory;
-
-                // Seriennummer sofort aktualisieren
-                document.getElementById("geraet-serial").textContent =
-                    device.serial;
-
-                // Standort sofort aktualisieren
-                document.getElementById("geraet-standort").textContent =
-                    device.standort;
-
-                // Ergebnisse schließen
-                geraetResults.style.display = "none";
-
-            });
-
-
-            geraetResults.appendChild(item);
-
-        });
-
-
-        geraetResults.style.display = "block";
-
-    })
-    .catch(error => {
-
-        console.error(
-            "Fehler bei der Gerätesuche:",
-            error
-        );
-
-    });
-
-});
-
-document.getElementById("delete-reparatur-btn").addEventListener(
-    "click",
-    function () {
+form.addEventListener(
+    "submit",
+    function(e) {
 
         if (
-            !confirm(
-                "Möchten Sie diese Reparatur wirklich löschen?"
-            )
+            e.submitter &&
+            e.submitter.name === "delete" &&
+            e.submitter.value === "1"
         ) {
+
             return;
+
         }
 
-        const deleteForm = document.createElement("form");
 
-        deleteForm.method = "POST";
+        if (
+            statusSelect.value === "In Bearbeitung" ||
+            statusSelect.value === "Erledigt"
+        ) {
 
-        deleteForm.action =
-            "{% url 'reparatur_delete' reparatur.pk %}";
-
-
-        const csrfToken =
-            document.querySelector(
-                "#reparatur-form input[name='csrfmiddlewaretoken']"
-            ).value;
+            let valid = true;
 
 
-        const csrfInput =
-            document.createElement("input");
+            if (
+                techniker.value.trim() === ""
+            ) {
 
-        csrfInput.type = "hidden";
+                techniker.style.border =
+                    "2px solid red";
 
-        csrfInput.name =
-            "csrfmiddlewaretoken";
+                valid = false;
 
-        csrfInput.value =
-            csrfToken;
+            } else {
+
+                techniker.style.border = "";
+
+            }
 
 
-        deleteForm.appendChild(
-            csrfInput
-        );
+            if (datum.value === "") {
 
-        document.body.appendChild(
-            deleteForm
-        );
+                datum.style.border =
+                    "2px solid red";
 
-        deleteForm.submit();
+                valid = false;
+
+            } else {
+
+                datum.style.border = "";
+
+            }
+
+
+            if (
+                ausfuehrung.value.trim() === ""
+            ) {
+
+                ausfuehrung.style.border =
+                    "2px solid red";
+
+                valid = false;
+
+            } else {
+
+                ausfuehrung.style.border = "";
+
+            }
+
+
+            if (!valid) {
+
+                e.preventDefault();
+
+            }
+
+        }
 
     }
 );
+
+
+
+/* =========================================================
+   GERÄT SUCHEN
+========================================================= */
+
+const geraetSearch =
+    document.getElementById("geraet-search");
+
+const geraetSelect =
+    document.getElementById("id_geraet");
+
+const geraetResults =
+    document.getElementById("geraet-results");
+
+
+geraetSearch.addEventListener(
+    "input",
+    function() {
+
+        const query =
+            this.value.trim();
+
+
+        geraetResults.innerHTML = "";
+
+        geraetResults.style.display =
+            "none";
+
+
+        if (query.length < 2) {
+
+            return;
+
+        }
+
+
+        fetch(
+            "{% url 'search_reparatur_device' %}?q=" +
+            encodeURIComponent(query)
+        )
+
+        .then(
+            response => response.json()
+        )
+
+        .then(
+            data => {
+
+                if (!data.length) {
+
+                    geraetResults.innerHTML =
+                        '<div style="padding:10px;">' +
+                        'Kein Gerät gefunden.' +
+                        '</div>';
+
+                    geraetResults.style.display =
+                        "block";
+
+                    return;
+
+                }
+
+
+                data.forEach(
+                    device => {
+
+                        const item =
+                            document.createElement("div");
+
+
+                        item.style.padding =
+                            "10px";
+
+                        item.style.cursor =
+                            "pointer";
+
+                        item.style.borderBottom =
+                            "1px solid #eee";
+
+
+                        item.innerHTML =
+                            "<strong>" +
+                            device.inventory +
+                            "</strong> - " +
+                            device.name +
+                            "<br>" +
+                            "<small>" +
+                            "Seriennummer: " +
+                            device.serial +
+                            " | Standort: " +
+                            device.standort +
+                            "</small>";
+
+
+                        item.addEventListener(
+                            "click",
+                            function() {
+
+                                geraetSelect.value =
+                                    device.id;
+
+
+                                geraetSearch.value =
+                                    device.inventory +
+                                    " - " +
+                                    device.name;
+
+
+                                document
+                                    .getElementById(
+                                        "geraet-inventory"
+                                    )
+                                    .textContent =
+                                        device.inventory;
+
+
+                                document
+                                    .getElementById(
+                                        "geraet-serial"
+                                    )
+                                    .textContent =
+                                        device.serial;
+
+
+                                document
+                                    .getElementById(
+                                        "geraet-standort"
+                                    )
+                                    .textContent =
+                                        device.standort;
+
+
+                                geraetResults.style.display =
+                                    "none";
+
+                            }
+                        );
+
+
+                        geraetResults.appendChild(
+                            item
+                        );
+
+                    }
+                );
+
+
+                geraetResults.style.display =
+                    "block";
+
+            }
+        )
+
+        .catch(
+            error => {
+
+                console.error(
+                    "Fehler bei der Gerätesuche:",
+                    error
+                );
+
+            }
+        );
+
+    }
+);
+
+
+
+/* =========================================================
+   LÖSCHEN
+========================================================= */
+
+document
+    .getElementById(
+        "delete-reparatur-btn"
+    )
+    .addEventListener(
+        "click",
+        function() {
+
+            if (
+                !confirm(
+                    "Möchten Sie diese Reparatur wirklich löschen?"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            const deleteForm =
+                document.createElement("form");
+
+
+            deleteForm.method =
+                "POST";
+
+
+            deleteForm.action =
+                "{% url 'reparatur_delete' reparatur.pk %}";
+
+
+            const csrfToken =
+                document.querySelector(
+                    "#reparatur-form input[name='csrfmiddlewaretoken']"
+                ).value;
+
+
+            const csrfInput =
+                document.createElement("input");
+
+
+            csrfInput.type =
+                "hidden";
+
+
+            csrfInput.name =
+                "csrfmiddlewaretoken";
+
+
+            csrfInput.value =
+                csrfToken;
+
+
+            deleteForm.appendChild(
+                csrfInput
+            );
+
+
+            document.body.appendChild(
+                deleteForm
+            );
+
+
+            deleteForm.submit();
+
+        }
+    );
+
+
+
+/* =========================================================
+   ELEKTRISCHE PRÜFUNG
+========================================================= */
+
+const elektrischePruefung =
+    document.getElementById(
+        "id_elektrische_pruefung"
+    );
+
+
+const elektrischePruefungArtContainer =
+    document.getElementById(
+        "elektrische-pruefung-art-container"
+    );
+
+
+const elektrischePruefungArt =
+    document.getElementById(
+        "id_elektrische_pruefung_art"
+    );
+
+
+const elektrischePruefungBetten =
+    document.getElementById(
+        "elektrische-pruefung-betten"
+    );
+
+
+const elektrischePruefungMaschinen =
+    document.getElementById(
+        "elektrische-pruefung-maschinen"
+    );
+
+
+
+function toggleElektrischePruefung() {
+
+    if (
+        elektrischePruefung.checked
+    ) {
+
+        elektrischePruefungArtContainer.style.display =
+            "block";
+
+    } else {
+
+        elektrischePruefungArtContainer.style.display =
+            "none";
+
+    }
+
+
+    toggleElektrischePruefungArt();
+
+}
+
+
+
+function toggleElektrischePruefungArt() {
+
+    elektrischePruefungBetten.style.display =
+        "none";
+
+    elektrischePruefungMaschinen.style.display =
+        "none";
+
+
+    if (
+        !elektrischePruefung.checked
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        elektrischePruefungArt.value === "Betten"
+    ) {
+
+        elektrischePruefungBetten.style.display =
+            "block";
+
+    }
+
+
+    if (
+        elektrischePruefungArt.value === "Maschinen"
+    ) {
+
+        elektrischePruefungMaschinen.style.display =
+            "block";
+
+    }
+
+}
+
+
+elektrischePruefung.addEventListener(
+    "change",
+    toggleElektrischePruefung
+);
+
+
+elektrischePruefungArt.addEventListener(
+    "change",
+    toggleElektrischePruefungArt
+);
+
+
+/* Beim Öffnen der Seite */
+
+toggleElektrischePruefung();
+
+
+</script>
+<!-- ==========================================
+MESSMITTEL JAVASCRIPT
+=========================================== -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+const button =
+    document.getElementById(
+        "messmittel-dropdown-button"
+    );
+
+const menu =
+    document.getElementById(
+        "messmittel-dropdown-menu"
+    );
+
+const selectedText =
+    document.getElementById(
+        "messmittel-selected-text"
+    );
+
+const arrow =
+    document.getElementById(
+        "messmittel-arrow"
+    );
+
+const checkboxes =
+    document.querySelectorAll(
+        ".messmittel-checkbox"
+    );
+
+const djangoSelect =
+    document.getElementById(
+        "id_messmittel"
+    );
+
+
+// =====================================================
+// AKTUELLE MESSMITTEL AUS DJANGO ÜBERNEHMEN
+// =====================================================
+
+if (djangoSelect) {
+
+    const selectedValues =
+        Array.from(
+            djangoSelect.options
+        )
+        .filter(option => option.selected)
+        .map(option => option.value);
+
+
+    checkboxes.forEach(function (checkbox) {
+
+        if (
+            selectedValues.includes(
+                checkbox.value
+            )
+        ) {
+
+            checkbox.checked = true;
+
+        }
+
+    });
+
+}
+
+
+// =====================================================
+// TEXT AKTUALISIEREN
+// =====================================================
+
+function updateSelectedText() {
+
+    const selected = [];
+
+    checkboxes.forEach(function (checkbox) {
+
+        if (checkbox.checked) {
+
+            const label =
+                checkbox.closest("label");
+
+            const name =
+                label.querySelector("span");
+
+            if (name) {
+
+                selected.push(
+                    name.textContent.trim()
+                );
+
+            }
+
+        }
+
+    });
+
+
+    if (selected.length === 0) {
+
+        selectedText.textContent =
+            "Messmittel auswählen...";
+
+    }
+
+    else {
+
+        selectedText.textContent =
+            selected.join(", ");
+
+    }
+
+}
+
+
+// =====================================================
+// DJANGO SELECT AKTUALISIEREN
+// =====================================================
+
+function updateDjangoSelect() {
+
+    if (!djangoSelect) {
+        return;
+    }
+
+
+    checkboxes.forEach(function (checkbox) {
+
+        const option =
+            djangoSelect.querySelector(
+                'option[value="' +
+                checkbox.value +
+                '"]'
+            );
+
+        if (option) {
+
+            option.selected =
+                checkbox.checked;
+
+        }
+
+    });
+
+
+    // Change Event auslösen
+
+    djangoSelect.dispatchEvent(
+        new Event(
+            "change",
+            {
+                bubbles: true
+            }
+        )
+    );
+
+}
+
+
+// =====================================================
+// CHECKBOX CHANGE
+// =====================================================
+
+checkboxes.forEach(function (checkbox) {
+
+    checkbox.addEventListener(
+        "change",
+        function () {
+
+            updateDjangoSelect();
+
+            updateSelectedText();
+
+        }
+    );
+
+});
+
+
+// =====================================================
+// DROPDOWN ÖFFNEN / SCHLIESSEN
+// =====================================================
+
+button.addEventListener(
+    "click",
+    function (event) {
+
+        event.stopPropagation();
+
+        if (
+            menu.style.display === "none" ||
+            menu.style.display === ""
+        ) {
+
+            menu.style.display = "block";
+
+            arrow.textContent = "▲";
+
+        }
+
+        else {
+
+            menu.style.display = "none";
+
+            arrow.textContent = "▼";
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// AUSSERHALB KLICKEN
+// =====================================================
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        if (
+            !document
+                .getElementById(
+                    "messmittel-dropdown"
+                )
+                .contains(event.target)
+        ) {
+
+            menu.style.display = "none";
+
+            arrow.textContent = "▼";
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// INITIAL
+// =====================================================
+
+updateSelectedText();
+
+updateDjangoSelect();
+
+});
+
 </script>
 {% endblock %}

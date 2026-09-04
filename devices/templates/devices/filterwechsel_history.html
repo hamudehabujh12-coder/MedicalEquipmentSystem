@@ -83,6 +83,40 @@
                         Datum
                     </th>
 
+                
+                    <th class="filter">
+
+                        Standort ▼
+
+                        <div class="filter-menu">
+
+                            {% for standort in standorte %}
+
+                                <a
+                                    href="#"
+                                    class="filter-link"
+                                    data-param="practice"
+                                    data-value="{{ standort.id }}"
+                                >
+                                    🏥 {{ standort.name }}
+                                </a>
+
+                            {% endfor %}
+
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-param="practice"
+                                data-value=""
+                            >
+                                Alle
+                            </a>
+
+                        </div>
+
+                    </th>
+
                     <th>
                         Durchgeführt von
                     </th>
@@ -173,7 +207,9 @@
                     {{ item.datum }}
                 </td>
 
-
+                <td>
+                    {{ item.geraet.practice.name }}
+                </td>
                 <!-- =====================================
                      DURCHGEFÜHRT VON
                 ====================================== -->
@@ -240,7 +276,7 @@
             <tr>
 
                 <td
-                    colspan="7"
+                    colspan="8"
                     style="
                         text-align:center;
                         padding:20px;
@@ -624,14 +660,234 @@ document.addEventListener(
 
 </script>
 
+<script>
 
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const filters =
+            document.querySelectorAll(
+                ".filter"
+            );
+
+
+        filters.forEach(
+            function (filter) {
+
+                filter.addEventListener(
+                    "click",
+                    function (event) {
+
+                        event.stopPropagation();
+
+
+                        const menu =
+                            this.querySelector(
+                                ".filter-menu"
+                            );
+
+
+                        if (!menu) {
+                            return;
+                        }
+
+
+                        /*
+                         * إغلاق أي قائمة أخرى
+                         */
+
+                        document
+                            .querySelectorAll(
+                                ".filter-menu"
+                            )
+                            .forEach(
+                                function (otherMenu) {
+
+                                    if (
+                                        otherMenu !== menu
+                                    ) {
+
+                                        otherMenu.classList.remove(
+                                            "show"
+                                        );
+
+                                    }
+
+                                }
+                            );
+
+
+                        /*
+                         * فتح / إغلاق القائمة الحالية
+                         */
+
+                        menu.classList.toggle(
+                            "show"
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+        /*
+         * إغلاق القائمة عند الضغط خارجها
+         */
+
+        document.addEventListener(
+            "click",
+            function () {
+
+                document
+                    .querySelectorAll(
+                        ".filter-menu"
+                    )
+                    .forEach(
+                        function (menu) {
+
+                            menu.classList.remove(
+                                "show"
+                            );
+
+                        }
+                    );
+
+            }
+        );
+
+    }
+);
+
+</script>
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        document
+            .querySelectorAll(".filter-link")
+            .forEach(
+                function (link) {
+
+                    link.addEventListener(
+                        "click",
+                        function (event) {
+
+                            event.preventDefault();
+                            event.stopPropagation();
+
+
+                            const param =
+                                this.dataset.param;
+
+                            const value =
+                                this.dataset.value;
+
+
+                            /*
+                             * الرابط الحالي
+                             * نحافظ على البحث الموجود
+                             */
+
+                            const url =
+                                new URL(
+                                    window.location.href
+                                );
+
+
+                            /*
+                             * تغيير Standort فقط
+                             */
+
+                            if (value === "") {
+
+                                url.searchParams.delete(
+                                    param
+                                );
+
+                            } else {
+
+                                url.searchParams.set(
+                                    param,
+                                    value
+                                );
+
+                            }
+
+
+                            /*
+                             * الانتقال إلى النتيجة
+                             */
+
+                            window.location.href =
+                                url.toString();
+
+                        }
+                    );
+
+                }
+            );
+
+    }
+);
+
+</script>
 
 <!-- =========================================================
      STYLE
 ========================================================= -->
 
 <style>
+/* =========================================================
+   STANDORT FILTER
+========================================================= */
 
+.filter {
+    position: relative;
+    cursor: pointer;
+    white-space: nowrap;
+    height: 40px;
+}
+
+.filter-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    min-width: 180px;
+    width: max-content;
+    max-width: 250px;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.25);
+    z-index: 9999;
+}
+
+.filter-menu.show {
+    display: block;
+}
+
+.filter-menu a {
+    display: block;
+    padding: 6px 8px;
+    font-size: 14px;
+    text-decoration: none;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
+.filter-menu a:hover {
+    background: #e5e7eb;
+}
+
+.table th.filter {
+    position: relative;
+}
 .delete-btn {
 
     background:#dc2626;
@@ -708,6 +964,5 @@ mark {
 }
 
 </style>
-
 
 {% endblock %}

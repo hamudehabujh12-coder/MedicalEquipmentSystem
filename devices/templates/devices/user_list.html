@@ -4,6 +4,14 @@
 
 <h1>👥 Benutzerverwaltung</h1>
 
+
+<!-- =====================================================
+     NEUER BENUTZER
+     NUR ADMIN
+====================================================== -->
+
+{% if request.user.is_superuser %}
+
 <div style="margin-bottom:20px;">
 
     <a href="{% url 'user_create' %}" class="add-btn">
@@ -12,10 +20,15 @@
 
 </div>
 
+{% endif %}
+
+
 <table class="table">
 
     <thead>
+
         <tr>
+
             <th>Benutzername</th>
             <th>Name</th>
             <th>E-Mail</th>
@@ -24,114 +37,230 @@
             <th>Letzter Login</th>
             <th>Status</th>
             <th>Aktionen</th>
+
         </tr>
+
     </thead>
+
 
     <tbody>
 
-{% for user in users %}
+    {% for user in users %}
 
-<tr>
+    <tr>
 
-    <td>{{ user.username }}</td>
+        <!-- =================================================
+             BENUTZERNAME
+        ================================================== -->
 
-    <td>{{ user.first_name }} {{ user.last_name }}</td>
-
-    <td>{{ user.email }}</td>
-
-    <td>
-        {% if user.is_superuser %}
-            👑 Administrator
-        {% else %}
-            👤 Benutzer
-        {% endif %}
-    </td>
-
-    <td>
-        {{ user.date_joined|date:"d.m.Y" }}
-    </td>
-
-    <td>
-        {% if user.last_login %}
-            {{ user.last_login|date:"d.m.Y H:i" }}
-        {% else %}
-            —
-        {% endif %}
-    </td>
-
-    <td>
-        {% if user.is_active %}
-            🟢 Aktiv
-        {% else %}
-            🔴 Gesperrt
-        {% endif %}
-    </td>
-    <td>
-
-        <div style="
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 200px;
-        ">
+        <td>
+            {{ user.username }}
+        </td>
 
 
-            <a href="{% url 'user_edit' user.id %}"
-            style="
-            display:block;
-            padding:10px;
-            text-align:center;
-            background:#0d6efd;
-            color:white;
-            border-radius:8px;
-            text-decoration:none;
-            ">
-                ✏️ Bearbeiten
-            </a>
+        <!-- =================================================
+             NAME
+        ================================================== -->
+
+        <td>
+            {{ user.first_name }}
+            {{ user.last_name }}
+        </td>
 
 
+        <!-- =================================================
+             E-MAIL
+        ================================================== -->
+
+        <td>
+            {{ user.email }}
+        </td>
 
 
-            {% if request.user != user %}
+        <!-- =================================================
+             ROLLE
+        ================================================== -->
 
-            <form method="POST"
-                action="{% url 'user_delete' user.id %}"
-                onsubmit="return confirm('Benutzer wirklich löschen?');">
+        <td>
 
-                {% csrf_token %}
+            {% if user.is_superuser %}
 
-                <button type="submit"
-                        style="
-                        width:100%;
-                        padding:10px;
-                        background:#dc3545;
-                        color:white;
-                        border:none;
-                        border-radius:8px;
-                        cursor:pointer;
-                        ">
-                    🗑️ Löschen
-                </button>
+                👑 Administrator
 
-            </form>
+            {% else %}
+
+                👤 Benutzer
 
             {% endif %}
 
+        </td>
 
-        </div>
 
-    </td>
+        <!-- =================================================
+             ERSTELLT AM
+        ================================================== -->
 
-</tr>
+        <td>
 
-{% endfor %}
+            {{ user.date_joined|date:"d.m.Y" }}
 
-</tbody>
+        </td>
+
+
+        <!-- =================================================
+             LETZTER LOGIN
+        ================================================== -->
+
+        <td>
+
+            {% if user.last_login %}
+
+                {{ user.last_login|date:"d.m.Y H:i" }}
+
+            {% else %}
+
+                —
+
+            {% endif %}
+
+        </td>
+
+
+        <!-- =================================================
+             STATUS
+        ================================================== -->
+
+        <td>
+
+            {% if user.is_active %}
+
+                🟢 Aktiv
+
+            {% else %}
+
+                🔴 Gesperrt
+
+            {% endif %}
+
+        </td>
+
+
+        <!-- =================================================
+             AKTIONEN
+        ================================================== -->
+
+        <td>
+
+            <div style="
+                display:flex;
+                flex-direction:column;
+                gap:10px;
+                width:200px;
+                margin:auto;
+            ">
+
+
+                <!-- =========================================
+                     BEARBEITEN
+                     ADMIN → ALLE
+                     BENUTZER → NUR SICH SELBST
+                ========================================== -->
+
+                <a
+                    href="{% url 'user_edit' user.id %}"
+                    style="
+                        display:block;
+                        padding:10px;
+                        text-align:center;
+                        background:#0d6efd;
+                        color:white;
+                        border-radius:8px;
+                        text-decoration:none;
+                    "
+                >
+
+                    ✏️ Bearbeiten
+
+                </a>
+
+
+                
+
+
+                <!-- =========================================
+                     LÖSCHEN
+                     NUR ADMIN
+                ========================================== -->
+
+                {% if request.user.is_superuser %}
+
+                    {% if request.user != user %}
+
+                        <form
+                            method="POST"
+                            action="{% url 'user_delete' user.id %}"
+                            onsubmit="return confirm('Benutzer wirklich löschen?');"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                style="
+                                    width:100%;
+                                    padding:10px;
+                                    background:#dc3545;
+                                    color:white;
+                                    border:none;
+                                    border-radius:8px;
+                                    cursor:pointer;
+                                "
+                            >
+
+                                🗑️ Löschen
+
+                            </button>
+
+                        </form>
+
+                    {% endif %}
+
+                {% endif %}
+
+
+            </div>
+
+        </td>
+
+    </tr>
+
+    {% empty %}
+
+    <tr>
+
+        <td
+            colspan="8"
+            style="text-align:center;"
+        >
+
+            Keine Benutzer vorhanden.
+
+        </td>
+
+    </tr>
+
+    {% endfor %}
+
+    </tbody>
 
 </table>
 
+
 <style>
 
+/* =====================================================
+   DELETE BUTTON
+===================================================== */
 
 .delete-btn{
     background:#dc2626;
@@ -146,6 +275,11 @@
     background:#b91c1c;
 }
 
+
+/* =====================================================
+   ADD BUTTON
+===================================================== */
+
 .add-btn{
     background:#16a34a;
     color:white;
@@ -154,6 +288,11 @@
     text-decoration:none;
     font-weight:bold;
 }
+
+
+/* =====================================================
+   TABLE
+===================================================== */
 
 .table{
     width:100%;
@@ -164,11 +303,13 @@
     box-shadow:0 5px 15px rgba(0,0,0,.1);
 }
 
+
 .table th{
     background:#1f2937;
     color:white;
     padding:15px;
 }
+
 
 .table td{
     padding:14px;
@@ -176,14 +317,15 @@
     text-align:center;
 }
 
+
 .table tr:hover{
     background:#f8fafc;
 }
 
+
 .table a{
     text-decoration:none;
     font-weight:bold;
-    color:#2563eb;
 }
 
 </style>

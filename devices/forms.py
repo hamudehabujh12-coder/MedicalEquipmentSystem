@@ -149,7 +149,23 @@ class DeviceForm(forms.ModelForm):
 
         geraetart = cleaned_data.get("geraetart")
         room = cleaned_data.get("room")
+        inventory_number = cleaned_data.get("inventory_number")
+        status = cleaned_data.get("status")
 
+        if inventory_number and status == "Aktiv":
+
+            existing_device = Device.objects.filter(
+                inventory_number=inventory_number,
+                status="Aktiv"
+            ).exclude(
+                pk=self.instance.pk
+            ).first()
+
+            if existing_device:
+                self.add_error(
+                    "inventory_number",
+                    "Diese Inventarnummer wird bereits von einem aktiven Gerät verwendet."
+                )
         # Dialyse Betten brauchen einen Raum
         if (
             geraetart
@@ -426,6 +442,9 @@ class ReparaturBearbeitenForm(forms.ModelForm):
             "techniker",
             "reparatur_datum",
             "ausfuehrung",
+            "messmittel",
+            "elektrische_pruefung",
+            "elektrische_pruefung_art",
             "reparaturbericht",
             "reparaturbild"
         ]
@@ -482,8 +501,55 @@ class ReparaturBearbeitenForm(forms.ModelForm):
                     "id": "id_ausfuehrung"
                 }
             ),
-        }
 
+            # =================================================
+            # MESSMITTEL
+            # =================================================
+            #
+            # Django verwendet dieses Feld weiterhin zum
+            # Speichern der ausgewählten ManyToMany-Werte.
+            #
+            # Die Anzeige als Dropdown mit Checkboxen machen
+            # wir anschließend im HTML.
+            #
+
+            "messmittel": forms.SelectMultiple(
+                attrs={
+                    "id": "id_messmittel",
+                    "style": "display:none;"
+                }
+            ),
+
+            "elektrische_pruefung": forms.CheckboxInput(
+                attrs={
+                    "id": "id_elektrische_pruefung",
+                    "style": (
+                        "width:20px;"
+                        "height:20px;"
+                        "cursor:pointer;"
+                    )
+                }
+            ),
+
+            "elektrische_pruefung_art": forms.Select(
+                attrs={
+                    "class": "form-control",
+                    "id": "id_elektrische_pruefung_art"
+                }
+            ),
+
+            "reparaturbericht": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control"
+                }
+            ),
+
+            "reparaturbild": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control"
+                }
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
 
@@ -495,6 +561,15 @@ class ReparaturBearbeitenForm(forms.ModelForm):
                 self.instance.reparatur_datum
             )
 
+            self.initial["elektrische_pruefung"] = (
+                self.instance.elektrische_pruefung
+            )
+
+            self.initial["elektrische_pruefung_art"] = (
+                self.instance.elektrische_pruefung_art
+            )
+
+            
 from django import forms
 from .models import Filterwechsel
 

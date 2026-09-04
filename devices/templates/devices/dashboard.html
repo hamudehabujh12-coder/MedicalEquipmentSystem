@@ -12,89 +12,108 @@
         CARDS
 ========================== -->
 
-<!-- ==========================
-        CARDS
-========================== -->
-
 <div class="dashboard-cards">
 
 {% for widget in dashboard_widgets %}
 
-<div class="card"
+
+{% if widget.url %}
+
+<a
+    href="{{ widget.url }}"
+    class="card"
+    style="
 
 {% if widget.color == "primary" %}
-style="background:linear-gradient(135deg,#eef6ff,#dbeafe);color:#2563eb;"
+background:linear-gradient(135deg,#eef6ff,#dbeafe);color:#2563eb;
 
 {% elif widget.color == "success" %}
-style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);color:#16a34a;"
+background:linear-gradient(135deg,#ecfdf5,#d1fae5);color:#16a34a;
 
 {% elif widget.color == "danger" %}
-style="background:linear-gradient(135deg,#fef2f2,#fecaca);color:#dc2626;"
+background:linear-gradient(135deg,#fef2f2,#fecaca);color:#dc2626;
 
 {% elif widget.color == "warning" %}
-style="background:linear-gradient(135deg,#fffbeb,#fde68a);color:#ca8a04;"
+background:linear-gradient(135deg,#fffbeb,#fde68a);color:#ca8a04;
 
 {% elif widget.color == "info" %}
-style="background:linear-gradient(135deg,#ecfeff,#cffafe);color:#0891b2;"
+background:linear-gradient(135deg,#ecfeff,#cffafe);color:#0891b2;
 
 {% elif widget.color == "purple" %}
-style="background:linear-gradient(135deg,#f5f3ff,#ddd6fe);color:#6d28d9;"
+background:linear-gradient(135deg,#f5f3ff,#ddd6fe);color:#6d28d9;
 
 {% elif widget.color == "orange" %}
-style="background:linear-gradient(135deg,#ffedd5,#fdba74);color:#c2410c;"
+background:linear-gradient(135deg,#ffedd5,#fdba74);color:#c2410c;
 
 {% elif widget.color == "teal" %}
-style="background:linear-gradient(135deg,#ccfbf1,#5eead4);color:#0f766e;"
+background:linear-gradient(135deg,#ccfbf1,#5eead4);color:#0f766e;
 
 {% elif widget.color == "pink" %}
-style="background:linear-gradient(135deg,#fce7f3,#f9a8d4);color:#be185d;"
+background:linear-gradient(135deg,#fce7f3,#f9a8d4);color:#be185d;
 
 {% elif widget.color == "brown" %}
-style="background:linear-gradient(135deg,#fef3c7,#d97706);color:#78350f;"
+background:linear-gradient(135deg,#fef3c7,#d97706);color:#78350f;
 
 {% elif widget.color == "gray" %}
-style="background:linear-gradient(135deg,#f1f5f9,#cbd5e1);color:#475569;"
+background:linear-gradient(135deg,#f1f5f9,#cbd5e1);color:#475569;
 
 {% else %}
-style="background:linear-gradient(135deg,#f8fafc,#e2e8f0);color:#334155;"
+background:linear-gradient(135deg,#f8fafc,#e2e8f0);color:#334155;
 
 {% endif %}
 
-{% if widget.widget_type == "devices" %}
-onclick="window.location.href='{% url 'device_list' %}?practice={{ widget.standort.id }}&geraetart={{ widget.geraetart.id }}';"
-
-{% elif widget.widget_type == "devices_overview" %}
-onclick="window.location.href='{% url 'device_list' %}';"
-
-{% elif widget.widget_type == "repairs_open" %}
-onclick="window.location.href='{% url 'reparatur_uebersicht' %}?status=Offen';"
-
-{% elif widget.widget_type == "repairs_progress" %}
-onclick="window.location.href='{% url 'reparatur_uebersicht' %}?status=In Bearbeitung';"
-
-{% elif widget.widget_type == "repair_history" %}
-onclick="window.location.href='{% url 'reparatur_historie' %}';"
-
-{% elif widget.widget_type == "filter_history" %}
-onclick="window.location.href='{% url 'filterwechsel_history' %}';"
-
-{% elif widget.widget_type == "stk" %}
-onclick="window.location.href='{% url 'faellige_stk' %}';"
-
-{% elif widget.widget_type == "mtk" %}
-onclick="window.location.href='{% url 'faellige_mtk' %}';"
-
-{% elif widget.widget_type == "dguv" %}
-onclick="window.location.href='{% url 'faellige_dguv' %}';"
-
-{% elif widget.widget_type == "device_documents" %}
-onclick="window.location.href='{% url 'documents' %}';"
-
-{% elif widget.widget_type == "technician_documents" %}
-onclick="window.location.href='{% url 'technician_documents' %}';"
-{% endif %}
-
+"
 >
+
+{% else %}
+
+<div
+    class="card"
+    style="
+
+{% if widget.color == "primary" %}
+background:linear-gradient(135deg,#eef6ff,#dbeafe);color:#2563eb;
+
+{% elif widget.color == "success" %}
+background:linear-gradient(135deg,#ecfdf5,#d1fae5);color:#16a34a;
+
+{% elif widget.color == "danger" %}
+background:linear-gradient(135deg,#fef2f2,#fecaca);color:#dc2626;
+
+{% elif widget.color == "warning" %}
+background:linear-gradient(135deg,#fffbeb,#fde68a);color:#ca8a04;
+
+{% elif widget.color == "info" %}
+background:linear-gradient(135deg,#ecfeff,#cffafe);color:#0891b2;
+
+{% elif widget.color == "purple" %}
+background:linear-gradient(135deg,#f5f3ff,#ddd6fe);color:#6d28d9;
+
+{% elif widget.color == "orange" %}
+background:linear-gradient(135deg,#ffedd5,#fdba74);color:#c2410c;
+
+{% elif widget.color == "teal" %}
+background:linear-gradient(135deg,#ccfbf1,#5eead4);color:#0f766e;
+
+{% elif widget.color == "pink" %}
+background:linear-gradient(135deg,#fce7f3,#f9a8d4);color:#be185d;
+
+{% elif widget.color == "brown" %}
+background:linear-gradient(135deg,#fef3c7,#d97706);color:#78350f;
+
+{% elif widget.color == "gray" %}
+background:linear-gradient(135deg,#f1f5f9,#cbd5e1);color:#475569;
+
+{% else %}
+background:linear-gradient(135deg,#f8fafc,#e2e8f0);color:#334155;
+
+{% endif %}
+
+"
+>
+
+{% endif %}
+
 
 <div class="icon">
 
@@ -106,6 +125,7 @@ onclick="window.location.href='{% url 'technician_documents' %}';"
 
 </div>
 
+
 <div class="card-content">
 
     <span>{{ widget.display_title }}</span>
@@ -114,11 +134,18 @@ onclick="window.location.href='{% url 'technician_documents' %}';"
 
 </div>
 
+
 <div class="card-decoration"></div>
 
 <div class="card-decoration-2"></div>
 
+
+{% if widget.url %}
+</a>
+{% else %}
 </div>
+{% endif %}
+
 
 {% empty %}
 
@@ -126,7 +153,10 @@ onclick="window.location.href='{% url 'technician_documents' %}';"
 
 <h2>Noch keine Dashboard Widgets vorhanden.</h2>
 
-<p>Erstellen Sie Ihr erstes Widget unter Einstellungen → Dashboard Widgets.</p>
+<p>
+Erstellen Sie Ihr erstes Widget unter
+Einstellungen → Dashboard Widgets.
+</p>
 
 </div>
 
@@ -147,6 +177,7 @@ onclick="window.location.href='{% url 'technician_documents' %}';"
 📊 Geräteübersicht
 </h2>
 
+
 <table>
 
 <thead>
@@ -159,17 +190,24 @@ onclick="window.location.href='{% url 'technician_documents' %}';"
 
 </thead>
 
+
 <tbody>
 
 {% for item in geraete_uebersicht %}
 
 <tr>
 
-<td>{{ item.geraetart__name }}</td>
+<td>
+{{ item.geraetart__name }}
+</td>
 
-<td>{{ item.practice__name }}</td>
+<td>
+{{ item.practice__name }}
+</td>
 
-<td>{{ item.anzahl }}</td>
+<td>
+{{ item.anzahl }}
+</td>
 
 </tr>
 
@@ -178,9 +216,7 @@ onclick="window.location.href='{% url 'technician_documents' %}';"
 <tr>
 
 <td colspan="3">
-
 Keine Daten vorhanden
-
 </td>
 
 </tr>
@@ -226,7 +262,6 @@ margin:25px 0 45px;
 
 /* CARDS */
 
-
 .dashboard-cards{
 
 display:grid;
@@ -261,6 +296,12 @@ gap:25px;
 
     transition:.35s;
 
+    box-sizing:border-box;
+
+    cursor:pointer;
+
+    text-decoration:none;
+
 }
 
 
@@ -272,7 +313,11 @@ transform:translateY(-8px);
 box-shadow:
 0 20px 40px rgba(0,0,0,.18);
 
+text-decoration:none;
+
 }
+
+
 
 .card-decoration{
 
@@ -292,6 +337,8 @@ box-shadow:
 
 }
 
+
+
 .card-decoration-2{
 
     position:absolute;
@@ -310,6 +357,8 @@ box-shadow:
 
 }
 
+
+
 .card::after{
 
     content:"";
@@ -327,6 +376,8 @@ box-shadow:
     background:rgba(255,255,255,.28);
 
 }
+
+
 
 .icon{
 
@@ -351,8 +402,6 @@ box-shadow:
 
 
 
-
-
 .card-content{
 
 position:relative;
@@ -374,7 +423,8 @@ color:#111827;
 font-size:22px;
 
 font-weight:700;
-letter-spacing: .3px;
+
+letter-spacing:.3px;
 
 }
 
@@ -394,10 +444,7 @@ font-weight:800;
 
 
 
-
-
 /* COLORS */
-
 
 .blue{
 background:linear-gradient(135deg,#2563eb,#1e40af);
@@ -426,32 +473,31 @@ background:linear-gradient(135deg,#6366f1,#4338ca);
 .brown{
 background:linear-gradient(135deg,#b45309,#78350f);
 }
+
+
 .bg-orange {
-    background-color: #f97316;
+    background-color:#f97316;
 }
 
 .bg-teal {
-    background-color: #0f766e;
+    background-color:#0f766e;
 }
 
 .bg-pink {
-    background-color: #ec4899;
+    background-color:#ec4899;
 }
 
 .bg-brown {
-    background-color: #92400e;
+    background-color:#92400e;
 }
 
 .bg-gray {
-    background-color: #6b7280;
+    background-color:#6b7280;
 }
-
-
 
 
 
 /* TABLE */
-
 
 .dashboard-table{
 
@@ -514,62 +560,82 @@ border-bottom:1px solid #ddd;
 
 
 
+/* EMPTY */
 
-
-@media(max-width:1000px){
-
-
-.dashboard-cards{
-
-grid-template-columns:1fr;
-
-}
-
-
-.dashboard-title{
-
-font-size:32px;
-
-}
-
-
-}
 .dashboard-empty{
 
     background:white;
+
     border-radius:20px;
+
     padding:50px;
+
     text-align:center;
+
     grid-column:1/-1;
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,.08);
 
 }
+
+
 
 .dashboard-empty h2{
 
     color:#1e293b;
+
     margin-bottom:10px;
 
 }
 
+
+
 .dashboard-empty p{
 
     color:#64748b;
+
     font-size:18px;
 
 }
 
+
+
 .icon i{
 
     font-size:38px;
+
     color:inherit;
 
 }
+
+
+
 .card:hover .icon{
 
     transform:scale(1.08) rotate(-5deg);
 
 }
+
+
+
+@media(max-width:1000px){
+
+    .dashboard-cards{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .dashboard-title{
+
+        font-size:32px;
+
+    }
+
+}
+
 
 </style>
 

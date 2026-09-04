@@ -7,17 +7,19 @@
     <h1>{{ title|default:"Rechnung Historie" }}</h1>
 
 
-    <!-- ==========================================
+    <!-- =====================================================
          LIVE SEARCH
-    ========================================== -->
+    ===================================================== -->
 
-    <div style="
-        margin-bottom:15px;
-        display:flex;
-        align-items:center;
-        gap:10px;
-        flex-wrap:wrap;
-    ">
+    <div
+        style="
+            margin-bottom:15px;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
+        "
+    >
 
         <input
             type="text"
@@ -32,6 +34,7 @@
                 font-size:14px;
             "
         >
+
 
         <button
             type="button"
@@ -52,9 +55,10 @@
     </div>
 
 
-    <!-- ==========================================
+
+    <!-- =====================================================
          DATUM FILTER
-    ========================================== -->
+    ===================================================== -->
 
     <form
         method="get"
@@ -67,12 +71,14 @@
         "
     >
 
-        <div style="
-            display:flex;
-            align-items:end;
-            gap:10px;
-            flex-wrap:wrap;
-        ">
+        <div
+            style="
+                display:flex;
+                align-items:end;
+                gap:10px;
+                flex-wrap:wrap;
+            "
+        >
 
 
             <!-- RECHNUNGSDATUM VON -->
@@ -108,6 +114,7 @@
             </div>
 
 
+
             <!-- RECHNUNGSDATUM BIS -->
 
             <div>
@@ -141,12 +148,13 @@
             </div>
 
 
+
             <!-- FILTERN -->
 
             <button
                 type="submit"
                 style="
-                    padding:8px 16px;
+                    padding:7px 16px;
                     border-radius:6px;
                     background:#2563eb;
                     color:white;
@@ -159,6 +167,24 @@
                 📅 Filtern
             </button>
 
+            <button
+            
+                type="button"
+                id="summeButton"
+                title="Gesamtsumme anzeigen"
+                style="
+                    padding:8px 16px;
+                    border-radius:6px;
+                    background:#16a34a;
+                    color:white;
+                    border:none;
+                    cursor:pointer;
+                    font-size:14px;
+                    font-weight:bold;
+                "
+            >
+                Σ Summe
+            </button>
 
             <!-- ZURÜCKSETZEN -->
 
@@ -182,9 +208,10 @@
     </form>
 
 
-    <!-- ==========================================
+
+    <!-- =====================================================
          GESAMTSUMME
-    ========================================== -->
+    ===================================================== -->
 
     <div
         id="gesamtsummeBox"
@@ -199,19 +226,22 @@
 
         💰 Gesamtsumme:
 
-        <span style="
-            color:#2563eb;
-            margin-left:8px;
-        ">
+        <span
+            style="
+                color:#2563eb;
+                margin-left:8px;
+            "
+        >
             {{ gesamtsumme|floatformat:2 }} €
         </span>
 
     </div>
 
 
-    <!-- ==========================================
+
+    <!-- =====================================================
          DELETE FORM
-    ========================================== -->
+    ===================================================== -->
 
     <form
         method="post"
@@ -221,9 +251,10 @@
         {% csrf_token %}
 
 
-        <!-- ==========================================
+
+        <!-- =================================================
              TABELLE
-        ========================================== -->
+        ================================================= -->
 
         <table
             id="rechnungHistorieTable"
@@ -242,11 +273,13 @@
                     </th>
 
 
+
                     <!-- RECHNUNGSDATUM -->
 
                     <th>
                         Rechnungsdatum
                     </th>
+
 
 
                     <!-- LIEFERANT -->
@@ -256,50 +289,102 @@
                     </th>
 
 
-                    <!-- KATEGORIE -->
 
-                    <th>
-                        Kategorie
+                    <!-- =================================================
+                         KATEGORIE FILTER
+                    ================================================= -->
+
+                    <th
+                        class="filter"
+                        id="kategorieFilter"
+                    >
+
+                        <span>
+                            Kategorie
+                        </span>
+
+                        <span
+                            class="filter-arrow"
+                        >
+                            ▼
+                        </span>
+
+
+                        <div class="filter-menu">
+
+
+                            <!-- ALLE -->
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-param="kategorie"
+                                data-value=""
+                            >
+                                📋 Alle
+                            </a>
+
+
+                            <!-- KATEGORIEN -->
+
+                            {% for kat in kategorien %}
+
+                                <a
+                                    href="#"
+                                    class="filter-link"
+                                    data-param="kategorie"
+                                    data-value="{{ kat.id }}"
+                                >
+                                    📋 {{ kat.name }}
+                                </a>
+
+                            {% empty %}
+
+                                <span
+                                    style="
+                                        display:block;
+                                        padding:6px 8px;
+                                        color:white;
+                                        font-size:14px;
+                                    "
+                                >
+                                    Keine Kategorien vorhanden
+                                </span>
+
+                            {% endfor %}
+
+
+                        </div>
+
                     </th>
+
 
 
                     <!-- BETRAG -->
 
                     <th>
 
-                        <div style="
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                            gap:8px;
-                            white-space:nowrap;
-                        ">
+                        <div
+                            style="
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                                gap:8px;
+                                white-space:nowrap;
+                            "
+                        >
 
                             <span>
                                 Betrag
                             </span>
 
-                            <button
-                                type="button"
-                                id="summeButton"
-                                title="Gesamtsumme anzeigen"
-                                style="
-                                    padding:4px 8px;
-                                    border-radius:5px;
-                                    background:#2563eb;
-                                    color:white;
-                                    border:none;
-                                    cursor:pointer;
-                                    font-size:12px;
-                                    font-weight:bold;
-                                "
-                            >
-                                Σ Summe
-                            </button>
+
+            
 
                         </div>
 
                     </th>
+
 
 
                     <!-- BEZAHLT AM -->
@@ -309,11 +394,13 @@
                     </th>
 
 
+
                     <!-- VERANTWORTLICHER -->
 
                     <th>
                         Verantwortlicher
                     </th>
+
 
 
                     <!-- STATUS -->
@@ -323,9 +410,8 @@
                     </th>
 
 
-                    <!-- ==================================
-                         AUSWAHL – LETZTE SPALTE
-                    ================================== -->
+
+                    <!-- AUSWAHL -->
 
                     <th
                         style="
@@ -357,8 +443,12 @@
             </thead>
 
 
-            <tbody>
 
+            <!-- =================================================
+                 RECHNUNGEN
+            ================================================= -->
+
+            <tbody>
 
             {% for r in rechnungen %}
 
@@ -369,9 +459,7 @@
             >
 
 
-                <!-- ==================================
-                     RECHNUNGSNUMMER
-                ================================== -->
+                <!-- RECHNUNGSNUMMER -->
 
                 <td>
 
@@ -382,9 +470,8 @@
                 </td>
 
 
-                <!-- ==================================
-                     RECHNUNGSDATUM
-                ================================== -->
+
+                <!-- RECHNUNGSDATUM -->
 
                 <td>
 
@@ -401,24 +488,22 @@
                 </td>
 
 
-                <!-- ==================================
-                     LIEFERANT
-                ================================== -->
+
+                <!-- LIEFERANT -->
 
                 <td>
                     {{ r.lieferant }}
                 </td>
 
 
-                <!-- ==================================
-                     KATEGORIE
-                ================================== -->
+
+                <!-- KATEGORIE -->
 
                 <td>
 
                     {% if r.kategorie %}
 
-                        {{ r.kategorie }}
+                        {{ r.kategorie.name }}
 
                     {% else %}
 
@@ -429,9 +514,8 @@
                 </td>
 
 
-                <!-- ==================================
-                     BETRAG
-                ================================== -->
+
+                <!-- BETRAG -->
 
                 <td>
 
@@ -440,9 +524,8 @@
                 </td>
 
 
-                <!-- ==================================
-                     BEZAHLT AM
-                ================================== -->
+
+                <!-- BEZAHLT AM -->
 
                 <td>
 
@@ -459,9 +542,8 @@
                 </td>
 
 
-                <!-- ==================================
-                     VERANTWORTLICHER
-                ================================== -->
+
+                <!-- VERANTWORTLICHER -->
 
                 <td>
 
@@ -478,44 +560,49 @@
                 </td>
 
 
-                <!-- ==================================
-                     STATUS
-                ================================== -->
+
+                <!-- STATUS -->
 
                 <td>
 
                     {% if r.status == "Erledigt" %}
 
-                        <span style="
-                            background:#28a745;
-                            color:white;
-                            padding:6px 12px;
-                            border-radius:15px;
-                        ">
+                        <span
+                            style="
+                                background:#28a745;
+                                color:white;
+                                padding:6px 12px;
+                                border-radius:15px;
+                            "
+                        >
                             ✅ {{ r.status }}
                         </span>
 
 
                     {% elif r.status == "In Bearbeitung" %}
 
-                        <span style="
-                            background:#ffc107;
-                            color:black;
-                            padding:6px 12px;
-                            border-radius:15px;
-                        ">
+                        <span
+                            style="
+                                background:#ffc107;
+                                color:black;
+                                padding:6px 12px;
+                                border-radius:15px;
+                            "
+                        >
                             🔧 {{ r.status }}
                         </span>
 
 
                     {% elif r.status == "Offen" %}
 
-                        <span style="
-                            background:#dc3545;
-                            color:white;
-                            padding:6px 12px;
-                            border-radius:15px;
-                        ">
+                        <span
+                            style="
+                                background:#dc3545;
+                                color:white;
+                                padding:6px 12px;
+                                border-radius:15px;
+                            "
+                        >
                             ⚠️ {{ r.status }}
                         </span>
 
@@ -529,9 +616,8 @@
                 </td>
 
 
-                <!-- ==================================
-                     AUSWAHL – NUR CHECKBOX
-                ================================== -->
+
+                <!-- AUSWAHL -->
 
                 <td
                     style="
@@ -553,6 +639,7 @@
                     >
 
                 </td>
+
 
             </tr>
 
@@ -580,18 +667,21 @@
         </table>
 
 
-        <!-- ==========================================
+
+        <!-- =================================================
              AUSGEWÄHLTE LÖSCHEN
-        ========================================== -->
+        ================================================= -->
 
         <button
             type="submit"
             name="action"
             value="delete_selected"
             class="btn btn-danger"
-            onclick="return confirm(
-                'Ausgewählte Rechnungen wirklich löschen?'
-            );"
+            onclick="
+                return confirm(
+                    'Ausgewählte Rechnungen wirklich löschen?'
+                );
+            "
         >
             🗑️ Ausgewählte löschen
         </button>
@@ -612,9 +702,10 @@
     </form>
 
 
-    <!-- ==========================================
+
+    <!-- =====================================================
          JAVASCRIPT
-    ========================================== -->
+    ================================================= -->
 
     <script>
 
@@ -622,6 +713,190 @@
         "DOMContentLoaded",
         function () {
 
+
+            /* =================================================
+               FILTER MENÜ
+            ================================================= */
+
+            const filters =
+                document.querySelectorAll(
+                    ".filter"
+                );
+
+
+            filters.forEach(
+                function (filter) {
+
+                    filter.addEventListener(
+                        "click",
+                        function (event) {
+
+                            event.stopPropagation();
+
+
+                            const menu =
+                                this.querySelector(
+                                    ".filter-menu"
+                                );
+
+
+                            if (!menu) {
+
+                                return;
+
+                            }
+
+
+                            /*
+                             * Andere Filter schließen
+                             */
+
+                            document
+                                .querySelectorAll(
+                                    ".filter-menu"
+                                )
+                                .forEach(
+                                    function (otherMenu) {
+
+                                        if (
+                                            otherMenu !== menu
+                                        ) {
+
+                                            otherMenu.classList.remove(
+                                                "show"
+                                            );
+
+                                        }
+
+                                    }
+                                );
+
+
+                            /*
+                             * Aktuelles Menü
+                             */
+
+                            menu.classList.toggle(
+                                "show"
+                            );
+
+                        }
+                    );
+
+                }
+            );
+
+
+
+            /* =================================================
+               FILTER LINKS
+            ================================================= */
+
+            document
+                .querySelectorAll(
+                    ".filter-link"
+                )
+                .forEach(
+                    function (link) {
+
+                        link.addEventListener(
+                            "click",
+                            function (event) {
+
+                                event.preventDefault();
+
+                                event.stopPropagation();
+
+
+                                const param =
+                                    this.dataset.param;
+
+
+                                const value =
+                                    this.dataset.value;
+
+
+                                /*
+                                 * Aktuelle URL übernehmen
+                                 */
+
+                                const url =
+                                    new URL(
+                                        window.location.href
+                                    );
+
+
+                                /*
+                                 * Kategorie ändern
+                                 *
+                                 * Suche und Datum
+                                 * bleiben erhalten.
+                                 */
+
+                                if (
+                                    value === ""
+                                ) {
+
+                                    url.searchParams.delete(
+                                        param
+                                    );
+
+                                }
+                                else {
+
+                                    url.searchParams.set(
+                                        param,
+                                        value
+                                    );
+
+                                }
+
+
+                                /*
+                                 * Seite neu laden
+                                 */
+
+                                window.location.href =
+                                    url.toString();
+
+                            }
+                        );
+
+                    }
+                );
+
+
+
+            /* =================================================
+               KLICK AUSSERHALB
+            ================================================= */
+
+            document.addEventListener(
+                "click",
+                function () {
+
+                    document
+                        .querySelectorAll(
+                            ".filter-menu"
+                        )
+                        .forEach(
+                            function (menu) {
+
+                                menu.classList.remove(
+                                    "show"
+                                );
+
+                            }
+                        );
+
+                }
+            );
+
+
+
+            /* =================================================
+               ELEMENTE
+            ================================================= */
 
             const searchInput =
                 document.getElementById(
@@ -671,9 +946,10 @@
                 );
 
 
-            /* =====================================
+
+            /* =================================================
                ORIGINAL INHALT SPEICHERN
-            ===================================== */
+            ================================================= */
 
             tableRows.forEach(
                 function (row) {
@@ -695,9 +971,10 @@
             );
 
 
-            /* =====================================
+
+            /* =================================================
                AUSWAHL ZÄHLEN
-            ===================================== */
+            ================================================= */
 
             function updateSelectedCount() {
 
@@ -718,7 +995,8 @@
 
                     selectAll.checked = true;
 
-                } else {
+                }
+                else {
 
                     selectAll.checked = false;
 
@@ -727,9 +1005,10 @@
             }
 
 
-            /* =====================================
+
+            /* =================================================
                EINZELNE CHECKBOX
-            ===================================== */
+            ================================================= */
 
             checkboxes.forEach(
                 function (checkbox) {
@@ -754,9 +1033,10 @@
             );
 
 
-            /* =====================================
+
+            /* =================================================
                ALLE AUSWÄHLEN
-            ===================================== */
+            ================================================= */
 
             selectAll.addEventListener(
                 "click",
@@ -788,9 +1068,10 @@
             );
 
 
-            /* =====================================
+
+            /* =================================================
                LIVE SEARCH
-            ===================================== */
+            ================================================= */
 
             function performSearch() {
 
@@ -818,9 +1099,7 @@
 
 
                         /*
-                         * Letzte Spalte
-                         * (Auswahl)
-                         * nicht durchsuchen
+                         * Letzte Spalte nicht durchsuchen
                          */
 
                         for (
@@ -838,9 +1117,10 @@
                         }
 
 
-                        /*
-                         * Original wiederherstellen
-                         */
+
+                        /* =================================
+                           ORIGINAL WIEDERHERSTELLEN
+                        ================================= */
 
                         cells.forEach(
                             function (cell) {
@@ -849,6 +1129,7 @@
                                     cell.getAttribute(
                                         "data-original"
                                     );
+
 
                                 if (
                                     original !== null
@@ -863,9 +1144,10 @@
                         );
 
 
-                        /*
-                         * Suche leer
-                         */
+
+                        /* =================================
+                           SUCHE LEER
+                        ================================= */
 
                         if (
                             searchLower === ""
@@ -879,9 +1161,10 @@
                         }
 
 
-                        /*
-                         * Kein Treffer
-                         */
+
+                        /* =================================
+                           KEIN TREFFER
+                        ================================= */
 
                         if (
                             !searchableText.includes(
@@ -897,17 +1180,32 @@
                         }
 
 
-                        /*
-                         * Treffer
-                         */
+
+                        /* =================================
+                           TREFFER
+                        ================================= */
 
                         row.style.display =
                             "";
 
 
-                        /*
-                         * Suchtext markieren
-                         */
+
+                        const escapedSearch =
+                            search.replace(
+                                /[.*+?^${}()|[\]\\]/g,
+                                "\\$&"
+                            );
+
+
+                        const regex =
+                            new RegExp(
+                                "(" +
+                                escapedSearch +
+                                ")",
+                                "gi"
+                            );
+
+
 
                         for (
                             let i = 0;
@@ -924,26 +1222,10 @@
                                 cell.innerHTML;
 
 
-                            const escapedSearch =
-                                search.replace(
-                                    /[.*+?^${}()|[\]\\]/g,
-                                    "\\$&"
-                                );
-
-
-                            const regex =
-                                new RegExp(
-                                    "(" +
-                                    escapedSearch +
-                                    ")",
-                                    "gi"
-                                );
-
-
                             cell.innerHTML =
                                 original.replace(
                                     regex,
-                                    '<mark style="background:#ffe066;color:#000;padding:2px 4px;border-radius:4px;">$1</mark>'
+                                    '<mark>$1</mark>'
                                 );
 
                         }
@@ -954,9 +1236,10 @@
             }
 
 
-            /* =====================================
+
+            /* =================================================
                SEARCH INPUT
-            ===================================== */
+            ================================================= */
 
             searchInput.addEventListener(
                 "input",
@@ -964,9 +1247,10 @@
             );
 
 
-            /* =====================================
+
+            /* =================================================
                SEARCH BUTTON
-            ===================================== */
+            ================================================= */
 
             searchButton.addEventListener(
                 "click",
@@ -974,9 +1258,10 @@
             );
 
 
-            /* =====================================
+
+            /* =================================================
                SUMME BUTTON
-            ===================================== */
+            ================================================= */
 
             summeButton.addEventListener(
                 "click",
@@ -996,9 +1281,10 @@
             );
 
 
-            /* =====================================
+
+            /* =================================================
                INITIAL
-            ===================================== */
+            ================================================= */
 
             updateSelectedCount();
 
@@ -1008,28 +1294,178 @@
     </script>
 
 
+
+    <!-- =====================================================
+         STYLE
+    ===================================================== -->
+
     <style>
 
-    mark {
-        background:#ffd54f;
-        color:black;
-        font-weight:bold;
-        padding:2px 4px;
-        border-radius:4px;
+
+    /* =====================================================
+       FILTER HEADER
+    ===================================================== */
+
+    .table th.filter {
+
+        position:relative;
+
+        cursor:pointer;
+
+        white-space:nowrap;
+
+        height:40px;
+
+        user-select:none;
+
     }
 
 
-    .table {
-        width:100%;
-        overflow:visible;
-        table-layout:auto;
+    /* =====================================================
+       KLEINER PFEIL
+    ===================================================== */
+    
+    .filter-arrow {
+
+        font-size:15px;
+
+        margin-left:4px;
+
+        color:white;
+
+    }
+
+
+    /* =====================================================
+       FILTER MENÜ
+    ===================================================== */
+    
+
+    .filter-menu {
+
+        display:none;
+
+        position:absolute;
+
+        top:100%;
+
+        left:0;
+
+        background:white;
+
+        min-width:180px;
+
+        width:max-content;
+
+        max-width:250px;
+
+        padding:10px;
+
+        border-radius:8px;
+
+        box-shadow:
+            0 5px 15px
+            rgba(0,0,0,.25);
+
+        z-index:9999;
+
+    }
+
+
+    /* =====================================================
+       MENÜ ÖFFNEN
+    ===================================================== */
+
+    .filter-menu.show {
+
+        display:block;
+
+    }
+
+
+    /* =====================================================
+       FILTER LINK
+    ===================================================== */
+
+    .filter-menu a {
+
+        display:block;
+
+        padding:7px 9px;
+
         font-size:14px;
+
+        text-decoration:none;
+
+        color:#1f2937;
+
+        white-space:nowrap;
+
+        border-radius:5px;
+
+    }
+
+
+    .filter-menu a:hover {
+
+        background:#e5e7eb;
+
+    }
+
+
+    /* =====================================================
+       SUCHTREFFER
+    ===================================================== */
+
+    mark {
+
+        background:#ffd54f;
+
+        color:black;
+
+        font-weight:bold;
+
+        padding:2px 4px;
+
+        border-radius:4px;
+
+    }
+
+
+    /* =====================================================
+       TABELLE
+    ===================================================== */
+
+    .table {
+
+        width:100%;
+
+        overflow:visible;
+
+        table-layout:auto;
+
+        font-size:14px;
+
     }
 
 
     .table th,
     .table td {
+
         padding:8px 10px;
+
+    }
+
+
+    /* =====================================================
+       CHECKBOX
+    ===================================================== */
+
+    .rechnung-checkbox,
+    #selectAllRechnungen {
+
+        accent-color:#2563eb;
+
     }
 
 

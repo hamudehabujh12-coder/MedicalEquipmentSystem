@@ -1,4 +1,5 @@
 from pathlib import Path
+from django.urls import reverse
 import os
 import re
 import json
@@ -21,7 +22,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.admin.views.decorators import staff_member_required
-
+from django.contrib.auth import update_session_auth_hash
 from django.db.models import (
     Count,
     Q,
@@ -45,7 +46,7 @@ from django.shortcuts import (
 )
 
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 
@@ -55,6 +56,7 @@ from .models import (
     DevicePruefung,
     Pruefart,
     Reparatur,
+    Messmittel,
     PracticeSettings,
     DeviceDocument,
     GeneralDocument,
@@ -947,101 +949,234 @@ def contact(request):
     )
 
 @login_required
-def faellige_stk(request):
-
-    heute = date.today()
-    grenze = heute + timedelta(days=30)
-
-    devices = Device.objects.filter(
-        next_stk__isnull=False,
-        next_stk__lte=grenze
-    ).order_by("next_stk")
-
-
-    return render(
-        request,
-        "devices/faellige_stk.html",
-        {
-            "devices": devices,
-            "heute": heute,
-        }
-    )
-
-@login_required
-def faellige_mtk(request):
-
-    heute = date.today()
-    grenze = heute + timedelta(days=30)
-
-    devices = Device.objects.filter(
-        next_mtk__isnull=False,
-        next_mtk__lte=grenze
-    ).order_by("next_mtk")
-
-
-    return render(
-        request,
-        "devices/faellige_mtk.html",
-        {
-            "devices": devices,
-            "heute": heute,
-        }
-    )
-
-
-@login_required
-def faellige_dguv(request):
-
-    heute = date.today()
-    grenze = heute + timedelta(days=30)
-
-    devices = Device.objects.filter(
-        next_dguv__isnull=False,
-        next_dguv__lte=grenze
-    ).order_by("next_dguv")
-
-
-    return render(
-        request,
-        "devices/faellige_dguv.html",
-        {
-            "devices": devices,
-            "heute": heute,
-        }
-    )
-
-@login_required
 def faellige_pruefung(request, pruefart_id):
 
     heute = date.today()
     grenze = heute + timedelta(days=30)
+
+    # =========================================================
+    # PRÜFUNGSART
+    # =========================================================
+
     pruefart = get_object_or_404(
         Pruefart,
         id=pruefart_id
     )
+
+    # =========================================================
+    # ALLE GERÄTEARTEN AUS EINSTELLUNGEN
+    # =========================================================
+
+    geraetearten = (
+        Geraetart.objects
+        .all()
+        .order_by("name")
+    )
+
+    # =========================================================
+    # ALLE STANDORTE AUS EINSTELLUNGEN
+    # =========================================================
+
+    standorte = (
+        Standort.objects
+        .all()
+        .order_by("name")
+    )
+
+    # =========================================================
+    # STATUS AUS DASHBOARD
+    # =========================================================
+
+    pruef_status = request.GET.get(
+        "status",
+        ""
+    ).strip()
+
+    # =========================================================
+    # PRÜFUNGEN
+    # =========================================================
+
     pruefungen = (
         DevicePruefung.objects
         .filter(
             pruefart=pruefart,
             aktiv=True,
-           device__status="Aktiv",
+            device__status="Aktiv",
             naechstes_datum__isnull=False,
-            naechstes_datum__lte=grenze
         )
         .select_related(
             "device",
-            "pruefart"
+            "pruefart",
+            "device__geraetart",
+            "device__practice",
         )
-        .order_by("naechstes_datum")
     )
+
+    # =========================================================
+    # STATUS FILTER
+    # =========================================================
+
+    if pruef_status == "gueltig":
+
+        pruefungen = pruefungen.filter(
+            naechstes_datum__gt=grenze
+        )
+
+    elif pruef_status == "faellig":
+
+        pruefungen = pruefungen.filter(
+            naechstes_datum__gte=heute,
+            naechstes_datum__lte=grenze
+        )
+
+    elif pruef_status == "ueberfaellig":
+
+        pruefungen = pruefungen.filter(
+            naechstes_datum__lt=heute
+        )
+
+    # =========================================================
+    # SORTIERUNG
+    # =========================================================
+
+    pruefungen = pruefungen.order_by(
+        "naechstes_datum"
+    )
+
+    # =========================================================
+    # TEMPLATE
+    # =========================================================
+
     return render(
         request,
         "devices/faellige_pruefung.html",
         {
             "pruefart": pruefart,
+
             "pruefungen": pruefungen,
+
             "heute": heute,
+
+            "grenze": grenze,
+
+            "geraetearten": geraetearten,
+
+            "standorte": standorte,
+
+            # Wichtig für das Template
+            "pruef_status": pruef_status,
         }
+    )
+@login_required
+def messmittel_list(request):
+
+    messmittel = Messmittel.objects.all().order_by(
+        "name"
+    )
+
+    return render(
+        request,
+        "devices/messmittel.html",
+        {
+            "messmittel": messmittel,
+        }
+    )
+
+@login_required
+def messmittel_create(request):
+
+    if request.method == "POST":
+
+        name = request.POST.get("name", "").strip()
+
+        if name:
+
+            Messmittel.objects.create(
+                name=name
+            )
+
+            messages.success(
+                request,
+                "Messmittel erfolgreich hinzugefügt."
+            )
+
+            return redirect(
+                "messmittel_list"
+            )
+
+        messages.error(
+            request,
+            "Bitte Messmittel eingeben."
+        )
+
+    return render(
+        request,
+        "devices/messmittel_form.html"
+    )
+
+@login_required
+def messmittel_update(request, pk):
+
+    messmittel = get_object_or_404(
+        Messmittel,
+        pk=pk
+    )
+
+    if request.method == "POST":
+
+        name = request.POST.get(
+            "name",
+            ""
+        ).strip()
+
+        if name:
+
+            messmittel.name = name
+
+            messmittel.save()
+
+            messages.success(
+                request,
+                "Messmittel erfolgreich geändert."
+            )
+
+            return redirect(
+                "messmittel_list"
+            )
+
+        messages.error(
+            request,
+            "Bitte Messmittel eingeben."
+        )
+
+    return render(
+        request,
+        "devices/messmittel_form.html",
+        {
+            "messmittel": messmittel,
+            "edit": True,
+        }
+    )
+
+@login_required
+def messmittel_delete(request, pk):
+
+    messmittel = get_object_or_404(
+        Messmittel,
+        pk=pk
+    )
+
+    if request.method == "POST":
+
+        messmittel.delete()
+
+        messages.success(
+            request,
+            "Messmittel erfolgreich gelöscht."
+        )
+
+    return redirect(
+        "messmittel_list"
     )
 
 
@@ -1182,10 +1317,11 @@ def reparatur_detail(request, pk):
         pk=pk
     )
 
+    # =====================================================
+    # READONLY
+    # =====================================================
 
-    # وضع العرض فقط
     readonly = request.GET.get("readonly") == "1"
-
 
     if readonly:
 
@@ -1200,19 +1336,22 @@ def reparatur_detail(request, pk):
                 "reparatur": reparatur,
                 "form": form,
                 "readonly": True,
+                "elektrische_daten":
+                    reparatur.elektrische_pruefung_daten or {},
             }
         )
 
+    # =====================================================
+    # POST
+    # =====================================================
 
     if request.method == "POST":
 
-
-        # =========================
-        # حذف Reparatur
-        # =========================
+        # =================================================
+        # DELETE
+        # =================================================
 
         if request.POST.get("delete") == "1":
-
 
             AuditLog.objects.create(
 
@@ -1225,65 +1364,544 @@ def reparatur_detail(request, pk):
                 object_id=reparatur.id,
 
                 description=(
-
                     f"Reparatur für Gerät "
                     f"{reparatur.geraet.name} "
-                    f"(Inventarnummer: {reparatur.geraet.inventory_number}) "
+                    f"(Inventarnummer: "
+                    f"{reparatur.geraet.inventory_number}) "
                     "gelöscht."
-
                 )
-
             )
 
-
             reparatur.delete()
-
 
             messages.success(
                 request,
                 "Reparatur gelöscht."
             )
 
+            return redirect("reparatur")
 
-            return redirect(
-                "reparatur"
-            )
-
-
-        # =========================
-        # Speichern
-        # =========================
+        # =================================================
+        # FORM
+        # =================================================
 
         form = ReparaturBearbeitenForm(
-
             request.POST,
-
             request.FILES,
-
             instance=reparatur
-
         )
 
-        print(request.POST)
         if form.is_valid():
+
+            # -------------------------------------------------
+            # Reparatur speichern
+            # -------------------------------------------------
 
             reparatur = form.save()
 
-            # =========================
-            # Vom Techniker gelesen
-            # Nur Admin darf ändern
-            # =========================
+            # -------------------------------------------------
+            # Falls Messmittel ManyToMany ist:
+            # Form.save() übernimmt die Auswahl automatisch.
+            # -------------------------------------------------
+
+            # =================================================
+            # ELEKTRISCHE PRÜFUNG
+            # =================================================
+
+            if reparatur.elektrische_pruefung:
+
+                # =============================================
+                # BETTEN
+                # =============================================
+
+                if reparatur.elektrische_pruefung_art == "Betten":
+
+                    reparatur.elektrische_pruefung_daten = {
+
+                        "betten": {
+
+                            # ---------------------------------
+                            # Potentialausgleichswiderstand
+                            # ---------------------------------
+
+                            "potentialausgleichswiderstand": {
+
+                                "1": {
+                                    "messwert":
+                                        request.POST.get(
+                                            "potentialausgleichswiderstand_1",
+                                            ""
+                                        ),
+                                    "ok":
+                                        request.POST.get(
+                                            "potentialausgleichswiderstand_1_ok"
+                                        ) == "on",
+                                },
+
+                                "2": {
+                                    "messwert":
+                                        request.POST.get(
+                                            "potentialausgleichswiderstand_2",
+                                            ""
+                                        ),
+                                    "ok":
+                                        request.POST.get(
+                                            "potentialausgleichswiderstand_2_ok"
+                                        ) == "on",
+                                },
+
+                                "3": {
+                                    "messwert":
+                                        request.POST.get(
+                                            "potentialausgleichswiderstand_3",
+                                            ""
+                                        ),
+                                    "ok":
+                                        request.POST.get(
+                                            "potentialausgleichswiderstand_3_ok"
+                                        ) == "on",
+                                },
+                            },
+
+                            # ---------------------------------
+                            # Gerätableitstrom Ersatzmessung
+                            # ---------------------------------
+
+                            "geraeteableitstrom_ersatzmessung": {
+
+                                "intrakardiale_anwendung": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "intrakardiale_anwendung",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "intrakardiale_anwendung_ok"
+                                        ) == "on",
+                                },
+
+                                "typ_b": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "typ_b_messwert",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "typ_b_ok"
+                                        ) == "on",
+                                },
+
+                                "laserlampe": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "laserlampe_messwert",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "laserlampe_ok"
+                                        ) == "on",
+                                },
+
+                                "netzspannung": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "netzspannung_messwert",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "netzspannung_ok"
+                                        ) == "on",
+                                },
+                            },
+                        }
+                    }
+
+                # =============================================
+                # MASCHINEN
+                # =============================================
+
+                elif reparatur.elektrische_pruefung_art == "Maschinen":
+
+                    reparatur.elektrische_pruefung_daten = {
+
+                        "maschinen": {
+
+                            # ---------------------------------
+                            # Schutzleiterwiderstand
+                            # ---------------------------------
+
+                            "schutzleiterwiderstand": {
+
+                                "messwert":
+                                    request.POST.get(
+                                        "maschinen_schutzleiterwiderstand",
+                                        ""
+                                    ),
+
+                                "ok":
+                                    request.POST.get(
+                                        "maschinen_schutzleiterwiderstand_ok"
+                                    ) == "on",
+                            },
+
+                            # ---------------------------------
+                            # Typ B
+                            # ---------------------------------
+
+                            "typ_b": {
+
+                                "ok":
+                                    request.POST.get(
+                                        "maschinen_typ_b_ok"
+                                    ) == "on",
+                            },
+
+                            # ---------------------------------
+                            # Differenzstrommessung
+                            # ---------------------------------
+
+                            "differenzstrommessung": {
+
+                                "ok":
+                                    request.POST.get(
+                                        "maschinen_differenz_ok"
+                                    ) == "on",
+                            },
+
+                            # ---------------------------------
+                            # Direktmessung
+                            # ---------------------------------
+
+                            "direktmessung": {
+
+                                "ok":
+                                    request.POST.get(
+                                        "maschinen_direkt_ok"
+                                    ) == "on",
+                            },
+
+                            # ---------------------------------
+                            # Nennspannung
+                            # ---------------------------------
+
+                            "nennspannung": {
+
+                                "messwert":
+                                    request.POST.get(
+                                        "maschinen_nennspannung",
+                                        ""
+                                    ),
+
+                                "ok":
+                                    request.POST.get(
+                                        "maschinen_nennspannung_ok"
+                                    ) == "on",
+                            },
+
+                            # ---------------------------------
+                            # Polarität L - N
+                            # ---------------------------------
+
+                            "polaritaet_l_n": {
+
+                                "ibmax": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "maschinen_ln_ibmax",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "maschinen_ln_ibmax_ok"
+                                        ) == "on",
+                                },
+
+                                "ubmax": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "maschinen_ln_ubmax",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "maschinen_ln_ubmax_ok"
+                                        ) == "on",
+                                },
+
+                                "in": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "maschinen_ln_in",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "maschinen_ln_in_ok"
+                                        ) == "on",
+                                },
+                            },
+
+                            # ---------------------------------
+                            # Polarität N - L
+                            # ---------------------------------
+
+                            "polaritaet_n_l": {
+
+                                "ibmax": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "maschinen_nl_ibmax",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "maschinen_nl_ibmax_ok"
+                                        ) == "on",
+                                },
+
+                                "ubmax": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "maschinen_nl_ubmax",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "maschinen_nl_ubmax_ok"
+                                        ) == "on",
+                                },
+
+                                "in": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "maschinen_nl_in",
+                                            ""
+                                        ),
+
+                                    "ok":
+                                        request.POST.get(
+                                            "maschinen_nl_in_ok"
+                                        ) == "on",
+                                },
+                            },
+                        }
+                    }
+
+                # =============================================
+                # DIALYSE MASCHINE
+                # =============================================
+
+                elif (
+                    reparatur.elektrische_pruefung_art
+                    == "Dialyse Maschinen"
+                ):
+
+                    reparatur.elektrische_pruefung_daten = {
+
+                        "dialyse": {
+
+                            # ---------------------------------
+                            # Schutzleiterwiderstand
+                            # ---------------------------------
+
+                            "schutzleiterwiderstand": {
+
+                                "messwert":
+                                    request.POST.get(
+                                        "dialyse_schutzleiterwiderstand",
+                                        ""
+                                    ),
+
+                                "ok":
+                                    request.POST.get(
+                                        "dialyse_schutzleiterwiderstand_ok"
+                                    ) == "on",
+                            },
+
+                            # ---------------------------------
+                            # Typ B
+                            # ---------------------------------
+
+                            "typ_b": {
+
+                                "ok":
+                                    request.POST.get(
+                                        "dialyse_typ_b_ok"
+                                    ) == "on",
+                            },
+
+                            # ---------------------------------
+                            # Differenzstrommessung
+                            # ---------------------------------
+
+                            "differenzstrommessung": {
+
+                                "ok":
+                                    request.POST.get(
+                                        "dialyse_differenzstrommessung"
+                                    ) == "on",
+                            },
+
+                            # ---------------------------------
+                            # Direktmessung
+                            # ---------------------------------
+
+                            "direktmessung": {
+
+                                "ok":
+                                    request.POST.get(
+                                        "dialyse_direktmessung"
+                                    ) == "on",
+                            },
+
+                            # ---------------------------------
+                            # Nennspannung U0
+                            # ---------------------------------
+
+                            "nennspannung_u0": {
+
+                                "messwert":
+                                    request.POST.get(
+                                        "dialyse_nennspannung_u0",
+                                        ""
+                                    ),
+                            },
+
+                            # ---------------------------------
+                            # Polarität L - N
+                            # ---------------------------------
+
+                            "polaritaet_l_n": {
+
+                                "ebmax": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "dialyse_ebmax",
+                                            ""
+                                        ),
+                                },
+
+                                "ubmax": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "dialyse_ubmax",
+                                            ""
+                                        ),
+                                },
+
+                                "in": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "dialyse_in_ln",
+                                            ""
+                                        ),
+                                },
+                            },
+
+                            # ---------------------------------
+                            # Polarität N - L
+                            # ---------------------------------
+
+                            "polaritaet_n_l": {
+
+                                "ibmax": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "dialyse_ibmax",
+                                            ""
+                                        ),
+                                },
+
+                                "ubmax": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "dialyse_ubmax_nl",
+                                            ""
+                                        ),
+                                },
+
+                                "in": {
+
+                                    "messwert":
+                                        request.POST.get(
+                                            "dialyse_in_nl",
+                                            ""
+                                        ),
+                                },
+                            },
+                        }
+                    }
+
+                # =================================================
+                # SPEICHERN ELEKTRISCHE DATEN
+                # =================================================
+
+                reparatur.save(
+                    update_fields=[
+                        "elektrische_pruefung_daten"
+                    ]
+                )
+
+            else:
+
+                reparatur.elektrische_pruefung_daten = {}
+
+                reparatur.save(
+                    update_fields=[
+                        "elektrische_pruefung_daten"
+                    ]
+                )
+
+            # =================================================
+            # VOM TECHNIKER GELESEN
+            # Nur Admin
+            # =================================================
 
             if request.user.is_superuser:
 
                 reparatur.techniker_gelesen = (
-                    request.POST.get("techniker_gelesen") == "on"
+                    request.POST.get(
+                        "techniker_gelesen"
+                    ) == "on"
                 )
 
                 reparatur.save(
-                    update_fields=["techniker_gelesen"]
+                    update_fields=[
+                        "techniker_gelesen"
+                    ]
                 )
 
+            # =================================================
+            # AUDIT LOG
+            # =================================================
 
             AuditLog.objects.create(
 
@@ -1296,51 +1914,45 @@ def reparatur_detail(request, pk):
                 object_id=reparatur.id,
 
                 description=(
-
                     f"Reparatur für Gerät "
                     f"{reparatur.geraet.name} "
-                    f"(Inventarnummer: {reparatur.geraet.inventory_number}) "
+                    f"(Inventarnummer: "
+                    f"{reparatur.geraet.inventory_number}) "
                     "geändert."
-
                 )
-
             )
-
 
             messages.success(
-
                 request,
-
                 "Reparatur erfolgreich gespeichert."
-
             )
 
+            return redirect("reparatur")
 
-            return redirect(
-                "reparatur"
-            )
-
+    # =====================================================
+    # GET
+    # =====================================================
 
     else:
-
 
         form = ReparaturBearbeitenForm(
             instance=reparatur
         )
 
+    # =====================================================
+    # RENDER
+    # =====================================================
 
     return render(
-
         request,
-
         "devices/reparatur_detail.html",
-
         {
             "reparatur": reparatur,
             "form": form,
             "readonly": False,
+            "elektrische_daten":
+                reparatur.elektrische_pruefung_daten or {},
         }
-
     )
 
 @login_required
@@ -1369,32 +1981,126 @@ def reparatur_uebersicht(request):
 @login_required
 def reparatur_historie(request):
 
-    reparaturen = Reparatur.objects.filter(
-        status="Erledigt"
-    ).order_by("-datum")
+    # =========================================================
+    # REPARATUREN
+    # =========================================================
+
+    reparaturen = (
+        Reparatur.objects
+        .select_related(
+            "geraet",
+            "geraet__geraetart",
+            "geraet__practice"
+        )
+        .filter(
+            status="Erledigt"
+        )
+        .order_by(
+            "geraet__practice_id",
+            "-datum"
+        )
+    )
 
 
-    search = request.GET.get("search")
+    # =========================================================
+    # SUCHE
+    # =========================================================
+
+    search = request.GET.get(
+        "search",
+        ""
+    ).strip()
 
 
     if search:
 
         reparaturen = reparaturen.filter(
 
-            Q(geraet__inventory_number__icontains=search) |
-
-            Q(geraet__serial_number__icontains=search) |
-
-            Q(beschreibung__icontains=search) |
-
-            Q(ausfuehrung__icontains=search)
+            Q(
+                geraet__inventory_number__icontains=search
+            )
+            |
+            Q(
+                geraet__serial_number__icontains=search
+            )
+            |
+            Q(
+                beschreibung__icontains=search
+            )
+            |
+            Q(
+                ausfuehrung__icontains=search
+            )
 
         )
 
 
-    # حذف متعدد - فقط Admin
-    if request.method == "POST":
+    # =========================================================
+    # GERÄTEART FILTER
+    # =========================================================
 
+    geraetart = request.GET.get(
+        "geraetart",
+        ""
+    ).strip()
+
+
+    if geraetart:
+
+        reparaturen = reparaturen.filter(
+            geraet__geraetart_id=geraetart
+        )
+
+
+    # =========================================================
+    # GERÄTEARTEN
+    # =========================================================
+
+    geraetearten = (
+        Geraetart.objects
+        .all()
+        .order_by(
+            "name"
+        )
+    )
+
+
+    # =========================================================
+    # STANDORT FILTER
+    # =========================================================
+
+    practice = request.GET.get(
+        "practice",
+        ""
+    ).strip()
+
+
+    if practice:
+
+        reparaturen = reparaturen.filter(
+            geraet__practice_id=practice
+        )
+
+
+    # =========================================================
+    # STANDORTE
+    # =========================================================
+
+    standorte = (
+        Standort.objects
+        .all()
+        .order_by(
+            "id"
+        )
+    )
+
+
+    # =========================================================
+    # AUSGEWÄHLTE LÖSCHEN
+    # NUR SUPERUSER
+    # =========================================================
+
+    if request.method == "POST":
 
         if not request.user.is_superuser:
 
@@ -1415,14 +2121,19 @@ def reparatur_historie(request):
 
         for repair_id in ids:
 
-
-            reparatur = Reparatur.objects.filter(
-                id=repair_id
-            ).first()
+            reparatur = (
+                Reparatur.objects
+                .select_related(
+                    "geraet"
+                )
+                .filter(
+                    id=repair_id
+                )
+                .first()
+            )
 
 
             if reparatur:
-
 
                 AuditLog.objects.create(
 
@@ -1445,9 +2156,7 @@ def reparatur_historie(request):
 
                 )
 
-
                 reparatur.delete()
-
 
 
         messages.success(
@@ -1461,6 +2170,9 @@ def reparatur_historie(request):
         )
 
 
+    # =========================================================
+    # RENDER
+    # =========================================================
 
     return render(
 
@@ -1470,10 +2182,15 @@ def reparatur_historie(request):
 
         {
             "reparaturen": reparaturen,
-            "search": search
+            "search": search,
+            "practice": practice,
+            "geraetart": geraetart,
+            "geraetearten": geraetearten,
+            "standorte": standorte,
         }
 
     )
+
 @login_required
 def reparatur_historie_detail(request, pk):
 
@@ -1659,66 +2376,129 @@ def dashboard(request):
     heute = date.today()
     grenze = heute + timedelta(days=30)
 
+    # =====================================================
+    # GERÄTE
+    # =====================================================
+
     devices = Device.objects.all()
 
-    dashboard_settings, created = DashboardSettings.objects.get_or_create(id=1)
+    dashboard_settings, created = (
+        DashboardSettings.objects.get_or_create(id=1)
+    )
 
-    # =====================
-    # Suche
-    # =====================
+    # =====================================================
+    # SUCHE
+    # =====================================================
 
-    search = request.GET.get("search")
+    search = request.GET.get("search", "").strip()
 
     if search:
+
         devices = devices.filter(
-            Q(name__icontains=search) |
-            Q(inventory_number__icontains=search) |
-            Q(serial_number__icontains=search) |
-            Q(practice__name__icontains=search)
+            Q(name__icontains=search)
+            | Q(inventory_number__icontains=search)
+            | Q(serial_number__icontains=search)
+            | Q(practice__name__icontains=search)
+            | Q(geraetart__name__icontains=search)
         )
 
-    # =====================
-    # Filter Status
-    # =====================
+    # =====================================================
+    # STATUS FILTER
+    # =====================================================
 
-    status = request.GET.get("status")
+    status = request.GET.get("status", "").strip()
 
     if status:
-        devices = devices.filter(status=status)
 
-    # =====================
-    # Sortierung
-    # =====================
+        devices = devices.filter(
+            status=status
+        )
 
-    sort = request.GET.get("sort")
+    # =====================================================
+    # SORTIERUNG
+    # =====================================================
+
+    sort = request.GET.get("sort", "").strip()
 
     if sort == "inventory_number":
-        devices = devices.order_by("inventory_number")
+
+        devices = devices.order_by(
+            "inventory_number"
+        )
 
     elif sort == "-inventory_number":
-        devices = devices.order_by("-inventory_number")
+
+        devices = devices.order_by(
+            "-inventory_number"
+        )
 
     elif sort == "operating_hours":
-        devices = devices.order_by("operating_hours")
+
+        devices = (
+            devices
+            .filter(
+                operating_hours__isnull=False
+            )
+            .order_by(
+                "operating_hours"
+            )
+        )
 
     elif sort == "-operating_hours":
-        devices = devices.order_by("-operating_hours")
+
+        devices = (
+            devices
+            .filter(
+                operating_hours__isnull=False
+            )
+            .order_by(
+                "-operating_hours"
+            )
+        )
 
     elif sort == "practice":
-        devices = devices.order_by("practice")
+
+        devices = devices.order_by(
+            "practice__name"
+        )
 
     elif sort == "-practice":
-        devices = devices.order_by("-practice")
 
-    elif sort == "next_stk":
-        devices = devices.order_by("next_stk")
+        devices = devices.order_by(
+            "-practice__name"
+        )
 
-    elif sort == "-next_stk":
-        devices = devices.order_by("-next_stk")
+    elif sort == "next_pruefung":
 
-    # =====================
-    # Standorte
-    # =====================
+        devices = (
+            devices
+            .filter(
+                pruefungen__aktiv=True,
+                pruefungen__naechstes_datum__isnull=False
+            )
+            .order_by(
+                "pruefungen__naechstes_datum"
+            )
+            .distinct()
+        )
+
+    elif sort == "-next_pruefung":
+
+        devices = (
+            devices
+            .filter(
+                pruefungen__aktiv=True,
+                pruefungen__naechstes_datum__isnull=False
+            )
+            .order_by(
+                "-pruefungen__naechstes_datum"
+            )
+            .distinct()
+        )
+
+    # =====================================================
+    # STANDORTE
+    # =====================================================
 
     luebeck_total = Device.objects.filter(
         practice__name="Lübeck"
@@ -1728,9 +2508,9 @@ def dashboard(request):
         practice__name="Ratzeburg"
     ).count()
 
-    # =====================
-    # Reparaturen
-    # =====================
+    # =====================================================
+    # REPARATUREN
+    # =====================================================
 
     offene_reparaturen = Reparatur.objects.filter(
         status="Offen"
@@ -1740,140 +2520,526 @@ def dashboard(request):
         status="In Bearbeitung"
     ).count()
 
-    # =====================
-    # Wartungen
-    # =====================
-
-    faellige_stk = Device.objects.filter(
-        next_stk__isnull=False,
-        next_stk__lte=grenze
+    reparaturen_erledigt = Reparatur.objects.filter(
+        status="Erledigt"
     ).count()
 
-    faellige_mtk = Device.objects.filter(
-        next_mtk__isnull=False,
-        next_mtk__lte=grenze
-    ).count()
+    # =====================================================
+    # PRÜFUNGEN
+    #
+    # Neues System:
+    # Nur "Prüfungsart"
+    # Keine STK / MTK / DGUV mehr
+    # =====================================================
 
-    faellige_dguv = Device.objects.filter(
-        next_dguv__isnull=False,
-        next_dguv__lte=grenze
-    ).count()
-
-    # =====================
-    # Geräteübersicht
-    # =====================
-
-    geraete_uebersicht = Device.objects.values(
-        "geraetart__name",
-        "practice__name"
-    ).annotate(
-        anzahl=Count("id")
-    ).order_by(
-        "geraetart__name",
-        "practice__name"
+    pruefungen = (
+        DevicePruefung.objects
+        .filter(
+            aktiv=True,
+            device__status="Aktiv",
+            naechstes_datum__isnull=False
+        )
     )
 
-    # =====================
-    # Dashboard Widgets
-    # =====================
+    # =====================================================
+    # GERÄTEÜBERSICHT
+    # =====================================================
 
-    dashboard_widgets = DashboardWidget.objects.filter(
-        visible=True
-    ).order_by("order")
+    geraete_uebersicht = (
+        Device.objects
+        .values(
+            "geraetart__name",
+            "practice__name"
+        )
+        .annotate(
+            anzahl=Count("id")
+        )
+        .order_by(
+            "geraetart__name",
+            "practice__name"
+        )
+    )
+
+    # =====================================================
+    # DASHBOARD WIDGETS
+    # Jeder Benutzer sieht nur seine eigenen Widgets
+    # =====================================================
+
+    dashboard_widgets = (
+        DashboardWidget.objects
+        .filter(
+            user=request.user,
+            visible=True
+        )
+        .select_related(
+            
+            "standort",
+            "geraetart",
+            "pruefart"
+        )
+        .order_by(
+            "order"
+        )
+    )
+
+    # =====================================================
+    # WIDGET WERTE + LINKS
+    # =====================================================
 
     for widget in dashboard_widgets:
+
+        # =================================================
+        # STANDARD
+        # =================================================
+
+        widget.value = 0
+        widget.url = None
+
+        # =================================================
+        # GERÄTE
+        # =================================================
 
         if widget.widget_type == "devices":
 
             qs = Device.objects.all()
 
+            # -------------------------
+            # STANDORT
+            # -------------------------
+
             if widget.standort:
+
                 qs = qs.filter(
                     practice=widget.standort
                 )
 
+            # -------------------------
+            # GERÄTEART
+            # -------------------------
+
             if widget.geraetart:
+
                 qs = qs.filter(
                     geraetart=widget.geraetart
                 )
 
+            # -------------------------
+            # WERT
+            # -------------------------
+
             widget.value = qs.count()
 
+            # -------------------------
+            # LINK
+            # -------------------------
+
+            widget.url = reverse(
+                "device_list"
+            )
+
+            params = []
+
+            if widget.standort:
+
+                params.append(
+                    f"practice={widget.standort.id}"
+                )
+
+            if widget.geraetart:
+
+                params.append(
+                    f"geraetart={widget.geraetart.id}"
+                )
+
+            if params:
+
+                widget.url += (
+                    "?"
+                    + "&".join(params)
+                )
+
+        # =================================================
+        # GERÄTEÜBERSICHT
+        # =================================================
+
         elif widget.widget_type == "devices_overview":
+
             widget.value = Device.objects.count()
 
-        elif widget.widget_type == "repairs_open":
-            widget.value = Reparatur.objects.filter(
-                status="Offen"
-            ).count()
+            widget.url = reverse(
+                "device_list"
+            )
 
-        elif widget.widget_type == "repairs_progress":
-            widget.value = Reparatur.objects.filter(
-                status="In Bearbeitung"
-            ).count()
+        # =================================================
+        # REPARATUREN
+        # =================================================
 
-        elif widget.widget_type == "repairs_done":
+        elif widget.widget_type == "repairs":
 
-            widget.value = Reparatur.objects.filter(
-                status="Erledigt"
-            ).count()
+            qs = Reparatur.objects.all()
 
+            status_map = {
 
-        elif widget.widget_type == "repair_history":
+                "offen":
+                    "Offen",
 
-            widget.value = Reparatur.objects.count()
+                "in_bearbeitung":
+                    "In Bearbeitung",
+
+                "erledigt":
+                    "Erledigt",
+
+            }
+
+            # -------------------------
+            # STATUS FILTER
+            # -------------------------
+
+            reparatur_status = None
+
+            if widget.reparatur_status:
+
+                reparatur_status = (
+                    status_map.get(
+                        widget.reparatur_status
+                    )
+                )
+
+            if reparatur_status:
+
+                qs = qs.filter(
+                    status=reparatur_status
+                )
+
+            # -------------------------
+            # WERT
+            # -------------------------
+
+            widget.value = qs.count()
+
+            # -------------------------
+            # LINK
+            # -------------------------
+
+            if reparatur_status == "Erledigt":
+
+                # Erledigte Reparaturen
+                # befinden sich in der Historie
+
+                widget.url = reverse(
+                    "reparatur_historie"
+                )
+
+            else:
+
+                # Offen / In Bearbeitung
+
+                widget.url = reverse(
+                    "reparatur_uebersicht"
+                )
+
+                if reparatur_status:
+
+                    from urllib.parse import urlencode
+
+                    widget.url += (
+                        "?"
+                        + urlencode(
+                            {
+                                "status":
+                                    reparatur_status
+                            }
+                        )
+                    )
+
+        # =================================================
+        # FILTERWECHSEL
+        # =================================================
 
         elif widget.widget_type == "filter_history":
-            widget.value = Filterwechsel.objects.count()
 
-        elif widget.widget_type == "stk":
-            widget.value = Device.objects.filter(
-                next_stk__isnull=False,
-                next_stk__lte=grenze
-            ).count()
+            widget.value = (
+                Filterwechsel.objects.count()
+            )
 
-        elif widget.widget_type == "mtk":
-            widget.value = Device.objects.filter(
-                next_mtk__isnull=False,
-                next_mtk__lte=grenze
-            ).count()
+            widget.url = reverse(
+                "filterwechsel_history"
+            )
 
-        elif widget.widget_type == "dguv":
-            widget.value = Device.objects.filter(
-                next_dguv__isnull=False,
-                next_dguv__lte=grenze
-            ).count()
+        # =================================================
+        # PRÜFUNGSART
+        # =================================================
+
+        elif widget.widget_type == "pruefart":
+
+            qs = DevicePruefung.objects.filter(
+                aktiv=True,
+                device__status="Aktiv",
+                naechstes_datum__isnull=False
+            )
+
+            # -------------------------
+            # PRÜFUNGSART
+            # -------------------------
+
+            if widget.pruefart:
+
+                qs = qs.filter(
+                    pruefart=widget.pruefart
+                )
+
+            # -------------------------
+            # STATUS
+            # -------------------------
+
+            if widget.pruef_status == "gueltig":
+
+                qs = qs.filter(
+                    naechstes_datum__gt=grenze
+                )
+
+            elif widget.pruef_status == "faellig":
+
+                qs = qs.filter(
+                    naechstes_datum__gte=heute,
+                    naechstes_datum__lte=grenze
+                )
+
+            elif widget.pruef_status == "ueberfaellig":
+
+                qs = qs.filter(
+                    naechstes_datum__lt=heute
+                )
+
+            # -------------------------
+            # WERT
+            # -------------------------
+
+            widget.value = qs.count()
+
+            # -------------------------
+            # LINK
+            # -------------------------
+
+            if widget.pruefart:
+
+                widget.url = reverse(
+                    "faellige_pruefung",
+                    args=[
+                        widget.pruefart.id
+                    ]
+                )
+
+                # =============================================
+                # PRÜFUNGS STATUS AN URL ÜBERGEBEN
+                # =============================================
+
+                if widget.pruef_status:
+
+                    from urllib.parse import urlencode
+
+                    widget.url += (
+                        "?"
+                        + urlencode(
+                            {
+                                "status":
+                                    widget.pruef_status
+                            }
+                        )
+                    )
+
+            else:
+
+                widget.url = reverse(
+                    "device_list"
+                )
+
+        # =================================================
+        # RECHNUNGEN
+        # =================================================
+
+        elif widget.widget_type == "rechnung":
+
+            status_map = {
+
+                "offen":
+                    "Offen",
+
+                "in_bearbeitung":
+                    "In Bearbeitung",
+
+                "erledigt":
+                    "Erledigt",
+
+            }
+
+            rechnung_status = None
+
+            if widget.rechnung_status:
+
+                rechnung_status = (
+                    status_map.get(
+                        widget.rechnung_status
+                    )
+                )
+
+            # -------------------------
+            # ERLEDIGT
+            # -------------------------
+
+            if rechnung_status == "Erledigt":
+
+                qs = Rechnung.objects.filter(
+                    status="Erledigt"
+                )
+
+                widget.value = qs.count()
+
+                widget.url = reverse(
+                    "rechnung_historie"
+                )
+
+            # -------------------------
+            # OFFEN / IN BEARBEITUNG
+            # -------------------------
+
+            else:
+
+                qs = (
+                    Rechnung.objects
+                    .exclude(
+                        status="Erledigt"
+                    )
+                )
+
+                if rechnung_status:
+
+                    qs = qs.filter(
+                        status=rechnung_status
+                    )
+
+                widget.value = qs.count()
+
+                widget.url = reverse(
+                    "rechnung_uebersicht"
+                )
+
+                if rechnung_status:
+
+                    from urllib.parse import urlencode
+
+                    widget.url += (
+                        "?"
+                        + urlencode(
+                            {
+                                "status":
+                                    rechnung_status
+                            }
+                        )
+                    )
+
+        # =================================================
+        # MEDIZINGERÄTE-DOKUMENTE
+        # =================================================
 
         elif widget.widget_type == "device_documents":
-            widget.value = DeviceDocument.objects.count()
+
+            widget.value = (
+                DeviceDocument.objects.count()
+            )
+
+            widget.url = reverse(
+                "documents"
+            )
+
+        # =================================================
+        # TECHNIKER-DOKUMENTE
+        # =================================================
 
         elif widget.widget_type == "technician_documents":
-            widget.value = TechnicianDocument.objects.count()
+
+            widget.value = (
+                TechnicianDocument.objects.count()
+            )
+
+            widget.url = reverse(
+                "technician_documents"
+            )
+
+        # =================================================
+        # UNBEKANNTER WIDGET-TYP
+        # =================================================
 
         else:
+
             widget.value = 0
+            widget.url = None
+
+    # =====================================================
+    # CONTEXT
+    # =====================================================
 
     context = {
 
-        "devices": devices,
-        "search": search,
-        "status": status,
+        "devices":
+            devices,
 
-        "offene_reparaturen": offene_reparaturen,
-        "reparaturen_bearbeitung": reparaturen_bearbeitung,
+        "search":
+            search,
 
-        "faellige_stk": faellige_stk,
-        "faellige_mtk": faellige_mtk,
-        "faellige_dguv": faellige_dguv,
+        "status":
+            status,
 
-        "luebeck_total": luebeck_total,
-        "ratzeburg_total": ratzeburg_total,
+        # -------------------------------------------------
+        # REPARATUREN
+        # -------------------------------------------------
 
-        "geraete_uebersicht": geraete_uebersicht,
+        "offene_reparaturen":
+            offene_reparaturen,
 
-        "dashboard_settings": dashboard_settings,
+        "reparaturen_bearbeitung":
+            reparaturen_bearbeitung,
 
-        "dashboard_widgets": dashboard_widgets,
+        "reparaturen_erledigt":
+            reparaturen_erledigt,
+
+        # -------------------------------------------------
+        # PRÜFUNGEN
+        # -------------------------------------------------
+
+        "pruefungen":
+            pruefungen,
+
+        # -------------------------------------------------
+        # STANDORTE
+        # -------------------------------------------------
+
+        "luebeck_total":
+            luebeck_total,
+
+        "ratzeburg_total":
+            ratzeburg_total,
+
+        # -------------------------------------------------
+        # GERÄTEÜBERSICHT
+        # -------------------------------------------------
+
+        "geraete_uebersicht":
+            geraete_uebersicht,
+
+        # -------------------------------------------------
+        # DASHBOARD EINSTELLUNGEN
+        # -------------------------------------------------
+
+        "dashboard_settings":
+            dashboard_settings,
+
+        # -------------------------------------------------
+        # DASHBOARD WIDGETS
+        # -------------------------------------------------
+
+        "dashboard_widgets":
+            dashboard_widgets,
     }
 
     return render(
@@ -1881,7 +3047,6 @@ def dashboard(request):
         "devices/dashboard.html",
         context
     )
-
 
 @login_required
 def dashboard_settings(request):
@@ -3090,38 +4255,82 @@ def rechnung_detail(request, rechnung_id):
 @rechnung_permission_required
 def rechnung_uebersicht(request):
 
+    # ==========================================
+    # RECHNUNGEN
+    # ==========================================
+
     rechnungen = (
         Rechnung.objects
         .select_related(
             "erstellt_von"
         )
-        .exclude(
+    )
+
+    # ==========================================
+    # STATUS FILTER
+    # ==========================================
+
+    status = request.GET.get(
+        "status",
+        ""
+    ).strip()
+
+    if status:
+
+        rechnungen = rechnungen.filter(
+            status=status
+        )
+
+    else:
+
+        # Ohne Filter:
+        # nur offene Rechnungen anzeigen
+
+        rechnungen = rechnungen.exclude(
             status="Erledigt"
         )
-        .order_by(
-            "faelligkeitsdatum",
-            "-erstellt_am"
-        )
+
+    # ==========================================
+    # SORTIERUNG
+    # ==========================================
+
+    rechnungen = rechnungen.order_by(
+        "faelligkeitsdatum",
+        "-erstellt_am"
     )
+
+    # ==========================================
+    # RENDER
+    # ==========================================
 
     return render(
         request,
         "devices/rechnung_uebersicht.html",
         {
             "rechnungen": rechnungen,
+            "status": status,
         }
     )
+    
 
 @rechnung_permission_required
 def rechnung_historie(request):
 
+    # ==========================================
+    # RECHNUNGEN
+    # ==========================================
+
     rechnungen = (
         Rechnung.objects
-        .filter(status="Erledigt")
+        .filter(
+            status="Erledigt"
+        )
         .select_related(
             "erstellt_von",
+            "kategorie",
         )
     )
+
 
     # ==========================================
     # SUCHE
@@ -3132,17 +4341,60 @@ def rechnung_historie(request):
         ""
     ).strip()
 
+
     if search:
 
         rechnungen = rechnungen.filter(
-            Q(rechnungsnummer__icontains=search)
+
+            Q(
+                rechnungsnummer__icontains=search
+            )
             |
-            Q(kategorie__name__icontains=search)
+            Q(
+                kategorie__name__icontains=search
+            )
             |
-            Q(lieferant__icontains=search)
+            Q(
+                lieferant__icontains=search
+            )
             |
-            Q(rechnungsbetrag__icontains=search)
+            Q(
+                rechnungsbetrag__icontains=search
+            )
+
         )
+
+
+    # ==========================================
+    # KATEGORIE FILTER
+    # ==========================================
+
+    kategorie = request.GET.get(
+        "kategorie",
+        ""
+    ).strip()
+
+
+    if kategorie:
+
+        rechnungen = rechnungen.filter(
+            kategorie_id=kategorie
+        )
+
+
+    # ==========================================
+    # KATEGORIEN
+    # ==========================================
+
+    kategorien = (
+        RechnungKategorie.objects
+        
+        .all()
+        .order_by(
+            "name"
+        )
+    )
+
 
     # ==========================================
     # DATUM FILTER
@@ -3153,20 +4405,26 @@ def rechnung_historie(request):
         ""
     ).strip()
 
+
     datum_bis = request.GET.get(
         "datum_bis",
         ""
     ).strip()
 
+
     if datum_von:
+
         rechnungen = rechnungen.filter(
             rechnungsdatum__gte=datum_von
         )
 
+
     if datum_bis:
+
         rechnungen = rechnungen.filter(
             rechnungsdatum__lte=datum_bis
         )
+
 
     # ==========================================
     # MEHRERE RECHNUNGEN LÖSCHEN
@@ -3174,26 +4432,44 @@ def rechnung_historie(request):
 
     if request.method == "POST":
 
-        if request.POST.get("action") == "delete_selected":
+        if request.POST.get(
+            "action"
+        ) == "delete_selected":
 
             selected_ids = request.POST.getlist(
                 "selected_rechnungen"
             )
 
+
             for rechnung_id in selected_ids:
 
-                rechnung = Rechnung.objects.filter(
-                    id=rechnung_id
-                ).first()
+                rechnung = (
+                    Rechnung.objects
+                    .filter(
+                        id=rechnung_id
+                    )
+                    .first()
+                )
+
 
                 if not rechnung:
                     continue
+
+
+                # ==================================
+                # RECHNUNG DATEI LÖSCHEN
+                # ==================================
 
                 if rechnung.rechnung_datei:
 
                     rechnung.rechnung_datei.delete(
                         save=False
                     )
+
+
+                # ==================================
+                # LIEFERSCHEIN DATEI LÖSCHEN
+                # ==================================
 
                 if hasattr(
                     rechnung,
@@ -3206,23 +4482,40 @@ def rechnung_historie(request):
                             save=False
                         )
 
+
+                # ==================================
+                # RECHNUNG LÖSCHEN
+                # ==================================
+
                 rechnung.delete()
+
 
             messages.success(
                 request,
                 "Ausgewählte Rechnungen erfolgreich gelöscht."
             )
 
+
             return redirect(
                 "rechnung_historie"
             )
+
+
     # ==========================================
     # GESAMTSUMME
     # ==========================================
 
-    gesamtsumme = rechnungen.aggregate(
-        total=Sum("rechnungsbetrag")
-    )["total"] or 0
+    gesamtsumme = (
+        rechnungen
+        .aggregate(
+            total=Sum(
+                "rechnungsbetrag"
+            )
+        )["total"]
+        or 0
+    )
+
+
     # ==========================================
     # SORTIERUNG
     # ==========================================
@@ -3232,16 +4525,33 @@ def rechnung_historie(request):
         "-erstellt_am"
     )
 
+
+    # ==========================================
+    # RENDER
+    # ==========================================
+
     return render(
+
         request,
+
         "devices/rechnung_historie.html",
+
         {
             "rechnungen": rechnungen,
+
             "search": search,
+
+            "kategorie": kategorie,
+
+            "kategorien": kategorien,
+
             "datum_von": datum_von,
+
             "datum_bis": datum_bis,
+
             "gesamtsumme": gesamtsumme,
         }
+
     )
 
 @rechnung_permission_required
@@ -3555,16 +4865,38 @@ def contact_edit(request):
 @login_required
 def user_list(request):
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
+    # =========================================================
+    # ADMIN
+    # =========================================================
 
-    users = User.objects.all().order_by("username")
+    if request.user.is_superuser:
+
+        users = User.objects.all().order_by("username")
+
+        is_admin = True
+
+    # =========================================================
+    # NORMAL USER
+    # =========================================================
+
+    else:
+
+        users = User.objects.filter(
+            id=request.user.id
+        )
+
+        is_admin = False
+
+    # =========================================================
+    # RENDER
+    # =========================================================
 
     return render(
         request,
         "devices/user_list.html",
         {
-            "users": users
+            "users": users,
+            "is_admin": is_admin,
         }
     )
 
@@ -3625,31 +4957,43 @@ def user_create(request):
 @login_required
 def user_edit(request, user_id):
 
-    if not request.user.is_superuser:
-        return redirect("home")
+    # =========================================================
+    # USER LADEN
+    # =========================================================
 
     user = get_object_or_404(
         User,
         id=user_id
     )
 
-    # ==========================================
+    # =========================================================
+    # NORMALER BENUTZER
+    # DARF NUR SICH SELBST BEARBEITEN
+    # =========================================================
+
+    if not request.user.is_superuser:
+
+        if user != request.user:
+
+            return redirect("permission_denied")
+
+    # =========================================================
     # USER PERMISSION OBJECT
-    # ==========================================
+    # =========================================================
 
     permission, created = UserPermission.objects.get_or_create(
         user=user
     )
 
-    # ==========================================
+    # =========================================================
     # POST
-    # ==========================================
+    # =========================================================
 
     if request.method == "POST":
 
-        # ======================================
+        # =====================================================
         # USER DATA
-        # ======================================
+        # =====================================================
 
         user.username = request.POST.get(
             "username",
@@ -3671,93 +5015,115 @@ def user_edit(request, user_id):
             ""
         ).strip()
 
-        # ======================================
-        # ROLE
-        # ======================================
+        # =====================================================
+        # ADMIN
+        # =====================================================
 
-        role = request.POST.get(
-            "role"
-        )
+        if request.user.is_superuser:
 
-        if role == "admin":
+            # ================================================
+            # ROLE
+            # ================================================
 
-            user.is_staff = True
-            user.is_superuser = True
+            role = request.POST.get(
+                "role"
+            )
+
+            if role == "admin":
+
+                user.is_staff = True
+                user.is_superuser = True
+
+            else:
+
+                user.is_staff = False
+                user.is_superuser = False
+
+            user.save()
+
+            # ================================================
+            # PERMISSIONS
+            # ================================================
+
+            permission.permission_geraete = (
+                "permission_geraete"
+                in request.POST
+            )
+
+            permission.permission_reparaturen = (
+                "permission_reparaturen"
+                in request.POST
+            )
+
+            permission.permission_filter = (
+                "permission_filter"
+                in request.POST
+            )
+
+            permission.permission_wartung = (
+                "permission_wartung"
+                in request.POST
+            )
+
+            permission.permission_dokumente = (
+                "permission_dokumente"
+                in request.POST
+            )
+
+            permission.permission_rechnung = (
+                "permission_rechnung"
+                in request.POST
+            )
+
+            permission.permission_firmeninfos = (
+                "permission_firmeninfos"
+                in request.POST
+            )
+
+            permission.permission_kontakt = (
+                "permission_kontakt"
+                in request.POST
+            )
+
+            permission.permission_einstellungen = (
+                "permission_einstellungen"
+                in request.POST
+            )
+
+            permission.save()
+
+        # =====================================================
+        # NORMALER BENUTZER
+        # =====================================================
 
         else:
 
-            user.is_staff = False
-            user.is_superuser = False
+            # Benutzer darf NUR seine Benutzerdaten ändern.
+            # Rolle und Berechtigungen werden NICHT verändert.
 
-        user.save()
+            user.save()
 
-        # ======================================
-        # PERMISSIONS
-        # ======================================
-
-        permission.permission_geraete = (
-            "permission_geraete"
-            in request.POST
-        )
-
-        permission.permission_reparaturen = (
-            "permission_reparaturen"
-            in request.POST
-        )
-
-        permission.permission_filter = (
-            "permission_filter"
-            in request.POST
-        )
-
-        permission.permission_wartung = (
-            "permission_wartung"
-            in request.POST
-        )
-
-        permission.permission_dokumente = (
-            "permission_dokumente"
-            in request.POST
-        )
-
-        permission.permission_rechnung = (
-            "permission_rechnung"
-            in request.POST
-        )
-
-        permission.permission_firmeninfos = (
-            "permission_firmeninfos"
-            in request.POST
-        )
-
-        permission.permission_kontakt = (
-            "permission_kontakt"
-            in request.POST
-        )
-
-        permission.permission_einstellungen = (
-            "permission_einstellungen"
-            in request.POST
-        )
-
-        permission.save()
-
-        # ======================================
+        # =====================================================
         # SUCCESS
-        # ======================================
+        # =====================================================
 
         messages.success(
             request,
-            "Benutzer und Berechtigungen erfolgreich geändert."
+            "Benutzerdaten erfolgreich geändert."
         )
+
+        # =====================================================
+        # ADMIN → USER LIST
+        # NORMALER BENUTZER → SEINE DATEN
+        # =====================================================
 
         return redirect(
             "user_list"
         )
 
-    # ==========================================
+    # =========================================================
     # GET
-    # ==========================================
+    # =========================================================
 
     return render(
         request,
@@ -3765,6 +5131,7 @@ def user_edit(request, user_id):
         {
             "edit_user": user,
             "permissions": permission,
+            "is_admin": request.user.is_superuser,
         }
     )
 
@@ -3808,42 +5175,155 @@ def user_delete(request, user_id):
 @login_required
 def user_password_reset(request, user_id):
 
-    if not request.user.is_superuser:
-        return redirect("home")
+    # =========================================================
+    # USER LADEN
+    # =========================================================
 
-    user = get_object_or_404(User, id=user_id)
+    user = get_object_or_404(
+        User,
+        id=user_id
+    )
+
+    # =========================================================
+    # NORMALER BENUTZER
+    # DARF NUR SEIN EIGENES PASSWORT ÄNDERN
+    # =========================================================
+
+    if not request.user.is_superuser:
+
+        if user != request.user:
+
+            return redirect(
+                "permission_denied"
+            )
+
+    # =========================================================
+    # POST
+    # =========================================================
 
     if request.method == "POST":
 
-        password1 = request.POST.get("password1")
-        password2 = request.POST.get("password2")
+        # =====================================================
+        # PASSWÖRTER AUSLESEN
+        # =====================================================
+
+        old_password = request.POST.get(
+            "old_password",
+            ""
+        )
+
+        password1 = request.POST.get(
+            "password1",
+            ""
+        )
+
+        password2 = request.POST.get(
+            "password2",
+            ""
+        )
+
+        # =====================================================
+        # NORMALER BENUTZER
+        # ALTES PASSWORT PRÜFEN
+        # =====================================================
+
+        if not request.user.is_superuser:
+
+            if not request.user.check_password(
+                old_password
+            ):
+
+                messages.error(
+                    request,
+                    "Das alte Passwort ist falsch."
+                )
+
+                return redirect(
+                    "user_password_reset",
+                    user_id=user.id
+                )
+
+        # =====================================================
+        # NEUE PASSWÖRTER VERGLEICHEN
+        # =====================================================
 
         if password1 != password2:
+
             messages.error(
                 request,
-                "Passwörter stimmen nicht überein."
+                "Die neuen Passwörter stimmen nicht überein."
             )
+
             return redirect(
                 "user_password_reset",
                 user_id=user.id
             )
 
-        user.set_password(password1)
+        # =====================================================
+        # LEERES PASSWORT VERHINDERN
+        # =====================================================
+
+        if not password1:
+
+            messages.error(
+                request,
+                "Das neue Passwort darf nicht leer sein."
+            )
+
+            return redirect(
+                "user_password_reset",
+                user_id=user.id
+            )
+
+        # =====================================================
+        # PASSWORT ÄNDERN
+        # =====================================================
+
+        user.set_password(
+            password1
+        )
+
         user.save()
+
+        # =====================================================
+        # SESSION BEIBEHALTEN
+        # Nur wenn Benutzer sein eigenes Passwort ändert
+        # =====================================================
+
+        if user == request.user:
+
+            update_session_auth_hash(
+                request,
+                user
+            )
+
+        # =====================================================
+        # SUCCESS
+        # =====================================================
 
         messages.success(
             request,
             "Passwort erfolgreich geändert."
         )
 
-        return redirect("user_list")
+        # =====================================================
+        # ZURÜCK
+        # =====================================================
 
+        return redirect(
+            "user_list"
+        )
+
+    # =========================================================
+    # GET
+    # =========================================================
 
     return render(
         request,
         "registration/user_password_reset.html",
         {
-            "edit_user": user
+            "edit_user": user,
+            "is_admin": request.user.is_superuser,
         }
     )
 
@@ -4061,7 +5541,18 @@ def filterwechsel_create(request):
 @login_required
 def filterwechsel_history(request):
 
-    filterwechsel = Filterwechsel.objects.all().order_by("-datum")
+    filterwechsel = (
+        Filterwechsel.objects
+        .select_related(
+            "geraet",
+            "geraet__practice"
+        )
+        .all()
+        .order_by(
+            "geraet__practice_id",
+            "-datum"
+        )
+    )
 
     # ==========================================
     # SUCHE
@@ -4076,6 +5567,22 @@ def filterwechsel_history(request):
 
         filterwechsel = filterwechsel.filter(
             inventarnummer__icontains=search
+        )
+
+
+    # ==========================================
+    # STANDORT FILTER
+    # ==========================================
+
+    practice = request.GET.get(
+        "practice",
+        ""
+    ).strip()
+
+    if practice:
+
+        filterwechsel = filterwechsel.filter(
+            geraet__practice_id=practice
         )
 
 
@@ -4149,6 +5656,22 @@ def filterwechsel_history(request):
         )
 
 
+    # ==========================================
+    # STANDORTE
+    # Genau wie bei Gesamte Geräte
+    # ==========================================
+
+    standorte = (
+        Standort.objects
+        .filter(
+            active=True
+        )
+        .order_by(
+            "name"
+        )
+    )
+
+
     return render(
 
         request,
@@ -4158,6 +5681,8 @@ def filterwechsel_history(request):
         {
             "filterwechsel": filterwechsel,
             "search": search,
+            "practice": practice,
+            "standorte": standorte,
         }
 
     )
@@ -4801,15 +6326,36 @@ def create_update_backup():
     return filename
 
 
+
+
 @login_required
 def export(request):
 
     # =========================================================
-    # NUR ADMIN
+    # USER BERECHTIGUNG
     # =========================================================
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
+    if request.user.is_superuser:
+
+        user_permission = None
+
+    else:
+
+        user_permission, created = (
+            UserPermission.objects.get_or_create(
+                user=request.user
+            )
+        )
+
+        if not any([
+            user_permission.permission_geraete,
+            user_permission.permission_reparaturen,
+            user_permission.permission_filter,
+            user_permission.permission_wartung,
+            user_permission.permission_rechnung,
+        ]):
+
+            return redirect("permission_denied")
 
 
     # =========================================================
@@ -4820,7 +6366,7 @@ def export(request):
 
 
     # =========================================================
-    # EXPORT ORDNER
+    # EXPORT HAUPTORDNER
     # =========================================================
 
     export_dir = os.path.join(
@@ -4835,10 +6381,36 @@ def export(request):
 
 
     # =========================================================
+    # BENUTZER EXPORT ORDNER
+    # =========================================================
+
+    user_export_dir = os.path.join(
+        export_dir,
+        str(request.user.id)
+    )
+
+    os.makedirs(
+        user_export_dir,
+        exist_ok=True
+    )
+
+
+    # =========================================================
     # POST = EXPORT ERSTELLEN
     # =========================================================
 
     if request.method == "POST":
+
+        # =====================================================
+        # WICHTIG
+        # =====================================================
+
+        elektrische_header_row = None
+
+        # Mehrere Maschinen-Tabellen möglich
+        maschinen_bloecke = []
+        betten_bloecke = []
+
 
         export_typ = request.POST.get(
             "export_typ",
@@ -4930,10 +6502,6 @@ def export(request):
                 )
 
 
-            # =================================================
-            # KEINE GERÄTE
-            # =================================================
-
             if not devices.exists():
 
                 messages.warning(
@@ -4943,10 +6511,6 @@ def export(request):
 
                 return redirect("export")
 
-
-            # =================================================
-            # TITEL
-            # =================================================
 
             ws.append([
                 "📋 Gesamte Geräte"
@@ -4959,10 +6523,6 @@ def export(request):
                 )
             ])
 
-
-            # =================================================
-            # GERÄTEART
-            # =================================================
 
             if geraetart_filter:
 
@@ -4989,10 +6549,6 @@ def export(request):
                 + geraetart_name
             ])
 
-
-            # =================================================
-            # STANDORT
-            # =================================================
 
             if standort_filter:
 
@@ -5022,34 +6578,17 @@ def export(request):
             ws.append([])
 
 
-            # =================================================
-            # TABELLENKOPF
-            # =================================================
-
             ws.append([
-
                 "Inventarnummer",
-
                 "Seriennummer",
-
                 "Gerätbezeichnung",
-
                 "Gerätart",
-
                 "Standort",
-
                 "Betriebsstunden",
-
                 "Nächste Prüfung",
-
                 "Status",
-
             ])
 
-
-            # =================================================
-            # GERÄTE
-            # =================================================
 
             for device in devices:
 
@@ -5088,14 +6627,11 @@ def export(request):
 
                 ws.append([
 
-                    device.inventory_number
-                    or "",
+                    device.inventory_number or "",
 
-                    device.serial_number
-                    or "",
+                    device.serial_number or "",
 
-                    device.name
-                    or "",
+                    device.name or "",
 
                     (
                         device.geraetart.name
@@ -5119,17 +6655,30 @@ def export(request):
                         naechste_pruefungen
                     ),
 
-                    device.status
-                    or "",
-
+                    device.status or "",
                 ])
 
 
         # =====================================================
-        # 2. REPARATURHISTORIE
+        # 2. REPARATUR
         # =====================================================
 
         elif export_typ == "reparatur":
+
+            geraetart_filter = request.POST.get(
+                "geraetart",
+                ""
+            ).strip()
+
+            inventarnummer_filter = request.POST.get(
+                "inventarnummer",
+                ""
+            ).strip()
+
+            standort_filter = request.POST.get(
+                "standort",
+                ""
+            ).strip()
 
             datum_von = request.POST.get(
                 "datum_von",
@@ -5142,13 +6691,148 @@ def export(request):
             ).strip()
 
 
+            # =================================================
+            # FILTER PRÜFEN
+            # =================================================
+
+            if not geraetart_filter:
+
+                messages.warning(
+                    request,
+                    "⚠️ Bitte wählen Sie eine Geräteart."
+                )
+
+                return redirect("export")
+
+
+            geraetart = (
+                Geraetart.objects
+                .filter(
+                    id=geraetart_filter
+                )
+                .first()
+            )
+
+
+            if not geraetart:
+
+                messages.warning(
+                    request,
+                    "⚠️ Die ausgewählte Geräteart wurde nicht gefunden."
+                )
+
+                return redirect("export")
+
+
+            if not standort_filter:
+
+                messages.warning(
+                    request,
+                    "⚠️ Bitte wählen Sie einen Standort."
+                )
+
+                return redirect("export")
+
+
+            standort = (
+                Standort.objects
+                .filter(
+                    id=standort_filter
+                )
+                .first()
+            )
+
+
+            if not standort:
+
+                messages.warning(
+                    request,
+                    "⚠️ Der ausgewählte Standort wurde nicht gefunden."
+                )
+
+                return redirect("export")
+
+
+            if not datum_von:
+
+                messages.warning(
+                    request,
+                    "⚠️ Bitte wählen Sie ein Startdatum."
+                )
+
+                return redirect("export")
+
+
+            if not datum_bis:
+
+                messages.warning(
+                    request,
+                    "⚠️ Bitte wählen Sie ein Enddatum."
+                )
+
+                return redirect("export")
+
+
+            # =================================================
+            # DATUM
+            # =================================================
+
+            try:
+
+                datum_von_date = datetime.strptime(
+                    datum_von,
+                    "%Y-%m-%d"
+                ).date()
+
+                datum_bis_date = datetime.strptime(
+                    datum_bis,
+                    "%Y-%m-%d"
+                ).date()
+
+            except ValueError:
+
+                messages.warning(
+                    request,
+                    "⚠️ Das ausgewählte Datum ist ungültig."
+                )
+
+                return redirect("export")
+
+
+            if datum_von_date > datum_bis_date:
+
+                messages.warning(
+                    request,
+                    "⚠️ Das Startdatum darf nicht nach dem Enddatum liegen."
+                )
+
+                return redirect("export")
+
+
+            # =================================================
+            # REPARATUREN
+            # =================================================
+
             reparaturen = (
                 Reparatur.objects
                 .filter(
-                    status="Erledigt"
+                    status="Erledigt",
+
+                    geraet__geraetart_id=geraetart_filter,
+
+                    geraet__practice_id=standort_filter,
+
+                    datum__gte=datum_von_date,
+
+                    datum__lte=datum_bis_date,
                 )
                 .select_related(
-                    "geraet"
+                    "geraet",
+                    "geraet__geraetart",
+                    "geraet__practice",
+                )
+                .prefetch_related(
+                    "messmittel"
                 )
                 .order_by(
                     "-datum"
@@ -5156,124 +6840,1135 @@ def export(request):
             )
 
 
-            if datum_von:
+            # =================================================
+            # INVENTARNUMMER
+            # =================================================
+
+            if inventarnummer_filter:
 
                 reparaturen = reparaturen.filter(
-                    datum__gte=datum_von
+                    geraet__inventory_number__iexact=
+                        inventarnummer_filter
                 )
 
 
-            if datum_bis:
-
-                reparaturen = reparaturen.filter(
-                    datum__lte=datum_bis
-                )
-
+            # =================================================
+            # KEINE DATEN
+            # =================================================
 
             if not reparaturen.exists():
 
                 messages.warning(
                     request,
-                    "⚠️ Keine Reparaturen zum Exportieren vorhanden."
+                    "⚠️ Keine Gerätedetails für Reparaturen mit Status Erledigt vorhanden."
                 )
 
                 return redirect("export")
 
 
-            ws.append([
-                "🛠️ Reparaturhistorie"
-            ])
+            # =================================================
+            # HAUPTÜBERSCHRIFTEN
+            # =================================================
 
-            ws.append([
-                "Erstellt am: "
-                + datetime.now().strftime(
-                    "%d.%m.%Y %H:%M"
-                )
-            ])
-
-            ws.append([
-                "Zeitraum von: "
-                + (
-                    datum_von
-                    if datum_von
-                    else "Alle"
-                )
-            ])
-
-            ws.append([
-                "Zeitraum bis: "
-                + (
-                    datum_bis
-                    if datum_bis
-                    else "Alle"
-                )
-            ])
-
-            ws.append([])
-
-
-            ws.append([
-
-                "Gerät",
-
-                "Inventarnummer",
-
-                "Seriennummer",
-
-                "Problemmeldung",
-
-                "Reparaturausführung",
-
-                "Datum",
-
-                "Status",
-
-            ])
-
+            reparaturbericht_nummer = 0
 
             for reparatur in reparaturen:
 
                 geraet = reparatur.geraet
 
+                # =================================================
+                # REPARATURBERICHT-NUMMER
+                # =================================================
+
+                reparaturbericht_nummer += 1
+
+                reparaturbericht_row = ws.max_row + 1
 
                 ws.append([
+                    f"Reparaturbericht {reparaturbericht_nummer}"
+                ])
 
+                
+                # =================================================
+                # REPARATURBERICHT – MITTE DER SEITE
+                # =================================================
+
+                ws.merge_cells(
+                    start_row=reparaturbericht_row,
+                    start_column=1,
+                    end_row=reparaturbericht_row,
+                    end_column=4
+                )
+
+                ws.cell(
+                    row=reparaturbericht_row,
+                    column=1
+                ).alignment = Alignment(
+                    horizontal="center",
+                    vertical="center"
+                )
+
+                ws.cell(
+                    row=reparaturbericht_row,
+                    column=1
+                ).font = Font(
+                    bold=True,
+                    size=16
+                )
+
+                ws.row_dimensions[
+                    reparaturbericht_row
+                ].height = 30
+
+                # =================================================
+                # GERÄT
+                # =================================================
+
+               
+                ws.append([
+                    "GERÄTEDETAIL"
+                ])
+
+                ws.append([])
+
+
+                ws.append([
+                    "Geräteart",
+                    (
+                        geraet.geraetart.name
+                        if geraet and geraet.geraetart
+                        else ""
+                    )
+                ])
+
+                ws.append([
+                    "Gerätbezeichnung",
                     (
                         geraet.name
                         if geraet
                         else ""
-                    ),
+                    )
+                ])
 
+                ws.append([
+                    "Inventarnummer",
                     (
                         geraet.inventory_number
                         if geraet
                         else ""
-                    ),
+                    )
+                ])
 
+                ws.append([
+                    "Seriennummer",
                     (
                         geraet.serial_number
                         if geraet
                         else ""
-                    ),
+                    )
+                ])
 
-                    reparatur.beschreibung
-                    or "",
+                ws.append([
+                    "Standort",
+                    (
+                        geraet.practice.name
+                        if geraet and geraet.practice
+                        else ""
+                    )
+                ])
 
-                    reparatur.ausfuehrung
-                    or "",
 
+                # =================================================
+                # REPARATUR
+                # =================================================
+
+                ws.append([])
+
+                ws.append([
+                    "REPARATUR"
+                ])
+
+                ws.append([])
+
+
+                ws.append([
+                    "Reparaturdatum",
+                    (
+                        reparatur.reparatur_datum.strftime(
+                            "%d.%m.%Y"
+                        )
+                        if reparatur.reparatur_datum
+                        else ""
+                    )
+                ])
+
+                ws.append([
+                    "Erstellt am",
                     (
                         reparatur.datum.strftime(
                             "%d.%m.%Y"
                         )
                         if reparatur.datum
                         else ""
-                    ),
-
-                    reparatur.status
-                    or "",
-
+                    )
                 ])
+
+                ws.append([
+                    "Status",
+                    reparatur.status or ""
+                ])
+
+                ws.append([
+                    "Melder",
+                    reparatur.melder or ""
+                ])
+
+                ws.append([
+                    "Techniker",
+                    reparatur.techniker or ""
+                ])
+
+                ws.append([
+                    "Techniker gelesen",
+                    (
+                        "Ja"
+                        if reparatur.techniker_gelesen
+                        else "Nein"
+                    )
+                ])
+
+                ws.append([
+                    "Problembeschreibung",
+                    reparatur.beschreibung or ""
+                ])
+
+                ws.append([
+                    "Ausführung",
+                    reparatur.ausfuehrung or ""
+                ])
+
+
+                # =================================================
+                # MESSMITTEL
+                # =================================================
+
+                messmittel = list(
+                    reparatur.messmittel.all()
+                )
+
+                ws.append([])
+
+                ws.append([
+                    "MESSMITTEL"
+                ])
+
+                ws.append([])
+
+
+                if messmittel:
+
+                    for item in messmittel:
+
+                        ws.append([
+                            "Messmittel",
+                            str(item)
+                        ])
+
+                else:
+
+                    ws.append([
+                        "Messmittel",
+                        ""
+                    ])
+
+
+                # =================================================
+                # ELEKTRISCHE PRÜFUNG
+                # =================================================
+
+                ws.append([])
+
+                ws.append([
+                    "ELEKTRISCHE PRÜFUNG"
+                ])
+
+                ws.append([])
+
+
+                if reparatur.elektrische_pruefung:
+
+                    daten = (
+                        reparatur.elektrische_pruefung_daten
+                        or {}
+                    )
+
+
+                    # =================================================
+                    # MASCHINEN
+                    # =================================================
+
+                    if (
+                        reparatur.elektrische_pruefung_art
+                        == "Maschinen"
+                    ):
+
+                        maschinen = (
+                            daten.get("maschinen")
+                            or {}
+                        )
+
+
+                        # -------------------------------------------------
+                        # TABELLENKOPF
+                        # -------------------------------------------------
+
+                        ws.append([
+                            "Prüfung",
+                            "Grenzwert / Bedingung",
+                            "Messwert",
+                            "OK"
+                        ])
+
+                        maschinen_header_row = ws.max_row
+
+
+                        # =================================================
+                        # 1. SCHUTZLEITERWIDERSTAND
+                        # =================================================
+
+                        ws.append([
+                            "Schutzleiterwiderstand",
+                            "≤ 0,3 Ω",
+                            (
+                                str(
+                                    maschinen
+                                    .get(
+                                        "schutzleiterwiderstand",
+                                        {}
+                                    )
+                                    .get(
+                                        "messwert",
+                                        ""
+                                    )
+                                )
+                                + (
+                                    " Ω"
+                                    if maschinen
+                                    .get(
+                                        "schutzleiterwiderstand",
+                                        {}
+                                    )
+                                    .get(
+                                        "messwert",
+                                        ""
+                                    )
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if maschinen
+                                .get(
+                                    "schutzleiterwiderstand",
+                                    {}
+                                )
+                                .get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+
+                        # =================================================
+                        # 2. TYP B
+                        # =================================================
+
+                        typ_b_row = ws.max_row + 1
+
+                        ws.append([
+                            (
+                                "Typ des Anwendungsteils: Typ B\n\n"
+                                "Gerätableitströme von Anwendungsteil "
+                                "des Typs B gemessen auf Nennspannung "
+                                "normiert und unter Berücksichtigung der "
+                                "Zusatzbedingungen geprüft.\n\n"
+                                "Sollwert: Iₙ ≤ 500 µA\n\n"
+                                "Messverfahren:\n"
+                                + (
+                                    "☑ "
+                                    if maschinen
+                                    .get(
+                                        "differenzstrommessung",
+                                        {}
+                                    )
+                                    .get(
+                                        "ok",
+                                        False
+                                    )
+                                    else "☐ "
+                                )
+                                + "Differenzstrommessung nach Bild 8\n"
+                                + (
+                                    "☑ "
+                                    if maschinen
+                                    .get(
+                                        "direktmessung",
+                                        {}
+                                    )
+                                    .get(
+                                        "ok",
+                                        False
+                                    )
+                                    else "☐ "
+                                )
+                                + "Direktmessung nach Bild 7"
+                            ),
+                            "",
+                            "",
+                            "",
+                        ])
+
+                        ws.merge_cells(
+                            start_row=typ_b_row,
+                            start_column=1,
+                            end_row=typ_b_row,
+                            end_column=4
+                        )
+
+
+                        # =================================================
+                        # 3. NENNSPANNUNG
+                        # =================================================
+
+                        nennspannung = (
+                            maschinen
+                            .get(
+                                "nennspannung",
+                                {}
+                            )
+                        )
+
+                        ws.append([
+                            "Nennspannung der Netzversorgung U₀",
+                            "Nennspannung",
+                            (
+                                str(
+                                    nennspannung.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                )
+                                + (
+                                    " V"
+                                    if nennspannung.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if nennspannung.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+
+                        # =================================================
+                        # 4. POLARITÄT L – N
+                        # =================================================
+
+                        polaritaet_ln = (
+                            maschinen
+                            .get(
+                                "polaritaet_l_n",
+                                {}
+                            )
+                        )
+
+
+                        ln_start_row = ws.max_row + 1
+
+
+                        # BMAX
+
+                        ln_ibmax = (
+                            polaritaet_ln
+                            .get(
+                                "ibmax",
+                                {}
+                            )
+                        )
+
+                        ws.append([
+                            "Polarität der Netzversorgung L – N",
+                            "Maximaler Geräteableitstrom I_Bmax",
+                            (
+                                str(
+                                    ln_ibmax.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                )
+                                + (
+                                    " µA"
+                                    if ln_ibmax.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if ln_ibmax.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+
+                        # UBMAX
+
+                        ln_ubmax = (
+                            polaritaet_ln
+                            .get(
+                                "ubmax",
+                                {}
+                            )
+                        )
+
+                        ws.append([
+                            "",
+                            "Zugehörige Netzspannung U_Bmax",
+                            (
+                                str(
+                                    ln_ubmax.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                )
+                                + (
+                                    " V"
+                                    if ln_ubmax.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if ln_ubmax.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+
+                        # IN
+
+                        ln_in = (
+                            polaritaet_ln
+                            .get(
+                                "in",
+                                {}
+                            )
+                        )
+
+                        ws.append([
+                            "",
+                            (
+                                "Auf Nennspannung normierter "
+                                "Geräteableitstrom\n\n"
+                                "Iₙ = (U₀ × I_Bmax) : U_Bmax"
+                            ),
+                            (
+                                str(
+                                    ln_in.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                )
+                                + (
+                                    " µA"
+                                    if ln_in.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if ln_in.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+
+                        ln_end_row = ws.max_row
+
+
+                        ws.merge_cells(
+                            start_row=ln_start_row,
+                            start_column=1,
+                            end_row=ln_end_row,
+                            end_column=1
+                        )
+
+
+                        # =================================================
+                        # 5. POLARITÄT N – L
+                        # =================================================
+
+                        polaritaet_nl = (
+                            maschinen
+                            .get(
+                                "polaritaet_n_l",
+                                {}
+                            )
+                        )
+
+
+                        nl_start_row = ws.max_row + 1
+
+
+                        # BMAX
+
+                        nl_ibmax = (
+                            polaritaet_nl
+                            .get(
+                                "ibmax",
+                                {}
+                            )
+                        )
+
+                        ws.append([
+                            "Polarität der Netzversorgung N – L",
+                            "Maximaler Geräteableitstrom I_Bmax",
+                            (
+                                str(
+                                    nl_ibmax.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                )
+                                + (
+                                    " µA"
+                                    if nl_ibmax.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if nl_ibmax.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+
+                        # UBMAX
+
+                        nl_ubmax = (
+                            polaritaet_nl
+                            .get(
+                                "ubmax",
+                                {}
+                            )
+                        )
+
+                        ws.append([
+                            "",
+                            "Zugehörige Netzspannung U_Bmax",
+                            (
+                                str(
+                                    nl_ubmax.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                )
+                                + (
+                                    " V"
+                                    if nl_ubmax.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if nl_ubmax.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+
+                        # IN
+
+                        nl_in = (
+                            polaritaet_nl
+                            .get(
+                                "in",
+                                {}
+                            )
+                        )
+
+                        ws.append([
+                            "",
+                            (
+                                "Auf Nennspannung normierter "
+                                "Geräteableitstrom\n\n"
+                                "Iₙ = (U₀ × I_Bmax) : U_Bmax"
+                            ),
+                            (
+                                str(
+                                    nl_in.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                )
+                                + (
+                                    " µA"
+                                    if nl_in.get(
+                                        "messwert",
+                                        ""
+                                    )
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if nl_in.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+
+                        nl_end_row = ws.max_row
+
+
+                        ws.merge_cells(
+                            start_row=nl_start_row,
+                            start_column=1,
+                            end_row=nl_end_row,
+                            end_column=1
+                        )
+
+                        
+                        # =================================================
+                        # MASCHINEN-BLOCK SPEICHERN
+                        # =================================================
+
+                        maschinen_bloecke.append({
+                            "header": maschinen_header_row,
+                            "typ_b": typ_b_row,
+                            "ln_start": ln_start_row,
+                            "ln_end": ln_end_row,
+                            "nl_start": nl_start_row,
+                            "nl_end": nl_end_row,
+                        })
+
+                        
+
+
+                    # =================================================
+                    # BETTEN
+                    # =================================================
+
+                    elif (
+                        reparatur.elektrische_pruefung_art
+                        == "Betten"
+                    ):
+
+                        betten = (
+                            daten.get("betten")
+                            or {}
+                        )
+
+                        # =================================================
+                        # TABELLENKOPF
+                        # =================================================
+
+                        ws.append([
+                            "Elektrostimulation",
+                            "Grenzwert",
+                            "Messwert",
+                            "OK"
+                        ])
+
+                        betten_header_row = ws.max_row
+
+                        # =================================================
+                        # POTENTIALAUSGLEICHSWIDERSTAND
+                        # =================================================
+
+                        potential = (
+                            betten.get(
+                                "potentialausgleichswiderstand"
+                            )
+                            or {}
+                        )
+
+                        potential_start_row = (
+                            ws.max_row + 1
+                        )
+
+                        # -------------------------------------------------
+                        # MESSPUNKT 1
+                        # -------------------------------------------------
+
+                        punkt_1 = (
+                            potential.get("1")
+                            or {}
+                        )
+
+                        messwert_1 = str(
+                            punkt_1.get(
+                                "messwert",
+                                ""
+                            )
+                        ).strip()
+
+                        ws.append([
+                            "Potentialausgleichswiderstand\n"
+                            "(anhand der Messpunkte)",
+
+                            "< 0,2 Ω",
+
+                            (
+                                "Messpunkt 1:"
+                                + (
+                                    "          " + messwert_1
+                                    if messwert_1
+                                    else ""
+                                )
+                            ),
+
+                            (
+                                "OK"
+                                if punkt_1.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+                        # -------------------------------------------------
+                        # MESSPUNKT 2
+                        # -------------------------------------------------
+
+                        punkt_2 = (
+                            potential.get("2")
+                            or {}
+                        )
+
+                        messwert_2 = str(
+                            punkt_2.get(
+                                "messwert",
+                                ""
+                            )
+                        ).strip()
+
+                        ws.append([
+                            "",
+                            "",
+                            (
+                                "Messpunkt 2:"
+                                + (
+                                    "          " + messwert_2
+                                    if messwert_2
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if punkt_2.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+                        # -------------------------------------------------
+                        # MESSPUNKT 3
+                        # -------------------------------------------------
+
+                        punkt_3 = (
+                            potential.get("3")
+                            or {}
+                        )
+
+                        messwert_3 = str(
+                            punkt_3.get(
+                                "messwert",
+                                ""
+                            )
+                        ).strip()
+
+                        ws.append([
+                            "",
+                            "",
+                            (
+                                "Messpunkt 3:"
+                                + (
+                                    "          " + messwert_3
+                                    if messwert_3
+                                    else ""
+                                )
+                            ),
+                            (
+                                "OK"
+                                if punkt_3.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+                        potential_end_row = (
+                            ws.max_row
+                        )
+
+                        # -------------------------------------------------
+                        # ZELLEN ZUSAMMENFÜHREN
+                        # -------------------------------------------------
+
+                        ws.merge_cells(
+                            start_row=potential_start_row,
+                            start_column=1,
+                            end_row=potential_end_row,
+                            end_column=1
+                        )
+
+                        ws.merge_cells(
+                            start_row=potential_start_row,
+                            start_column=2,
+                            end_row=potential_end_row,
+                            end_column=2
+                        )
+                        # =================================================
+                        # GERÄTEABLEITSTROM ERSATZMESSUNG
+                        # =================================================
+
+                        ersatzmessung = (
+                            betten.get(
+                                "geraeteableitstrom_ersatzmessung"
+                            )
+                            or {}
+                        )
+
+                        ersatz_start_row = (
+                            ws.max_row + 1
+                        )
+
+                        intrakardial = (
+                            ersatzmessung.get(
+                                "intrakardiale_anwendung"
+                            )
+                            or {}
+                        )
+
+                        ws.append([
+                            "Geräteableitstrom\nErsatzmessung",
+
+                            "Intrakardiale Anwendung: < 50 µA",
+
+                            str(
+                                intrakardial.get(
+                                    "messwert",
+                                    ""
+                                )
+                            ).strip(),
+
+                            (
+                                "OK"
+                                if intrakardial.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+                        typ_b = (
+                            ersatzmessung.get(
+                                "typ_b"
+                            )
+                            or {}
+                        )
+
+                        ws.append([
+                            "",
+                            "Messung nach Typ B: < 500 µA",
+                            str(
+                                typ_b.get(
+                                    "messwert",
+                                    ""
+                                )
+                            ).strip(),
+                            (
+                                "OK"
+                                if typ_b.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+                        laserlampe = (
+                            ersatzmessung.get(
+                                "laserlampe"
+                            )
+                            or {}
+                        )
+
+                        ws.append([
+                            "",
+                            (
+                                "Messung Laserlampe mit eigenem "
+                                "Netzstecker: < 50 µA"
+                            ),
+                            str(
+                                laserlampe.get(
+                                    "messwert",
+                                    ""
+                                )
+                            ).strip(),
+                            (
+                                "OK"
+                                if laserlampe.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+                        netzspannung = (
+                            ersatzmessung.get(
+                                "netzspannung"
+                            )
+                            or {}
+                        )
+
+                        ws.append([
+                            "",
+                            "Netzspannung: 230 V (EU)",
+                            str(
+                                netzspannung.get(
+                                    "messwert",
+                                    ""
+                                )
+                            ).strip(),
+                            (
+                                "OK"
+                                if netzspannung.get(
+                                    "ok",
+                                    False
+                                )
+                                else ""
+                            ),
+                        ])
+
+                        ersatz_end_row = (
+                            ws.max_row
+                        )
+
+                        ws.merge_cells(
+                            start_row=ersatz_start_row,
+                            start_column=1,
+                            end_row=ersatz_end_row,
+                            end_column=1
+                        )
+
+                        # =================================================
+                        # BETTEN-BLOCK SPEICHERN
+                        # =================================================
+
+                        betten_bloecke.append({
+
+                            "header_row":
+                                betten_header_row,
+
+                            "potential_start_row":
+                                potential_start_row,
+
+                            "potential_end_row":
+                                potential_end_row,
+
+                            "ersatz_start_row":
+                                ersatz_start_row,
+
+                            "ersatz_end_row":
+                                ersatz_end_row,
+                        })
+
+
+                    # =================================================
+                    # ALLE ANDEREN ELEKTRISCHEN PRÜFUNGEN
+                    # =================================================
+
+                    else:
+
+                        ws.append([
+                            "Prüfung",
+                            "Messwert",
+                            "Ergebnis"
+                        ])
+
+                        elektrische_header_row = (
+                            ws.max_row
+                        )
+
+                        # هنا تضع كود:
+                        # format_pruefung_name
+                        # clean_pruefung_path
+                        # export_pruefung_data
+                        # الموجود عندك حاليًا
+
+                        export_pruefung_data(
+                            daten
+                        )
+
+
+                # =================================================
+                # TRENNUNG
+                # =================================================
+
+                ws.append([])
+
+                ws.append([])
 
 
         # =====================================================
@@ -5281,6 +7976,11 @@ def export(request):
         # =====================================================
 
         elif export_typ == "filterwechsel":
+
+            standort_filter = request.POST.get(
+                "standort",
+                ""
+            ).strip()
 
             datum_von = request.POST.get(
                 "datum_von",
@@ -5296,7 +7996,8 @@ def export(request):
             filterwechsel = (
                 Filterwechsel.objects
                 .select_related(
-                    "geraet"
+                    "geraet",
+                    "geraet__practice",
                 )
                 .order_by(
                     "-datum"
@@ -5304,28 +8005,105 @@ def export(request):
             )
 
 
-            if datum_von:
+            if standort_filter:
 
                 filterwechsel = filterwechsel.filter(
-                    datum__gte=datum_von
+                    geraet__practice_id=standort_filter
                 )
+
+
+            datum_von_date = None
+            datum_bis_date = None
+
+
+            if datum_von:
+
+                try:
+
+                    datum_von_date = datetime.strptime(
+                        datum_von,
+                        "%Y-%m-%d"
+                    ).date()
+
+                    filterwechsel = filterwechsel.filter(
+                        datum__gte=datum_von_date
+                    )
+
+                except ValueError:
+
+                    messages.warning(
+                        request,
+                        "⚠️ Das Startdatum ist ungültig."
+                    )
+
+                    return redirect("export")
 
 
             if datum_bis:
 
-                filterwechsel = filterwechsel.filter(
-                    datum__lte=datum_bis
+                try:
+
+                    datum_bis_date = datetime.strptime(
+                        datum_bis,
+                        "%Y-%m-%d"
+                    ).date()
+
+                    filterwechsel = filterwechsel.filter(
+                        datum__lte=datum_bis_date
+                    )
+
+                except ValueError:
+
+                    messages.warning(
+                        request,
+                        "⚠️ Das Enddatum ist ungültig."
+                    )
+
+                    return redirect("export")
+
+
+            if (
+                datum_von_date
+                and datum_bis_date
+                and datum_von_date > datum_bis_date
+            ):
+
+                messages.warning(
+                    request,
+                    "⚠️ Das Startdatum darf nicht nach dem Enddatum liegen."
                 )
+
+                return redirect("export")
 
 
             if not filterwechsel.exists():
 
                 messages.warning(
                     request,
-                    "⚠️ Keine Filterwechsel zum Exportieren vorhanden."
+                    "⚠️ Keine Filterwechsel für die ausgewählten Filter vorhanden."
                 )
 
                 return redirect("export")
+
+
+            if standort_filter:
+
+                standort_name = (
+                    Standort.objects
+                    .filter(
+                        id=standort_filter
+                    )
+                    .values_list(
+                        "name",
+                        flat=True
+                    )
+                    .first()
+                    or ""
+                )
+
+            else:
+
+                standort_name = "Alle Standorte"
 
 
             ws.append([
@@ -5340,10 +8118,15 @@ def export(request):
             ])
 
             ws.append([
+                "Standort: "
+                + standort_name
+            ])
+
+            ws.append([
                 "Zeitraum von: "
                 + (
-                    datum_von
-                    if datum_von
+                    datum_von_date.strftime("%d.%m.%Y")
+                    if datum_von_date
                     else "Alle"
                 )
             ])
@@ -5351,8 +8134,8 @@ def export(request):
             ws.append([
                 "Zeitraum bis: "
                 + (
-                    datum_bis
-                    if datum_bis
+                    datum_bis_date.strftime("%d.%m.%Y")
+                    if datum_bis_date
                     else "Alle"
                 )
             ])
@@ -5361,27 +8144,24 @@ def export(request):
 
 
             ws.append([
-
                 "Inventarnummer",
-
                 "Anzahl der Filter",
-
                 "Filtercode",
-
                 "Datum",
-
                 "Durchgeführt von",
-
+                "Standort",
             ])
 
 
             for item in filterwechsel:
 
+                geraet = item.geraet
+
                 ws.append([
 
                     (
-                        item.geraet.inventory_number
-                        if item.geraet
+                        geraet.inventory_number
+                        if geraet
                         else ""
                     ),
 
@@ -5391,13 +8171,10 @@ def export(request):
                         else ""
                     ),
 
-                    item.filtercode
-                    or "",
+                    item.filtercode or "",
 
                     (
-                        item.datum.strftime(
-                            "%d.%m.%Y"
-                        )
+                        item.datum.strftime("%d.%m.%Y")
                         if item.datum
                         else ""
                     ),
@@ -5406,9 +8183,13 @@ def export(request):
                         item,
                         "durchgeführt_von",
                         ""
-                    )
-                    or "",
+                    ) or "",
 
+                    (
+                        geraet.practice.name
+                        if geraet and geraet.practice
+                        else ""
+                    ),
                 ])
 
 
@@ -5418,11 +8199,13 @@ def export(request):
 
         elif export_typ == "wartung":
 
-            # IMPORTANT:
-            # HTML sendet name="pruefart"
-
             pruefart_id = request.POST.get(
-                "pruefart",
+                "pruefart_id",
+                ""
+            ).strip()
+
+            pruef_status = request.POST.get(
+                "status",
                 ""
             ).strip()
 
@@ -5437,17 +8220,19 @@ def export(request):
                 return redirect("export")
 
 
-            # =================================================
-            # PRÜFART
-            # =================================================
+            try:
 
-            pruefart = (
-                Pruefart.objects
-                .filter(
-                    id=pruefart_id
+                pruefart = (
+                    Pruefart.objects
+                    .filter(
+                        id=int(pruefart_id)
+                    )
+                    .first()
                 )
-                .first()
-            )
+
+            except (ValueError, TypeError):
+
+                pruefart = None
 
 
             if not pruefart:
@@ -5460,14 +8245,10 @@ def export(request):
                 return redirect("export")
 
 
-            # =================================================
-            # PRÜFUNGEN
-            # =================================================
-
             pruefungen = (
                 DevicePruefung.objects
                 .filter(
-                    pruefart_id=pruefart_id,
+                    pruefart_id=pruefart.id,
                     aktiv=True,
                     device__status="Aktiv",
                     naechstes_datum__isnull=False,
@@ -5478,29 +8259,62 @@ def export(request):
                     "device__geraetart",
                     "device__practice",
                 )
-                .order_by(
-                    "naechstes_datum"
-                )
             )
 
 
-            # =================================================
-            # KEINE DATEN
-            # =================================================
+            heute = datetime.now().date()
+
+            grenze = heute + timedelta(days=30)
+
+
+            if pruef_status == "gueltig":
+
+                pruefungen = pruefungen.filter(
+                    naechstes_datum__gt=grenze
+                )
+
+            elif pruef_status == "faellig":
+
+                pruefungen = pruefungen.filter(
+                    naechstes_datum__gte=heute,
+                    naechstes_datum__lte=grenze
+                )
+
+            elif pruef_status == "ueberfaellig":
+
+                pruefungen = pruefungen.filter(
+                    naechstes_datum__lt=heute
+                )
+
+
+            pruefungen = pruefungen.order_by(
+                "naechstes_datum"
+            )
+
 
             if not pruefungen.exists():
 
+                status_name = {
+
+                    "gueltig": "Gültig",
+
+                    "faellig": "Fällig",
+
+                    "ueberfaellig": "Überfällig",
+
+                }.get(
+                    pruef_status,
+                    "Alle"
+                )
+
+
                 messages.warning(
                     request,
-                    f"⚠️ Keine Daten für {pruefart.name} zum Exportieren vorhanden."
+                    f"⚠️ Keine Daten für {pruefart.name} mit Status {status_name} zum Exportieren vorhanden."
                 )
 
                 return redirect("export")
 
-
-            # =================================================
-            # TITEL
-            # =================================================
 
             ws.append([
                 f"📋 Prüfungen - {pruefart.name}"
@@ -5513,38 +8327,35 @@ def export(request):
                 )
             ])
 
+            ws.append([
+                "Status: "
+                + (
+                    "Alle"
+                    if not pruef_status
+                    else {
+                        "gueltig": "Gültig",
+                        "faellig": "Fällig",
+                        "ueberfaellig": "Überfällig",
+                    }.get(
+                        pruef_status,
+                        pruef_status
+                    )
+                )
+            ])
+
             ws.append([])
 
 
-            # =================================================
-            # TABELLENKOPF
-            # =================================================
-
             ws.append([
-
                 "Inventarnummer",
-
                 "Seriennummer",
-
                 "Gerätbezeichnung",
-
                 "Gerätart",
-
                 "Standort",
-
                 "Nächste Prüfung",
-
                 "Status",
-
             ])
 
-
-            heute = datetime.now().date()
-
-
-            # =================================================
-            # PRÜFUNGEN
-            # =================================================
 
             for pruefung in pruefungen:
 
@@ -5555,21 +8366,22 @@ def export(request):
 
                     status_text = "Überfällig"
 
-                else:
+                elif pruefung.naechstes_datum <= grenze:
 
                     status_text = "Fällig"
+
+                else:
+
+                    status_text = "Gültig"
 
 
                 ws.append([
 
-                    device.inventory_number
-                    or "",
+                    device.inventory_number or "",
 
-                    device.serial_number
-                    or "",
+                    device.serial_number or "",
 
-                    device.name
-                    or "",
+                    device.name or "",
 
                     (
                         device.geraetart.name
@@ -5588,7 +8400,6 @@ def export(request):
                     ),
 
                     status_text,
-
                 ])
 
 
@@ -5597,6 +8408,16 @@ def export(request):
         # =====================================================
 
         elif export_typ == "rechnung":
+
+            kategorie_filter = request.POST.get(
+                "kategorie",
+                ""
+            ).strip()
+
+            status_filter = request.POST.get(
+                "status",
+                ""
+            ).strip()
 
             datum_von = request.POST.get(
                 "datum_von",
@@ -5609,63 +8430,135 @@ def export(request):
             ).strip()
 
 
-            # =================================================
-            # RECHNUNGEN LADEN
-            # =================================================
-
             rechnungen = (
                 Rechnung.objects
                 .select_related(
-                    "erstellt_von"
+                    "erstellt_von",
+                    "kategorie",
                 )
-                .filter(
-                    status="Erledigt"
-                )
+                .all()
                 .order_by(
                     "-rechnungsdatum"
                 )
             )
 
 
-            # =================================================
-            # DATUM VON
-            # =================================================
+            if kategorie_filter:
+
+                rechnungen = rechnungen.filter(
+                    kategorie_id=kategorie_filter
+                )
+
+
+            if status_filter:
+
+                rechnungen = rechnungen.filter(
+                    status__iexact=status_filter
+                )
+
+
+            datum_von_date = None
+            datum_bis_date = None
+
 
             if datum_von:
 
+                try:
+
+                    datum_von_date = datetime.strptime(
+                        datum_von,
+                        "%Y-%m-%d"
+                    ).date()
+
+                except ValueError:
+
+                    messages.warning(
+                        request,
+                        "⚠️ Das Rechnungsdatum von ist ungültig."
+                    )
+
+                    return redirect("export")
+
+
                 rechnungen = rechnungen.filter(
-                    rechnungsdatum__gte=datum_von
+                    rechnungsdatum__gte=datum_von_date
                 )
 
-
-            # =================================================
-            # DATUM BIS
-            # =================================================
 
             if datum_bis:
 
+                try:
+
+                    datum_bis_date = datetime.strptime(
+                        datum_bis,
+                        "%Y-%m-%d"
+                    ).date()
+
+                except ValueError:
+
+                    messages.warning(
+                        request,
+                        "⚠️ Das Rechnungsdatum bis ist ungültig."
+                    )
+
+                    return redirect("export")
+
+
                 rechnungen = rechnungen.filter(
-                    rechnungsdatum__lte=datum_bis
+                    rechnungsdatum__lte=datum_bis_date
                 )
 
 
-            # =================================================
-            # KEINE DATEN
-            # =================================================
-
-            if not rechnungen.exists():
+            if (
+                datum_von_date
+                and datum_bis_date
+                and datum_von_date > datum_bis_date
+            ):
 
                 messages.warning(
                     request,
-                    "⚠️ Keine Rechnungen zum Exportieren vorhanden."
+                    "⚠️ Das Rechnungsdatum von darf nicht nach dem Rechnungsdatum bis liegen."
                 )
 
                 return redirect("export")
 
 
-            # =================================================
-            # GESAMTSUMME
-            # =================================================
+            if not rechnungen.exists():
+
+                messages.warning(
+                    request,
+                    "⚠️ Keine Rechnungen für die ausgewählten Filter vorhanden."
+                )
+
+                return redirect("export")
+
+
+            if kategorie_filter:
+
+                kategorie_name = (
+                    RechnungKategorie.objects
+                    .filter(
+                        id=kategorie_filter
+                    )
+                    .values_list(
+                        "name",
+                        flat=True
+                    )
+                    .first()
+                    or ""
+                )
+
+            else:
+
+                kategorie_name = "Alle Kategorien"
+
+
+            status_name = (
+                status_filter
+                if status_filter
+                else "Alle"
+            )
+
 
             gesamtsumme = (
                 rechnungen.aggregate(
@@ -5676,10 +8569,6 @@ def export(request):
                 or 0
             )
 
-
-            # =================================================
-            # TITEL
-            # =================================================
 
             ws.append([
                 "🧾 Rechnungshistorie"
@@ -5693,10 +8582,20 @@ def export(request):
             ])
 
             ws.append([
+                "Kategorie: "
+                + kategorie_name
+            ])
+
+            ws.append([
+                "Status: "
+                + status_name
+            ])
+
+            ws.append([
                 "Rechnungsdatum von: "
                 + (
-                    datum_von
-                    if datum_von
+                    datum_von_date.strftime("%d.%m.%Y")
+                    if datum_von_date
                     else "Alle"
                 )
             ])
@@ -5704,8 +8603,8 @@ def export(request):
             ws.append([
                 "Rechnungsdatum bis: "
                 + (
-                    datum_bis
-                    if datum_bis
+                    datum_bis_date.strftime("%d.%m.%Y")
+                    if datum_bis_date
                     else "Alle"
                 )
             ])
@@ -5718,91 +8617,55 @@ def export(request):
             ws.append([])
 
 
-            # =================================================
-            # TABELLENKOPF
-            # =================================================
-
             ws.append([
-
                 "Rechnungsnummer",
-
                 "Rechnungsdatum",
-
                 "Lieferant",
-
                 "Auftragsnummer",
-
                 "Lieferscheinnummer",
-
                 "Kundennummer",
-
                 "Leistungsdatum",
-
                 "Betrag",
-
                 "Zahlungsziel",
-
                 "Fälligkeitsdatum",
-
                 "Kostenstelle",
-
                 "Kategorie",
-
                 "Verantwortlicher",
-
                 "Bezahlt am",
-
                 "Zahlungsreferenz",
-
                 "Status",
-
                 "Bemerkung",
-
             ])
 
-
-            # =================================================
-            # RECHNUNGEN
-            # =================================================
 
             for r in rechnungen:
 
                 ws.append([
 
-                    r.rechnungsnummer
-                    or "",
+                    r.rechnungsnummer or "",
 
                     (
-                        r.rechnungsdatum.strftime(
-                            "%d.%m.%Y"
-                        )
+                        r.rechnungsdatum.strftime("%d.%m.%Y")
                         if r.rechnungsdatum
                         else ""
                     ),
 
-                    r.lieferant
-                    or "",
+                    r.lieferant or "",
 
-                    r.auftragsnummer
-                    or "",
+                    r.auftragsnummer or "",
 
-                    r.lieferscheinnummer
-                    or "",
+                    r.lieferscheinnummer or "",
 
-                    r.kundennummer
-                    or "",
+                    r.kundennummer or "",
 
                     (
-                        r.leistungsdatum.strftime(
-                            "%d.%m.%Y"
-                        )
+                        r.leistungsdatum.strftime("%d.%m.%Y")
                         if r.leistungsdatum
                         else ""
                     ),
 
                     float(
-                        r.rechnungsbetrag
-                        or 0
+                        r.rechnungsbetrag or 0
                     ),
 
                     (
@@ -5812,39 +8675,32 @@ def export(request):
                     ),
 
                     (
-                        r.faelligkeitsdatum.strftime(
-                            "%d.%m.%Y"
-                        )
+                        r.faelligkeitsdatum.strftime("%d.%m.%Y")
                         if r.faelligkeitsdatum
                         else ""
                     ),
 
-                    r.kostenstelle
-                    or "",
-
-                    r.kategorie
-                    or "",
-
-                    r.verantwortlicher
-                    or "",
+                    r.kostenstelle or "",
 
                     (
-                        r.bezahlt_am.strftime(
-                            "%d.%m.%Y"
-                        )
+                        r.kategorie.name
+                        if r.kategorie
+                        else ""
+                    ),
+
+                    r.verantwortlicher or "",
+
+                    (
+                        r.bezahlt_am.strftime("%d.%m.%Y")
                         if r.bezahlt_am
                         else ""
                     ),
 
-                    r.zahlungsreferenz
-                    or "",
+                    r.zahlungsreferenz or "",
 
-                    r.status
-                    or "",
+                    r.status or "",
 
-                    r.bemerkung
-                    or "",
-
+                    r.bemerkung or "",
                 ])
 
 
@@ -5863,7 +8719,107 @@ def export(request):
 
 
         # =====================================================
-        # FORMATIERUNG
+        # EXCEL DESIGN
+        # =====================================================
+
+        DARK = "1F4E78"
+        BLUE = "D9EAF7"
+        LIGHT_BLUE = "EAF3F8"
+        GREY = "F2F2F2"
+        WHITE = "FFFFFF"
+        GREEN = "E2F0D9"
+        RED = "FCE4D6"
+
+
+        title_font = Font(
+            name="Calibri",
+            size=18,
+            bold=True,
+            color=WHITE
+        )
+
+        section_font = Font(
+            name="Calibri",
+            size=13,
+            bold=True,
+            color=WHITE
+        )
+
+        label_font = Font(
+            name="Calibri",
+            size=11,
+            bold=True
+        )
+
+        normal_font = Font(
+            name="Calibri",
+            size=11
+        )
+
+
+        title_fill = PatternFill(
+            "solid",
+            fgColor=DARK
+        )
+
+        section_fill = PatternFill(
+            "solid",
+            fgColor=DARK
+        )
+
+        label_fill = PatternFill(
+            "solid",
+            fgColor=BLUE
+        )
+
+        info_fill = PatternFill(
+            "solid",
+            fgColor=LIGHT_BLUE
+        )
+
+        grey_fill = PatternFill(
+            "solid",
+            fgColor=GREY
+        )
+
+        green_fill = PatternFill(
+            "solid",
+            fgColor=GREEN
+        )
+
+        red_fill = PatternFill(
+            "solid",
+            fgColor=RED
+        )
+
+
+        thin_side = Side(
+            style="thin",
+            color="B7B7B7"
+        )
+
+        medium_side = Side(
+            style="medium",
+            color=DARK
+        )
+
+        thin_border = Border(
+            left=thin_side,
+            right=thin_side,
+            top=thin_side,
+            bottom=thin_side
+        )
+
+        section_border = Border(
+            left=medium_side,
+            right=medium_side,
+            top=medium_side,
+            bottom=medium_side
+        )
+
+
+        # =====================================================
+        # STANDARD FORMATIERUNG
         # =====================================================
 
         for row in ws.iter_rows():
@@ -5872,86 +8828,793 @@ def export(request):
 
                 if cell.value is not None:
 
+                    cell.font = normal_font
+
                     cell.alignment = Alignment(
                         vertical="top",
+                        horizontal="left",
+                        wrap_text=True
+                    )
+
+                    cell.border = thin_border
+
+
+        # =====================================================
+        # SPALTENBREITEN
+        # =====================================================
+
+        widths = {
+
+            "A": 55,
+            "B": 38,
+            "C": 24,
+            "D": 28,
+            "E": 28,
+            "F": 28,
+            "G": 28,
+            "H": 28,
+            "I": 28,
+            "J": 28,
+            "K": 28,
+            "L": 28,
+            "M": 28,
+            "N": 28,
+            "O": 28,
+            "P": 28,
+            "Q": 42,
+
+        }
+
+
+        for column, width in widths.items():
+
+            ws.column_dimensions[
+                column
+            ].width = width
+
+
+        # =====================================================
+        # MASCHINEN-TABELLE
+        # =====================================================
+
+        if export_typ == "reparatur":
+
+            # -------------------------------------------------
+            # Alle Zeilen suchen, die als Maschinen-Tabelle
+            # markiert wurden.
+            # -------------------------------------------------
+
+            maschinen_header_rows = []
+
+            for row_number in range(
+                1,
+                ws.max_row + 1
+            ):
+
+                value_a = ws.cell(
+                    row=row_number,
+                    column=1
+                ).value
+
+                value_b = ws.cell(
+                    row=row_number,
+                    column=2
+                ).value
+
+                value_c = ws.cell(
+                    row=row_number,
+                    column=3
+                ).value
+
+                value_d = ws.cell(
+                    row=row_number,
+                    column=4
+                ).value
+
+
+                if (
+                    value_a == "Prüfung"
+                    and
+                    value_b == "Grenzwert / Bedingung"
+                    and
+                    value_c == "Messwert"
+                    and
+                    value_d == "OK"
+                ):
+
+                    maschinen_header_rows.append(
+                        row_number
+                    )
+
+
+            # -------------------------------------------------
+            # Maschinen Header
+            # -------------------------------------------------
+
+            for header_row in maschinen_header_rows:
+
+                for column in range(1, 5):
+
+                    cell = ws.cell(
+                        row=header_row,
+                        column=column
+                    )
+
+                    cell.fill = section_fill
+
+                    cell.font = Font(
+                        name="Calibri",
+                        size=12,
+                        bold=True,
+                        color=WHITE
+                    )
+
+                    cell.alignment = Alignment(
+                        horizontal="center",
+                        vertical="center",
+                        wrap_text=True
+                    )
+
+                    cell.border = section_border
+
+
+                ws.row_dimensions[
+                    header_row
+                ].height = 32
+
+
+        # =====================================================
+        # ABSCHNITTE FORMATIEREN
+        # =====================================================
+
+        for row_number in range(
+            1,
+            ws.max_row + 1
+        ):
+
+            first_cell = ws.cell(
+                row=row_number,
+                column=1
+            )
+
+            first_value = (
+                str(first_cell.value).strip()
+                if first_cell.value is not None
+                else ""
+            )
+
+
+            # =================================================
+            # HAUPTTITEL
+            # =================================================
+
+            if (
+                first_value.startswith("📋")
+                or
+                first_value.startswith("🧾")
+                or
+                first_value.startswith("🔄")
+            ):
+
+                ws.merge_cells(
+                    start_row=row_number,
+                    start_column=1,
+                    end_row=row_number,
+                    end_column=4
+                )
+
+                for column in range(1, 5):
+
+                    cell = ws.cell(
+                        row=row_number,
+                        column=column
+                    )
+
+                    cell.fill = title_fill
+                    cell.border = section_border
+
+
+                cell = ws.cell(
+                    row=row_number,
+                    column=1
+                )
+
+                cell.font = title_font
+
+                cell.alignment = Alignment(
+                    horizontal="center",
+                    vertical="center"
+                )
+
+                ws.row_dimensions[
+                    row_number
+                ].height = 32
+
+
+            # =================================================
+            # SEKTIONSÜBERSCHRIFT
+            # =================================================
+            
+            elif first_value.startswith("Reparaturbericht "):
+
+                ws.merge_cells(
+                    start_row=row_number,
+                    start_column=1,
+                    end_row=row_number,
+                    end_column=4
+                )
+
+                cell = ws.cell(
+                    row=row_number,
+                    column=1
+                )
+
+                # Keine Hintergrundfarbe
+                cell.fill = PatternFill(
+                    fill_type=None
+                )
+
+                # Kein Rahmen
+                cell.border = Border()
+
+                # Groß und fett
+                cell.font = Font(
+                    name="Calibri",
+                    size=16,
+                    bold=True
+                )
+
+                # In die Mitte
+                cell.alignment = Alignment(
+                    horizontal="center",
+                    vertical="center"
+                )
+
+                ws.row_dimensions[
+                    row_number
+                ].height = 30
+
+            elif first_value in [
+
+                "GERÄTEDETAIL",
+                "REPARATUR",
+                "MESSMITTEL",
+                "ELEKTRISCHE PRÜFUNG",
+
+            ]:
+
+                ws.merge_cells(
+                    start_row=row_number,
+                    start_column=1,
+                    end_row=row_number,
+                    end_column=4
+                )
+
+                for column in range(1, 5):
+
+                    cell = ws.cell(
+                        row=row_number,
+                        column=column
+                    )
+
+                    cell.fill = section_fill
+                    cell.border = section_border
+
+
+                cell = ws.cell(
+                    row=row_number,
+                    column=1
+                )
+
+                cell.font = section_font
+
+                cell.alignment = Alignment(
+                    horizontal="left",
+                    vertical="center"
+                )
+
+                ws.row_dimensions[
+                    row_number
+                ].height = 25
+
+
+        # =====================================================
+        # LABEL / VALUE
+        # =====================================================
+
+        for row_number in range(
+            1,
+            ws.max_row + 1
+        ):
+
+            label = ws.cell(
+                row=row_number,
+                column=1
+            )
+
+            value = ws.cell(
+                row=row_number,
+                column=2
+            )
+
+
+            if (
+                label.value is not None
+                and
+                value.value is not None
+            ):
+
+                # -------------------------------------------------
+                # ELEKTRISCHE PRÜFUNG - 3/4 SPALTEN
+                # -------------------------------------------------
+
+                if (
+                    str(label.value).strip()
+                    == "Prüfung"
+                ):
+
+                    continue
+
+
+                label.font = label_font
+
+                label.fill = label_fill
+
+                label.alignment = Alignment(
+                    horizontal="left",
+                    vertical="center",
+                    wrap_text=True
+                )
+
+                label.border = thin_border
+
+
+                value.font = normal_font
+
+                value.fill = info_fill
+
+                value.alignment = Alignment(
+                    horizontal="left",
+                    vertical="top",
+                    wrap_text=True
+                )
+
+                value.border = thin_border
+
+
+        # =====================================================
+        # MASCHINEN-TABELLE FORMATIEREN
+        # =====================================================
+
+        if export_typ == "reparatur":
+
+            for header_row in maschinen_header_rows:
+
+                row_number = header_row + 1
+
+                while row_number <= ws.max_row:
+
+                    first_value = ws.cell(
+                        row=row_number,
+                        column=1
+                    ).value
+
+
+                    # Ende der Tabelle
+
+                    if first_value in [
+                        None,
+                        "GERÄTEDETAIL",
+                        "REPARATUR",
+                        "MESSMITTEL",
+                        "ELEKTRISCHE PRÜFUNG",
+                    ]:
+
+                        break
+
+
+                    # Neue Maschinen-Tabelle
+
+                    if (
+                        ws.cell(
+                            row=row_number,
+                            column=1
+                        ).value
+                        == "Prüfung"
+                    ):
+
+                        break
+
+
+                    # -------------------------------------------------
+                    # Alle 4 Spalten formatieren
+                    # -------------------------------------------------
+
+                    for column in range(1, 5):
+
+                        cell = ws.cell(
+                            row=row_number,
+                            column=column
+                        )
+
+                        cell.border = thin_border
+
+                        cell.alignment = Alignment(
+                            horizontal="left"
+                            if column != 4
+                            else "center",
+                            vertical="top",
+                            wrap_text=True
+                        )
+
+
+                    # -------------------------------------------------
+                    # Prüfung
+                    # -------------------------------------------------
+
+                    ws.cell(
+                        row=row_number,
+                        column=1
+                    ).font = Font(
+                        name="Calibri",
+                        size=11,
+                        bold=True
+                    )
+
+                    ws.cell(
+                        row=row_number,
+                        column=1
+                    ).fill = info_fill
+
+
+                    # -------------------------------------------------
+                    # Grenzwert
+                    # -------------------------------------------------
+
+                    ws.cell(
+                        row=row_number,
+                        column=2
+                    ).fill = info_fill
+
+
+                    # -------------------------------------------------
+                    # Messwert
+                    # -------------------------------------------------
+
+                    ws.cell(
+                        row=row_number,
+                        column=3
+                    ).fill = info_fill
+
+                    ws.cell(
+                        row=row_number,
+                        column=3
+                    ).alignment = Alignment(
+                        horizontal="center",
+                        vertical="center",
                         wrap_text=True
                     )
 
 
+                    # -------------------------------------------------
+                    # OK
+                    # -------------------------------------------------
+
+                    ok_cell = ws.cell(
+                        row=row_number,
+                        column=4
+                    )
+
+                    ok_text = str(
+                        ok_cell.value or ""
+                    ).strip()
+
+
+                    ok_cell.font = Font(
+                        name="Calibri",
+                        size=11,
+                        bold=True
+                    )
+
+                    ok_cell.alignment = Alignment(
+                        horizontal="center",
+                        vertical="center"
+                    )
+
+
+                    if ok_text == "OK":
+
+                        ok_cell.fill = green_fill
+
+                    else:
+
+                        ok_cell.fill = grey_fill
+
+
+                    # -------------------------------------------------
+                    # Zeilenhöhe
+                    # -------------------------------------------------
+
+                    max_length = max(
+                        len(
+                            str(
+                                ws.cell(
+                                    row=row_number,
+                                    column=1
+                                ).value or ""
+                            )
+                        ),
+                        len(
+                            str(
+                                ws.cell(
+                                    row=row_number,
+                                    column=2
+                                ).value or ""
+                            )
+                        ),
+                    )
+
+
+                    ws.row_dimensions[
+                        row_number
+                    ].height = max(
+                        30,
+                        min(
+                            20 * (
+                                max_length // 45 + 1
+                            ),
+                            120
+                        )
+                    )
+
+
+                    row_number += 1
+
+
         # =====================================================
-        # TABELLENKOPF FETT
+        # STATUS / OK
         # =====================================================
 
         for row in ws.iter_rows():
 
-            values = [
+            for cell in row:
 
-                str(cell.value)
-                if cell.value is not None
-                else ""
+                if cell.value is None:
 
-                for cell in row
-
-            ]
+                    continue
 
 
-            if (
-                "Inventarnummer" in values
-                or
-                "Rechnungsnummer" in values
-                or
-                "Gerät" in values
-            ):
+                text = str(
+                    cell.value
+                ).strip()
 
-                for cell in row:
+
+                if text in [
+                    "Erledigt",
+                    "OK",
+                    "Ja",
+                ]:
+
+                    cell.fill = green_fill
 
                     cell.font = Font(
+                        name="Calibri",
+                        size=11,
                         bold=True
                     )
 
-                break
-
-
-        # =====================================================
-        # SPALTENBREITE
-        # =====================================================
-
-        for column in ws.columns:
-
-            max_length = 0
-
-            column_letter = get_column_letter(
-                column[0].column
-            )
-
-
-            for cell in column:
-
-                if cell.value is not None:
-
-                    lines = str(
-                        cell.value
-                    ).split("\n")
-
-
-                    longest = max(
-                        len(line)
-                        for line in lines
+                    cell.alignment = Alignment(
+                        horizontal="center",
+                        vertical="center",
+                        wrap_text=True
                     )
 
 
-                    max_length = max(
-                        max_length,
-                        longest
+                elif text == "Nicht OK":
+
+                    cell.value = ""
+
+                    cell.fill = grey_fill
+
+
+        # =====================================================
+        # META-INFORMATIONEN OBEN
+        # =====================================================
+
+        for row_number in range(
+            1,
+            min(ws.max_row, 10) + 1
+        ):
+
+            for column in range(
+                1,
+                min(ws.max_column, 4) + 1
+            ):
+
+                cell = ws.cell(
+                    row=row_number,
+                    column=column
+                )
+
+                if cell.value is None:
+                    continue
+
+                text = str(
+                    cell.value
+                ).strip()
+
+                # -------------------------------------------------
+                # Reparaturbericht nicht als Meta-Information formatieren
+                # -------------------------------------------------
+
+                if text.startswith("Reparaturbericht "):
+
+                    continue
+                # -------------------------------------------------
+                # Buchst Eis / Buchst Spai
+                # -------------------------------------------------
+
+                if text in [
+                    "Buchst Eis",
+                    "Buchst Spai"
+                ]:
+
+                    cell.font = Font(
+                        name="Calibri",
+                        size=11,
+                        bold=True,
+                        italic=False
                     )
 
+                    cell.alignment = Alignment(
+                        horizontal="left",
+                        vertical="center",
+                        wrap_text=False
+                    )
 
-            ws.column_dimensions[
-                column_letter
-            ].width = min(
-                max_length + 3,
-                60
+                    continue
+
+
+                # -------------------------------------------------
+                # Dunkle Zellen nicht verändern
+                # -------------------------------------------------
+
+                if (
+                    cell.fill.fgColor.rgb
+                    and
+                    str(
+                        cell.fill.fgColor.rgb
+                    ).endswith(DARK)
+                ):
+
+                    continue
+
+
+                # -------------------------------------------------
+                # Normale Meta-Informationen
+                # -------------------------------------------------
+
+                cell.fill = grey_fill
+
+                cell.font = Font(
+                    name="Calibri",
+                    size=10,
+                    bold=False,
+                    italic=True
+                )
+
+        # =====================================================
+        # ZEILENHÖHE AUTOMATISCH
+        # =====================================================
+
+        for row_number in range(
+            1,
+            ws.max_row + 1
+        ):
+
+            current_height = (
+                ws.row_dimensions[
+                    row_number
+                ].height
             )
+
+
+            if current_height is not None:
+
+                continue
+
+
+            max_lines = 1
+
+
+            for column in range(
+                1,
+                ws.max_column + 1
+            ):
+
+                value = ws.cell(
+                    row=row_number,
+                    column=column
+                ).value
+
+
+                if value is None:
+
+                    continue
+
+
+                lines = str(
+                    value
+                ).count("\n") + 1
+
+
+                max_lines = max(
+                    max_lines,
+                    lines
+                )
+
+
+            ws.row_dimensions[
+                row_number
+            ].height = min(
+                20 * max_lines,
+                100
+            )
+
+
+        # =====================================================
+        # FREEZE PANES
+        # =====================================================
+
+        ws.freeze_panes = "A2"
+
+
+        # =====================================================
+        # GRIDLINES AUSBLENDEN
+        # =====================================================
+
+        ws.sheet_view.showGridLines = False
+
+
+        # =====================================================
+        # DRUCKEINSTELLUNGEN
+        # =====================================================
+
+        ws.page_setup.orientation = "landscape"
+
+        ws.page_setup.fitToWidth = 1
+
+        ws.page_setup.fitToHeight = 0
+
+        ws.sheet_properties.pageSetUpPr.fitToPage = True
+
+
+        ws.page_margins.left = 0.3
+        ws.page_margins.right = 0.3
+        ws.page_margins.top = 0.5
+        ws.page_margins.bottom = 0.5
+
+
+        # =====================================================
+        # HEADER / FOOTER
+        # =====================================================
+
+        ws.oddFooter.center.text = (
+            "Seite &[Page] von &[Pages]"
+        )
+
+        ws.oddFooter.right.text = (
+            "&[Date]"
+        )
+
+
+        # =====================================================
+        # PRINT AREA
+        # =====================================================
+
+        ws.print_area = (
+            f"A1:Q{ws.max_row}"
+        )
 
 
         # =====================================================
@@ -5964,7 +9627,7 @@ def export(request):
                 "Geraete",
 
             "reparatur":
-                "Reparaturhistorie",
+                "Gerätedetail_Reparatur",
 
             "filterwechsel":
                 "Filterwechselhistorie",
@@ -5989,23 +9652,72 @@ def export(request):
 
 
         filepath = os.path.join(
-            export_dir,
+            user_export_dir,
             filename
         )
 
+        # =================================================
+        # MASCHINEN – MESSWERTE IMMER ZENTRIEREN
+        # =================================================
 
-        # =====================================================
-        # SPEICHERN
-        # =====================================================
+        for block in maschinen_bloecke:
+
+            start_row = block["header"]
+            end_row = block["nl_end"]
+
+            for row in range(start_row, end_row + 1):
+
+                # Spalte C = Messwert
+                ws.cell(
+                    row=row,
+                    column=3
+                ).alignment = Alignment(
+                    horizontal="center",
+                    vertical="center",
+                    wrap_text=True
+                )
+
+                # Spalte D = OK
+                ws.cell(
+                    row=row,
+                    column=4
+                ).alignment = Alignment(
+                    horizontal="center",
+                    vertical="center",
+                    wrap_text=True
+                )
+
+        # =================================================
+        # BETTEN – ALLE MESSWERTE IN SPALTE C ZENTRIEREN
+        # =================================================
+
+        for row in range(65, 73):
+            ws.cell(
+                row=row,
+                column=3
+            ).alignment = Alignment(
+                horizontal="center",
+                vertical="center",
+                wrap_text=True
+            )
+        
+
+        print(
+            "FINAL FONT 1:",
+            ws.cell(row=2, column=1).font.sz,
+            ws.cell(row=2, column=1).font.bold
+        )
+
+        print(
+            "FINAL FONT 2:",
+            ws.cell(row=39, column=1).font.sz,
+            ws.cell(row=39, column=1).font.bold
+        )
 
         wb.save(
             filepath
         )
 
-
-        # =====================================================
-        # ERFOLG
-        # =====================================================
 
         messages.success(
             request,
@@ -6013,9 +9725,7 @@ def export(request):
         )
 
 
-        return redirect(
-            "export"
-        )
+        return redirect("export")
 
 
     # =========================================================
@@ -6026,16 +9736,23 @@ def export(request):
 
 
     for file in os.listdir(
-        export_dir
+        user_export_dir
     ):
 
         path = os.path.join(
-            export_dir,
+            user_export_dir,
             file
         )
 
 
         if not os.path.isfile(path):
+
+            continue
+
+
+        if not file.lower().endswith(
+            ".xlsx"
+        ):
 
             continue
 
@@ -6060,10 +9777,6 @@ def export(request):
 
         })
 
-
-    # =========================================================
-    # NEUESTE EXPORTE ZUERST
-    # =========================================================
 
     exports.sort(
         key=lambda x: x["date"],
@@ -6114,6 +9827,19 @@ def export(request):
 
 
     # =========================================================
+    # RECHNUNG KATEGORIEN
+    # =========================================================
+
+    kategorien = (
+        RechnungKategorie.objects
+        .all()
+        .order_by(
+            "name"
+        )
+    )
+
+
+    # =========================================================
     # RENDER
     # =========================================================
 
@@ -6132,28 +9858,66 @@ def export(request):
 
             "pruefarten":
                 pruefarten,
+
+            "kategorien":
+                kategorien,
         }
     )
-
 
 @login_required
 def export_download(request, filename):
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
-
-
     export_dir = os.path.join(
         settings.BASE_DIR,
-        "exports"
+        "exports",
+        str(request.user.id)
     )
-
 
     filepath = os.path.join(
         export_dir,
         filename
     )
 
+    if not os.path.exists(filepath):
+
+        messages.error(
+            request,
+            "Export-Datei nicht gefunden."
+        )
+
+        return redirect("export")
+
+    return FileResponse(
+        open(filepath, "rb"),
+        as_attachment=True,
+        filename=filename
+    )
+
+@login_required
+def export_delete(request, filename):
+
+    # =========================================================
+    # EXPORT ORDNER DES AKTUELLEN BENUTZERS
+    # =========================================================
+
+    export_dir = os.path.join(
+        settings.BASE_DIR,
+        "exports",
+        str(request.user.id)
+    )
+
+    filepath = os.path.join(
+        export_dir,
+        filename
+    )
+
+
+    # =========================================================
+    # SICHERHEIT
+    # =========================================================
+
+    # Nur Dateien innerhalb des eigenen Benutzerordners
+    # dürfen gelöscht werden.
 
     if not os.path.exists(filepath):
 
@@ -6165,32 +9929,11 @@ def export_download(request, filename):
         return redirect("export")
 
 
-    return FileResponse(
-        open(filepath, "rb"),
-        as_attachment=True,
-        filename=filename
-    )
+    # =========================================================
+    # LÖSCHEN
+    # =========================================================
 
-@login_required
-def export_delete(request, filename):
-
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
-
-
-    export_dir = os.path.join(
-        settings.BASE_DIR,
-        "exports"
-    )
-
-
-    filepath = os.path.join(
-        export_dir,
-        filename
-    )
-
-
-    if os.path.exists(filepath):
+    try:
 
         os.remove(filepath)
 
@@ -6199,11 +9942,11 @@ def export_delete(request, filename):
             "Export erfolgreich gelöscht."
         )
 
-    else:
+    except OSError:
 
         messages.error(
             request,
-            "Export-Datei nicht gefunden."
+            "Export konnte nicht gelöscht werden."
         )
 
 
@@ -6688,10 +10431,19 @@ def kontakt_edit(request):
 @login_required
 def dashboard_widgets(request):
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
+    # =========================================================
+    # DASHBOARD WIDGETS DES AKTUELLEN BENUTZERS
+    # =========================================================
 
-    widgets = DashboardWidget.objects.all()
+    widgets = (
+        DashboardWidget.objects
+        .filter(
+            user=request.user
+        )
+        .order_by(
+            "order"
+        )
+    )
 
     return render(
         request,
@@ -6704,36 +10456,189 @@ def dashboard_widgets(request):
 @login_required
 def dashboard_widget_create(request):
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
-
     if request.method == "POST":
 
         widget = DashboardWidget()
 
-        widget.widget_type = request.POST.get("widget_type")
+        # =====================================================
+        # BENUTZER
+        # =====================================================
 
-        widget.title = request.POST.get("title")
+        widget.user = request.user
 
-        standort_id = request.POST.get("standort")
+        # =====================================================
+        # WIDGET-TYP
+        # =====================================================
 
-        if standort_id:
-            widget.standort = Standort.objects.get(id=standort_id)
+        widget.widget_type = request.POST.get(
+            "widget_type"
+        )
 
-        geraetart_id = request.POST.get("geraetart")
+        # =====================================================
+        # TITEL
+        # =====================================================
 
-        if geraetart_id:
-            widget.geraetart = Geraetart.objects.get(id=geraetart_id)
+        widget.title = request.POST.get(
+            "title"
+        )
+
+        # =====================================================
+        # STANDORT
+        # Nur für Geräte
+        # =====================================================
+
+        standort_id = request.POST.get(
+            "standort"
+        )
+
+        if (
+            widget.widget_type == "devices"
+            and standort_id
+        ):
+
+            widget.standort = get_object_or_404(
+                Standort,
+                id=standort_id
+            )
+
+        else:
+
+            widget.standort = None
+
+        # =====================================================
+        # GERÄTART
+        # Nur für Geräte
+        # =====================================================
+
+        geraetart_id = request.POST.get(
+            "geraetart"
+        )
+
+        if (
+            widget.widget_type == "devices"
+            and geraetart_id
+        ):
+
+            widget.geraetart = get_object_or_404(
+                Geraetart,
+                id=geraetart_id
+            )
+
+        else:
+
+            widget.geraetart = None
+
+        # =====================================================
+        # REPARATUR STATUS
+        # =====================================================
+
+        if widget.widget_type == "repairs":
+
+            widget.reparatur_status = (
+                request.POST.get(
+                    "reparatur_status"
+                )
+                or None
+            )
+
+        else:
+
+            widget.reparatur_status = None
+
+        # =====================================================
+        # PRÜFUNGSART
+        # =====================================================
+
+        pruefart_id = request.POST.get(
+            "pruefart"
+        )
+
+        if (
+            widget.widget_type == "pruefart"
+            and pruefart_id
+        ):
+
+            widget.pruefart = get_object_or_404(
+                Pruefart,
+                id=pruefart_id
+            )
+
+        else:
+
+            widget.pruefart = None
+
+        # =====================================================
+        # PRÜFUNGS STATUS
+        # =====================================================
+
+        if widget.widget_type == "pruefart":
+
+            widget.pruef_status = (
+                request.POST.get(
+                    "pruef_status"
+                )
+                or None
+            )
+
+        else:
+
+            widget.pruef_status = None
+
+        # =====================================================
+        # RECHNUNG STATUS
+        # =====================================================
+
+        if widget.widget_type == "rechnung":
+
+            widget.rechnung_status = (
+                request.POST.get(
+                    "rechnung_status"
+                )
+                or None
+            )
+
+        else:
+
+            widget.rechnung_status = None
+
+        # =====================================================
+        # SICHTBAR
+        # =====================================================
 
         widget.visible = (
             request.POST.get("visible") == "on"
         )
 
-        widget.order = request.POST.get("order") or 0
+        # =====================================================
+        # REIHENFOLGE
+        # =====================================================
 
-        widget.color = request.POST.get("color") or "primary"
+        widget.order = (
+            request.POST.get("order")
+            or 0
+        )
 
-        widget.icon = request.POST.get("icon") or "bi-grid"
+        # =====================================================
+        # FARBE
+        # =====================================================
+
+        widget.color = (
+            request.POST.get("color")
+            or "primary"
+        )
+
+        # =====================================================
+        # ICON
+        # =====================================================
+
+        widget.icon = (
+            request.POST.get("icon")
+            or "bi-grid"
+        )
+
+        # =====================================================
+        # SPEICHERN
+        # =====================================================
 
         widget.save()
 
@@ -6742,108 +10647,253 @@ def dashboard_widget_create(request):
             "Dashboard Widget erstellt."
         )
 
-        return redirect("dashboard_widgets")
+        return redirect(
+            "dashboard_widgets"
+        )
 
     return render(
         request,
         "devices/dashboard_widget_form.html",
         {
-            "standorte": Standort.objects.filter(active=True),
-            "geraetarten": Geraetart.objects.filter(aktiv=True),
+            "standorte": Standort.objects.filter(
+                active=True
+            ),
+
+            "geraetarten": Geraetart.objects.filter(
+                aktiv=True
+            ),
+
+            "pruefarten": Pruefart.objects.all().order_by(
+                "name"
+            ),
+
             "types": DashboardWidget.WIDGET_TYPES,
+
+            "pruef_status_choices":
+                DashboardWidget.PRUEF_STATUS_CHOICES,
+
+            "rechnung_status_choices":
+                DashboardWidget.RECHNUNG_STATUS_CHOICES,
+
+            "reparatur_status_choices":
+                DashboardWidget.REPARATUR_STATUS_CHOICES,
         }
     )
+
 
 @login_required
 def dashboard_widget_edit(request, id):
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
-
+    # =========================================================
+    # NUR EIGENES WIDGET
+    # =========================================================
 
     widget = get_object_or_404(
         DashboardWidget,
-        id=id
+        id=id,
+        user=request.user
     )
 
+    # =========================================================
+    # POST
+    # =========================================================
 
     if request.method == "POST":
+
+        # =====================================================
+        # WIDGET-TYP
+        # =====================================================
 
         widget.widget_type = request.POST.get(
             "widget_type"
         )
 
+        # =====================================================
+        # TITEL
+        # =====================================================
 
         widget.title = request.POST.get(
             "title"
         )
 
+        # =====================================================
+        # STANDORT
+        # =====================================================
 
         standort_id = request.POST.get(
             "standort"
         )
 
-        if standort_id:
+        if (
+            widget.widget_type == "devices"
+            and standort_id
+        ):
+
             widget.standort = get_object_or_404(
                 Standort,
                 id=standort_id
             )
+
         else:
+
             widget.standort = None
 
-
+        # =====================================================
+        # GERÄTART
+        # =====================================================
 
         geraetart_id = request.POST.get(
             "geraetart"
         )
 
-        if geraetart_id:
+        if (
+            widget.widget_type == "devices"
+            and geraetart_id
+        ):
+
             widget.geraetart = get_object_or_404(
                 Geraetart,
                 id=geraetart_id
             )
+
         else:
+
             widget.geraetart = None
 
+        # =====================================================
+        # REPARATUR STATUS
+        # =====================================================
 
+        if widget.widget_type == "repairs":
 
-        widget.color = request.POST.get(
-            "color"
-        ) or "primary"
+            widget.reparatur_status = (
+                request.POST.get(
+                    "reparatur_status"
+                )
+                or None
+            )
 
+        else:
 
+            widget.reparatur_status = None
 
-        widget.icon = request.POST.get(
-            "icon"
-        ) or "bi-grid"
+        # =====================================================
+        # PRÜFUNGSART
+        # =====================================================
 
-
-
-        widget.order = request.POST.get(
-            "order"
-        ) or 0
-
-
-
-        widget.visible = (
-            request.POST.get("visible") == "on"
+        pruefart_id = request.POST.get(
+            "pruefart"
         )
 
+        if (
+            widget.widget_type == "pruefart"
+            and pruefart_id
+        ):
+
+            widget.pruefart = get_object_or_404(
+                Pruefart,
+                id=pruefart_id
+            )
+
+        else:
+
+            widget.pruefart = None
+
+        # =====================================================
+        # PRÜFUNGS STATUS
+        # =====================================================
+
+        if widget.widget_type == "pruefart":
+
+            widget.pruef_status = (
+                request.POST.get(
+                    "pruef_status"
+                )
+                or None
+            )
+
+        else:
+
+            widget.pruef_status = None
+
+        # =====================================================
+        # RECHNUNG STATUS
+        # =====================================================
+
+        if widget.widget_type == "rechnung":
+
+            widget.rechnung_status = (
+                request.POST.get(
+                    "rechnung_status"
+                )
+                or None
+            )
+
+        else:
+
+            widget.rechnung_status = None
+
+        # =====================================================
+        # FARBE
+        # =====================================================
+
+        widget.color = (
+            request.POST.get(
+                "color"
+            )
+            or "primary"
+        )
+
+        # =====================================================
+        # ICON
+        # =====================================================
+
+        widget.icon = (
+            request.POST.get(
+                "icon"
+            )
+            or "bi-grid"
+        )
+
+        # =====================================================
+        # REIHENFOLGE
+        # =====================================================
+
+        widget.order = (
+            request.POST.get(
+                "order"
+            )
+            or 0
+        )
+
+        # =====================================================
+        # SICHTBAR
+        # =====================================================
+
+        widget.visible = (
+            request.POST.get(
+                "visible"
+            ) == "on"
+        )
+
+        # =====================================================
+        # SPEICHERN
+        # =====================================================
 
         widget.save()
-
 
         messages.success(
             request,
             "Dashboard Widget geändert."
         )
 
-
         return redirect(
             "dashboard_widgets"
         )
 
-
+    # =========================================================
+    # GET
+    # =========================================================
 
     return render(
         request,
@@ -6859,30 +10909,47 @@ def dashboard_widget_edit(request, id):
                 aktiv=True
             ),
 
+            "pruefarten": Pruefart.objects.all().order_by(
+                "name"
+            ),
+
             "types": DashboardWidget.WIDGET_TYPES,
+
+            "pruef_status_choices":
+                DashboardWidget.PRUEF_STATUS_CHOICES,
+
+            "rechnung_status_choices":
+                DashboardWidget.RECHNUNG_STATUS_CHOICES,
+
+            "reparatur_status_choices":
+                DashboardWidget.REPARATUR_STATUS_CHOICES,
         }
     )
+
+
 @login_required
 def dashboard_widget_delete(request, id):
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
-
+    # =========================================================
+    # NUR EIGENES WIDGET LÖSCHEN
+    # =========================================================
 
     widget = get_object_or_404(
         DashboardWidget,
-        id=id
+        id=id,
+        user=request.user
     )
 
+    # =========================================================
+    # LÖSCHEN
+    # =========================================================
 
     widget.delete()
-
 
     messages.success(
         request,
         "Dashboard Widget gelöscht."
     )
-
 
     return redirect(
         "dashboard_widgets"

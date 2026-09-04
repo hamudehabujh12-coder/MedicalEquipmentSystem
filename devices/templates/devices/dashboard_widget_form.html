@@ -3,7 +3,12 @@
 {% block content %}
 
 <h1>
-    📊 Neues Dashboard Widget
+    📊
+    {% if widget %}
+        Dashboard Widget bearbeiten
+    {% else %}
+        Neues Dashboard Widget
+    {% endif %}
 </h1>
 
 
@@ -12,354 +17,772 @@
 {% csrf_token %}
 
 
+<!-- =========================================================
+     WIDGET TYP
+========================================================= -->
 
 <div class="form-group">
 
-<label>
-    Widget Typ
-</label>
+    <label>
+        Widget Typ
+    </label>
+
+    <select
+        name="widget_type"
+        id="widget_type"
+        class="form-control"
+        onchange="toggleWidgetFields()"
+        required
+    >
+
+        <option value="">
+            Bitte wählen
+        </option>
 
 
-<select
-    name="widget_type"
-    id="widget_type"
-    class="form-control"
-    onchange="toggleDeviceFields()"
-    required
->
+        {% for value, label in types %}
 
-<option value="">
-    Bitte wählen
-</option>
+            <option
+                value="{{ value }}"
+                {% if widget and widget.widget_type == value %}
+                    selected
+                {% endif %}
+            >
+                {{ label }}
+            </option>
 
+        {% endfor %}
 
-{% for value,label in types %}
-
-<option value="{{ value }}"
-{% if widget and widget.widget_type == value %}
-selected
-{% endif %}
->
-{{ label }}
-</option>
-
-{% endfor %}
-
-
-</select>
+    </select>
 
 </div>
 
 
 
+<!-- =========================================================
+     GERÄTE
+========================================================= -->
 
-<div id="device-fields" style="display:none;">
+<div
+    id="device-fields"
+    class="dynamic-fields"
+    style="display:none;"
+>
 
+    <h3>🏥 Gerätefilter</h3>
+
+
+    <!-- STANDORT -->
+
+    <div class="form-group">
+
+        <label>
+            Standort
+        </label>
+
+        <select
+            name="standort"
+            class="form-control"
+        >
+
+            <option value="">
+                Alle Standorte
+            </option>
+
+
+            {% for s in standorte %}
+
+                <option
+                    value="{{ s.id }}"
+                    {% if widget and widget.standort_id == s.id %}
+                        selected
+                    {% endif %}
+                >
+                    {{ s.name }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+    <!-- GERÄTEART -->
+
+    <div class="form-group">
+
+        <label>
+            Geräteart
+        </label>
+
+        <select
+            name="geraetart"
+            class="form-control"
+        >
+
+            <option value="">
+                Alle Gerätearten
+            </option>
+
+
+            {% for g in geraetarten %}
+
+                <option
+                    value="{{ g.id }}"
+                    {% if widget and widget.geraetart_id == g.id %}
+                        selected
+                    {% endif %}
+                >
+                    {{ g.name }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     REPARATUREN
+     EIN Widget
+========================================================= -->
+
+<div
+    id="repair-fields"
+    class="dynamic-fields repair-fields"
+    style="display:none;"
+>
+
+    <h3>🔧 Reparaturen</h3>
+
+    <p class="field-description">
+        Wählen Sie den Status der Reparaturen.
+    </p>
+
+
+    <div class="form-group">
+
+        <label>
+            Reparaturstatus
+        </label>
+
+
+        <select
+            name="reparatur_status"
+            id="reparatur_status"
+            class="form-control"
+        >
+
+            <option value="">
+                Alle Reparaturen
+            </option>
+
+
+            {% for value, label in reparatur_status_choices %}
+
+                <option
+                    value="{{ value }}"
+                    {% if widget and widget.reparatur_status == value %}
+                        selected
+                    {% endif %}
+                >
+                    {{ label }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =========================================================
+     PRÜFUNGSART
+========================================================= -->
+
+<div
+    id="pruef-fields"
+    class="dynamic-fields"
+    style="display:none;"
+>
+
+    <h3>📅 Prüfungsart</h3>
+
+
+    <!-- PRÜFUNGSART -->
+
+    <div class="form-group">
+
+        <label>
+            Prüfungsart
+        </label>
+
+        <select
+            name="pruefart"
+            class="form-control"
+        >
+
+            <option value="">
+                Alle Prüfungsarten
+            </option>
+
+
+            {% for p in pruefarten %}
+
+                <option
+                    value="{{ p.id }}"
+                    {% if widget and widget.pruefart_id == p.id %}
+                        selected
+                    {% endif %}
+                >
+                    {{ p.name }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+    <!-- PRÜFUNGSSTATUS -->
+
+    <div class="form-group">
+
+        <label>
+            Prüfungsstatus
+        </label>
+
+        <select
+            name="pruef_status"
+            class="form-control"
+        >
+
+            <option value="">
+                Alle Status
+            </option>
+
+
+            {% for value, label in pruef_status_choices %}
+
+                <option
+                    value="{{ value }}"
+                    {% if widget and widget.pruef_status == value %}
+                        selected
+                    {% endif %}
+                >
+                    {{ label }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     RECHNUNGEN
+========================================================= -->
+
+<div
+    id="rechnung-fields"
+    class="dynamic-fields"
+    style="display:none;"
+>
+
+    <h3>🧾 Rechnungen</h3>
+
+
+    <div class="form-group">
+
+        <label>
+            Rechnungsstatus
+        </label>
+
+
+        <select
+            name="rechnung_status"
+            class="form-control"
+        >
+
+            <option value="">
+                Alle Rechnungen
+            </option>
+
+
+            {% for value, label in rechnung_status_choices %}
+
+                <option
+                    value="{{ value }}"
+                    {% if widget and widget.rechnung_status == value %}
+                        selected
+                    {% endif %}
+                >
+                    {{ label }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     EIGENER TITEL
+========================================================= -->
 
 <div class="form-group">
 
-<label>
-    Standort
-</label>
+    <label>
+        Eigener Titel (optional)
+    </label>
 
-
-<select
-name="standort"
-class="form-control"
->
-
-
-<option value="">
----------
-</option>
-
-
-{% for s in standorte %}
-
-<option value="{{ s.id }}">
-{{ s.name }}
-</option>
-
-{% endfor %}
-
-
-</select>
-
+    <input
+        type="text"
+        name="title"
+        class="form-control"
+        value="{{ widget.title|default:'' }}"
+        placeholder="z.B. Offene Reparaturen"
+    >
 
 </div>
 
 
 
+<!-- =========================================================
+     FARBE
+========================================================= -->
 
 <div class="form-group">
 
-<label>
-    Geräteart
-</label>
+    <label>
+        Farbe
+    </label>
 
 
-<select
-name="geraetart"
-class="form-control"
->
+    <select
+        name="color"
+        class="form-control"
+    >
+
+        <option
+            value="primary"
+            {% if not widget or widget.color == "primary" %}
+                selected
+            {% endif %}
+        >
+            🔵 Blau
+        </option>
 
 
-<option value="">
----------
-</option>
+        <option
+            value="success"
+            {% if widget.color == "success" %}
+                selected
+            {% endif %}
+        >
+            🟢 Grün
+        </option>
 
 
-{% for g in geraetarten %}
+        <option
+            value="danger"
+            {% if widget.color == "danger" %}
+                selected
+            {% endif %}
+        >
+            🔴 Rot
+        </option>
 
-<option value="{{ g.id }}">
-{{ g.name }}
-</option>
 
-{% endfor %}
+        <option
+            value="warning"
+            {% if widget.color == "warning" %}
+                selected
+            {% endif %}
+        >
+            🟡 Gelb
+        </option>
 
 
-</select>
+        <option
+            value="info"
+            {% if widget.color == "info" %}
+                selected
+            {% endif %}
+        >
+            🔷 Türkis
+        </option>
 
+
+        <option
+            value="purple"
+            {% if widget.color == "purple" %}
+                selected
+            {% endif %}
+        >
+            🟣 Lila
+        </option>
+
+
+        <option
+            value="dark"
+            {% if widget.color == "dark" %}
+                selected
+            {% endif %}
+        >
+            ⚫ Dunkel
+        </option>
+
+
+        <option
+            value="orange"
+            {% if widget.color == "orange" %}
+                selected
+            {% endif %}
+        >
+            🟠 Orange
+        </option>
+
+
+        <option
+            value="teal"
+            {% if widget.color == "teal" %}
+                selected
+            {% endif %}
+        >
+            🟦 Petrol
+        </option>
+
+
+        <option
+            value="pink"
+            {% if widget.color == "pink" %}
+                selected
+            {% endif %}
+        >
+            🩷 Pink
+        </option>
+
+
+        <option
+            value="brown"
+            {% if widget.color == "brown" %}
+                selected
+            {% endif %}
+        >
+            🟤 Braun
+        </option>
+
+
+        <option
+            value="gray"
+            {% if widget.color == "gray" %}
+                selected
+            {% endif %}
+        >
+            ⚪ Grau
+        </option>
+
+    </select>
 
 </div>
 
 
-</div>
 
-
-
-
+<!-- =========================================================
+     REIHENFOLGE
+========================================================= -->
 
 <div class="form-group">
 
+    <label>
+        Reihenfolge
+    </label>
 
-<label>
-    Eigener Titel (optional)
-</label>
-
-
-<input
-type="text"
-name="title"
-class="form-control"
-value="{{ widget.title|default:'' }}"
->
-
+    <input
+        type="number"
+        name="order"
+        value="{{ widget.order|default:0 }}"
+        class="form-control"
+        min="0"
+    >
 
 </div>
 
 
 
-
-
-
-<div class="form-group">
-
-<label>Farbe</label>
-
-<select
-name="color"
-class="form-control"
->
-
-<option value="primary"
-{% if widget.color == "primary" %}selected{% endif %}
->
-🔵 Blau
-</option>
-
-
-<option value="success"
-{% if widget.color == "success" %}selected{% endif %}
->
-🟢 Grün
-</option>
-
-
-<option value="danger"
-{% if widget.color == "danger" %}selected{% endif %}
->
-🔴 Rot
-</option>
-
-
-<option value="warning"
-{% if widget.color == "warning" %}selected{% endif %}
->
-🟡 Gelb
-</option>
-
-
-<option value="info"
-{% if widget.color == "info" %}selected{% endif %}
->
-🔷 Türkis
-</option>
-
-
-<option value="purple"
-{% if widget.color == "purple" %}selected{% endif %}
->
-🟣 Lila
-</option>
-
-
-<option value="dark"
-{% if widget.color == "dark" %}selected{% endif %}
->
-⚫ Dunkel
-</option>
-
-<option value="orange"
-{% if widget.color == "orange" %}selected{% endif %}
->
-🟠 Orange
-</option>
-
-
-<option value="teal"
-{% if widget.color == "teal" %}selected{% endif %}
->
-🟦 Petrol
-</option>
-
-
-<option value="pink"
-{% if widget.color == "pink" %}selected{% endif %}
->
-🩷 Pink
-</option>
-
-
-<option value="brown"
-{% if widget.color == "brown" %}selected{% endif %}
->
-🟤 Braun
-</option>
-
-
-<option value="gray"
-{% if widget.color == "gray" %}selected{% endif %}
->
-⚪ Grau
-</option>
-</select>
-
-</div>
-
-<div class="form-group">
-
-
-<label>
-    Reihenfolge
-</label>
-
-
-<input
-type="number"
-name="order"
-value="{{ widget.order|default:0 }}"
-class="form-control"
->
-
-
-</div>
-
-
-
-
-
+<!-- =========================================================
+     SICHTBAR
+========================================================= -->
 
 <div class="form-check">
 
+    <input
+        type="checkbox"
+        name="visible"
+        id="visible"
+        {% if not widget or widget.visible %}
+            checked
+        {% endif %}
+    >
 
-<input
-type="checkbox"
-name="visible"
-{% if widget.visible or not widget %}
-checked
-{% endif %}
->
-
-
-<label>
-Im Dashboard anzeigen
-</label>
-
+    <label for="visible">
+        Im Dashboard anzeigen
+    </label>
 
 </div>
-
-
 
 
 
 <br>
 
 
-<button
-type="submit"
-class="btn btn-success"
+
+<!-- =========================================================
+     BUTTONS
+========================================================= -->
+
+<div
+    style="
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        margin-top:20px;
+    "
 >
 
-💾 Widget speichern
+    <button
+        type="submit"
+        class="btn btn-success"
+    >
+        💾 Widget speichern
+    </button>
 
-</button>
 
+    <a
+        href="{% url 'dashboard_widgets' %}"
+        class="btn btn-secondary"
+    >
+        Zurück
+    </a>
 
-
-<a
-href="{% url 'dashboard_widgets' %}"
-class="btn btn-secondary"
->
-
-Zurück
-
-</a>
-
+</div>
 
 
 </form>
 
 
 
+<!-- =========================================================
+     CSS
+========================================================= -->
 
+<style>
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+
+.form-group label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 600;
+}
+
+
+.form-control {
+    width: 100%;
+    max-width: 600px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+
+.dynamic-fields {
+    padding: 20px;
+    margin-bottom: 22px;
+    background: #f8fafc;
+    border-left: 4px solid #2563eb;
+    border-radius: 8px;
+}
+
+
+.dynamic-fields h3 {
+    margin-top: 0;
+    margin-bottom: 18px;
+}
+
+
+.repair-fields {
+    border-left-color: #f59e0b;
+}
+
+
+.field-description {
+    margin-top: -8px;
+    margin-bottom: 20px;
+    color: #6b7280;
+}
+
+
+.status-info {
+    margin-top: 15px;
+    padding: 12px 15px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 7px;
+    line-height: 1.9;
+}
+
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+.form-check input {
+    width: 18px;
+    height: 18px;
+}
+
+
+</style>
+
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
 
 <script>
 
+function toggleWidgetFields() {
 
-function toggleDeviceFields(){
-
-
-const type =
-document.getElementById("widget_type").value;
+    const type =
+        document.getElementById("widget_type").value;
 
 
-const fields =
-document.getElementById("device-fields");
+    /*
+     * Alle dynamischen Bereiche ausblenden
+     */
+
+    document.getElementById(
+        "device-fields"
+    ).style.display = "none";
 
 
+    document.getElementById(
+        "repair-fields"
+    ).style.display = "none";
 
-if(type === "devices"){
 
-fields.style.display="block";
+    document.getElementById(
+        "pruef-fields"
+    ).style.display = "none";
+
+
+    document.getElementById(
+        "rechnung-fields"
+    ).style.display = "none";
+
+
+    /*
+     * GERÄTE
+     */
+
+    if (type === "devices") {
+
+        document.getElementById(
+            "device-fields"
+        ).style.display = "block";
+
+    }
+
+
+    /*
+     * REPARATUREN
+     *
+     * Wichtig:
+     * Jetzt nur noch EIN Widget-Typ:
+     *
+     * repairs
+     */
+
+    else if (type === "repairs") {
+
+        document.getElementById(
+            "repair-fields"
+        ).style.display = "block";
+
+    }
+
+
+    /*
+     * PRÜFUNGSART
+     */
+
+    else if (type === "pruefart") {
+
+        document.getElementById(
+            "pruef-fields"
+        ).style.display = "block";
+
+    }
+
+
+    /*
+     * RECHNUNGEN
+     */
+
+    else if (type === "rechnung") {
+
+        document.getElementById(
+            "rechnung-fields"
+        ).style.display = "block";
+
+    }
 
 }
 
-else{
-
-fields.style.display="none";
-
-}
 
 
-}
+/*
+ * Beim Laden der Seite
+ */
 
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-toggleDeviceFields();
+        toggleWidgetFields();
 
-
+    }
+);
 
 </script>
-
 
 {% endblock %}
