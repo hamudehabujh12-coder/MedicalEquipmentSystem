@@ -8389,6 +8389,11 @@ def export(request):
                 ""
             ).strip()
 
+            standort = request.POST.get(
+                "standort",
+                ""
+            ).strip()
+
 
             if not pruefart_id:
 
@@ -8442,6 +8447,17 @@ def export(request):
             )
 
 
+            # =================================================
+            # STANDORT FILTER
+            # =================================================
+
+            if standort:
+
+                pruefungen = pruefungen.filter(
+                    device__practice__name=standort
+                )
+
+
             heute = datetime.now().date()
 
             grenze = heute + timedelta(days=30)
@@ -8490,7 +8506,10 @@ def export(request):
 
                 messages.warning(
                     request,
-                    f"⚠️ Keine Daten für {pruefart.name} mit Status {status_name} zum Exportieren vorhanden."
+                    f"⚠️ Keine Daten für {pruefart.name} "
+                    f"mit Status {status_name} "
+                    f"und Standort {standort or 'Alle'} "
+                    f"zum Exportieren vorhanden."
                 )
 
                 return redirect("export")
@@ -8520,6 +8539,15 @@ def export(request):
                         pruef_status,
                         pruef_status
                     )
+                )
+            ])
+
+            ws.append([
+                "Standort: "
+                + (
+                    "Alle"
+                    if not standort
+                    else standort
                 )
             ])
 
@@ -8581,7 +8609,6 @@ def export(request):
 
                     status_text,
                 ])
-
 
         # =====================================================
         # 5. RECHNUNGSHISTORIE
@@ -8997,7 +9024,9 @@ def export(request):
             bottom=medium_side
         )
 
+        
 
+        
         # =====================================================
         # STANDARD FORMATIERUNG
         # =====================================================
@@ -9217,13 +9246,7 @@ def export(request):
             
             elif first_value.startswith("Reparaturbericht "):
 
-                ws.merge_cells(
-                    start_row=row_number,
-                    start_column=1,
-                    end_row=row_number,
-                    end_column=4
-                )
-
+            
                 cell = ws.cell(
                     row=row_number,
                     column=1
@@ -9255,47 +9278,51 @@ def export(request):
                 ].height = 30
 
             elif first_value in [
-
                 "GERÄTEDETAIL",
                 "REPARATUR",
                 "MESSMITTEL",
                 "ELEKTRISCHE PRÜFUNG",
-
             ]:
 
-                ws.merge_cells(
-                    start_row=row_number,
-                    start_column=1,
-                    end_row=row_number,
-                    end_column=4
-                )
-
-                for column in range(1, 5):
-
-                    cell = ws.cell(
-                        row=row_number,
-                        column=column
-                    )
-
-                    cell.fill = section_fill
-                    cell.border = section_border
-
-
+                # Nur Zelle A formatieren
                 cell = ws.cell(
                     row=row_number,
                     column=1
                 )
 
-                cell.font = section_font
+                cell.fill = section_fill
+
+                cell.font = Font(
+                    name="Calibri",
+                    size=13,
+                    bold=True,
+                    color=WHITE
+                )
 
                 cell.alignment = Alignment(
                     horizontal="left",
                     vertical="center"
                 )
 
+                cell.border = section_border
+
                 ws.row_dimensions[
                     row_number
                 ].height = 25
+
+                # B, C und D bleiben normal / ohne Titel-Farbe
+                for column in range(2, 5):
+
+                    cell = ws.cell(
+                        row=row_number,
+                        column=column
+                    )
+
+                    cell.fill = PatternFill(
+                        fill_type=None
+                    )
+
+                    cell.border = Border()
 
 
         # =====================================================
@@ -9762,38 +9789,56 @@ def export(request):
 
         ws.page_setup.orientation = "landscape"
 
-        ws.page_setup.fitToWidth = 1
-
-        ws.page_setup.fitToHeight = 0
-
+        # Alle Exporte auf die Seitenbreite anpassen
         ws.sheet_properties.pageSetUpPr.fitToPage = True
 
+        ws.page_setup.fitToWidth = 1
 
-        ws.page_margins.left = 0.3
-        ws.page_margins.right = 0.3
-        ws.page_margins.top = 0.5
-        ws.page_margins.bottom = 0.5
+        # Höhe darf über mehrere Seiten gehen
+        ws.page_setup.fitToHeight = 0
+
+        # Keine feste Skalierung
+        ws.page_setup.scale = None
 
 
         # =====================================================
-        # HEADER / FOOTER
+        # SEITENRÄNDER
         # =====================================================
 
-        ws.oddFooter.center.text = (
-            "Seite &[Page] von &[Pages]"
-        )
+        ws.page_margins.left = 0.2
+        ws.page_margins.right = 0.2
+        ws.page_margins.top = 0.3
+        ws.page_margins.bottom = 0.3
 
-        ws.oddFooter.right.text = (
-            "&[Date]"
-        )
-
+        ws.page_margins.header = 0.1
+        ws.page_margins.footer = 0.1
 
         # =====================================================
         # PRINT AREA
         # =====================================================
 
+        # Letzte tatsächlich verwendete Spalte ermitteln
+        last_used_column = 1
+
+        for row in ws.iter_rows():
+
+            for cell in row:
+
+                if cell.value is not None:
+
+                    if cell.column > last_used_column:
+                        last_used_column = cell.column
+
+
+        # Letzte verwendete Zeile
+        last_used_row = ws.max_row
+
+
+        # Druckbereich automatisch auf den tatsächlich
+        # verwendeten Bereich begrenzen
         ws.print_area = (
-            f"A1:Q{ws.max_row}"
+            f"A1:{get_column_letter(last_used_column)}"
+            f"{last_used_row}"
         )
 
 

@@ -416,121 +416,100 @@
 
 
 
-    <!-- =====================================================
+   <!-- =====================================================
         WARTUNG / PRÜFUNGEN
     ====================================================== -->
-
-    <div class="export-card">
-
-        <h2>📋 Wartung / Prüfungen</h2>
-
-        <p>
-            Exportieren Sie die ausgewählte Prüfart.
-        </p>
-
-
-        <form method="POST">
-
-            {% csrf_token %}
-
-            <input
-                type="hidden"
-                name="export_typ"
-                value="wartung"
-            >
-
-
-            <div class="filter-row">
-
-
-                <!-- =================================================
-                    PRÜFART
-                ================================================= -->
-
-                <div class="field">
-
-                    <label>
-                        Prüfart
-                    </label>
-
-                    <select name="pruefart_id" required>
-
+<div class="export-card">
+    <h2>📋 Wartung / Prüfungen</h2>
+    <p>
+        Exportieren Sie die ausgewählte Prüfart.
+    </p>
+    <form method="POST">
+        {% csrf_token %}
+        <input
+            type="hidden"
+            name="export_typ"
+            value="wartung"
+        >
+        <div class="filter-row">
+            <!-- =================================================
+                PRÜFART
+            ================================================= -->
+            <div class="field">
+                <label>
+                    Prüfart
+                </label>
+                <select name="pruefart_id" required>
+                    <option value="">
+                        Prüfart auswählen
+                    </option>
+                    {% for pruefart in pruefarten %}
+                        <option value="{{ pruefart.id }}">
+                            {{ pruefart.name }}
+                        </option>
+                    {% empty %}
                         <option value="">
-                            Prüfart auswählen
+                            Keine Prüfarten vorhanden
                         </option>
-
-
-                        {% for pruefart in pruefarten %}
-
-                            <option value="{{ pruefart.id }}">
-                                {{ pruefart.name }}
-                            </option>
-
-                        {% empty %}
-
-                            <option value="">
-                                Keine Prüfarten vorhanden
-                            </option>
-
-                        {% endfor %}
-
-                    </select>
-
-                </div>
-
-
-                <!-- =================================================
-                    STATUS
-                ================================================= -->
-
-                <div class="field">
-
-                    <label>
-                        Status
-                    </label>
-
-                    <select name="status">
-
-                        <option value="">
-                            Alle
-                        </option>
-
-                        <option value="gueltig">
-                            Gültig
-                        </option>
-
-                        <option value="faellig">
-                            Fällig
-                        </option>
-
-                        <option value="ueberfaellig">
-                            Überfällig
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <!-- =================================================
-                    EXPORT
-                ================================================= -->
-
-                <button
-                    type="submit"
-                    class="export-btn"
-                >
-
-                    📤 Export
-
-                </button>
-
-
+                    {% endfor %}
+                </select>
             </div>
-
-        </form>
-
-    </div>
+            <!-- =================================================
+                STATUS
+            ================================================= -->
+            <div class="field">
+                <label>
+                    Status
+                </label>
+                <select name="status">
+                    <option value="">
+                        Alle
+                    </option>
+                    <option value="gueltig">
+                        Gültig
+                    </option>
+                    <option value="faellig">
+                        Fällig
+                    </option>
+                    <option value="ueberfaellig">
+                        Überfällig
+                    </option>
+                </select>
+            </div>
+            <!-- =================================================
+                STANDORT
+            ================================================= -->
+            <div class="field">
+                <label>
+                    Standort
+                </label>
+                <select name="standort">
+                    <option value="">
+                        Alle
+                    </option>
+                    {% for standort in standorte %}
+                        <option value="{{ standort }}">
+                            {{ standort }}
+                        </option>
+                    {% empty %}
+                        <option value="">
+                            Keine Standorte vorhanden
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- =================================================
+                EXPORT
+            ================================================= -->
+            <button
+                type="submit"
+                class="export-btn"
+            >
+                📤 Export
+            </button>
+        </div>
+    </form>
+</div>
 
 
     <!-- =====================================================
