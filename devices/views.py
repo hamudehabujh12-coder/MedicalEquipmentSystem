@@ -6459,12 +6459,7 @@ def export(request):
             return redirect("permission_denied")
 
 
-    # =========================================================
-    # FIRMA
-    # =========================================================
-
-    company = CompanyInformation.objects.first()
-
+   
 
     # =========================================================
     # EXPORT HAUPTORDNER
@@ -6530,31 +6525,7 @@ def export(request):
         ws.title = "Export"
 
 
-        # =====================================================
-        # FIRMA
-        # =====================================================
-
-        if company:
-
-            ws.append([
-                company.company_name or ""
-            ])
-
-            ws.append([
-                company.address or ""
-            ])
-
-            ws.append([
-                f"Telefon: {company.phone or ''}"
-            ])
-
-            ws.append([
-                f"E-Mail: {company.email or ''}"
-            ])
-
-            ws.append([
-                f"Kundennummer: {company.customer_number or ''}"
-            ])
+        
 
         ws.append([])
 
