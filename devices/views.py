@@ -154,7 +154,7 @@ def home(request):
     create_daily_backup()
 
     home, created = HomeInformation.objects.get_or_create(
-        id=1
+        user=request.user
     )
 
     return render(
@@ -164,13 +164,13 @@ def home(request):
             "home": home,
         },
     )
+
 @login_required
 def home_edit(request):
 
-    if not request.user.is_superuser:
-        return redirect("permission_denied")
-
-    home, created = HomeInformation.objects.get_or_create(id=1)
+    home, created = HomeInformation.objects.get_or_create(
+        user=request.user
+    )
 
     if request.method == "POST":
 
@@ -183,17 +183,25 @@ def home_edit(request):
 
             home = form.save()
 
+            # =====================================================
             # حذف الصور المحددة
+            # =====================================================
+
             if "delete_selected" in request.POST:
 
-                delete_ids = request.POST.getlist("delete_images")
+                delete_ids = request.POST.getlist(
+                    "delete_images"
+                )
 
                 HomeImage.objects.filter(
                     id__in=delete_ids,
                     home=home
                 ).delete()
 
+            # =====================================================
             # إضافة الصور الجديدة
+            # =====================================================
+
             images = request.FILES.getlist("images")
 
             for image in images:
@@ -224,7 +232,6 @@ def home_edit(request):
             "home": home,
         },
     )
-
 
 def natural_key(value):
     return [

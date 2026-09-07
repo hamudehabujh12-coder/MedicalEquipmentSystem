@@ -988,6 +988,12 @@ class ContactImage(models.Model):
 
 class HomeInformation(models.Model):
 
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="home_information"
+    )
+
     title = models.CharField(
         max_length=200,
         blank=True,
