@@ -2328,10 +2328,21 @@ def device_search(request):
 
 @login_required
 def settings_view(request):
+
+    permission, created = UserPermission.objects.get_or_create(
+        user=request.user
+    )
+
     return render(
         request,
-        "devices/settings.html"
+        "devices/settings.html",
+        {
+            "permissions": permission,
+            "is_admin": request.user.is_superuser,
+        }
     )
+
+
 @login_required
 def practice_settings_edit(request):
 
@@ -5090,6 +5101,89 @@ def user_edit(request, user_id):
                 in request.POST
             )
 
+
+
+            # =====================================================
+            # EINSTELLUNGEN – UNTERBEREICHE
+            # =====================================================
+
+            permission.permission_einstellung_benutzer = (
+                "permission_einstellung_benutzer"
+                in request.POST
+            )
+
+            permission.permission_einstellung_standorte = (
+                "permission_einstellung_standorte"
+                in request.POST
+            )
+
+            permission.permission_einstellung_geraetarten = (
+                "permission_einstellung_geraetarten"
+                in request.POST
+            )
+
+            permission.permission_einstellung_pruefarten = (
+                "permission_einstellung_pruefarten"
+                in request.POST
+            )
+
+            permission.permission_einstellung_messmittel = (
+                "permission_einstellung_messmittel"
+                in request.POST
+            )
+
+            permission.permission_einstellung_dokumenttypen = (
+                "permission_einstellung_dokumenttypen"
+                in request.POST
+            )
+
+            permission.permission_einstellung_dashboard_widgets = (
+                "permission_einstellung_dashboard_widgets"
+                in request.POST
+            )
+
+            permission.permission_einstellung_geraetedetails = (
+                "permission_einstellung_geraetedetails"
+                in request.POST
+            )
+
+            permission.permission_einstellung_rechnung_kategorien = (
+                "permission_einstellung_rechnung_kategorien"
+                in request.POST
+            )
+
+            permission.permission_einstellung_backup = (
+                "permission_einstellung_backup"
+                in request.POST
+            )
+
+            permission.permission_einstellung_export = (
+                "permission_einstellung_export"
+                in request.POST
+            )
+
+            permission.permission_einstellung_kontakt = (
+                "permission_einstellung_kontakt"
+                in request.POST
+            )
+
+            permission.permission_einstellung_home = (
+                "permission_einstellung_home"
+                in request.POST
+            )
+
+            permission.permission_einstellung_audit_log = (
+                "permission_einstellung_audit_log"
+                in request.POST
+            )
+
+            permission.permission_einstellung_system_update = (
+                "permission_einstellung_system_update"
+                in request.POST
+            )
+
+
+
             permission.save()
 
         # =====================================================
@@ -7042,10 +7136,79 @@ def export(request):
                     reparatur.beschreibung or ""
                 ])
 
+                problem_cell = ws.cell(
+                    row=ws.max_row,
+                    column=2
+                )
+
+                problem_cell.alignment = Alignment(
+                    horizontal="left",
+                    vertical="top",
+                    wrap_text=True
+                )
+
+                text = reparatur.beschreibung or ""
+
+                if text:
+                    # حساب عدد الأسطر بشكل محافظ
+                    lines = 0
+
+                    for paragraph in text.split("\n"):
+                        if paragraph:
+                            lines += max(
+                                1,
+                                (len(paragraph) + 49) // 50
+                            )
+                        else:
+                            lines += 1
+
+                    # إضافة مساحة إضافية حتى لا يختفي آخر سطر
+                    ws.row_dimensions[ws.max_row].height = (
+                        lines * 18 + 10
+                    )
+                else:
+                    ws.row_dimensions[ws.max_row].height = 20
+
+
                 ws.append([
                     "Ausführung",
                     reparatur.ausfuehrung or ""
                 ])
+
+                ausfuehrung_cell = ws.cell(
+                    row=ws.max_row,
+                    column=2
+                )
+
+                ausfuehrung_cell.alignment = Alignment(
+                    horizontal="left",
+                    vertical="top",
+                    wrap_text=True
+                )
+
+                text = reparatur.ausfuehrung or ""
+
+                if text:
+                    # حساب عدد الأسطر بشكل محافظ
+                    lines = 0
+
+                    for paragraph in text.split("\n"):
+                        if paragraph:
+                            lines += max(
+                                1,
+                                (len(paragraph) + 49) // 50
+                            )
+                        else:
+                            lines += 1
+
+                    # إضافة مساحة إضافية حتى يظهر آخر سطر بالكامل
+                    ws.row_dimensions[ws.max_row].height = (
+                        lines * 18 + 10
+                    )
+                else:
+                    ws.row_dimensions[ws.max_row].height = 20
+
+               
 
 
                 # =================================================
@@ -7064,7 +7227,6 @@ def export(request):
 
                 ws.append([])
 
-
                 if messmittel:
 
                     for item in messmittel:
@@ -7078,7 +7240,7 @@ def export(request):
 
                     ws.append([
                         "Messmittel",
-                        ""
+                        "Nicht vorhanden"
                     ])
 
 
@@ -7292,7 +7454,6 @@ def export(request):
                             )
                         )
 
-
                         ln_start_row = ws.max_row + 1
 
 
@@ -7419,9 +7580,7 @@ def export(request):
                             ),
                         ])
 
-
                         ln_end_row = ws.max_row
-
 
                         ws.merge_cells(
                             start_row=ln_start_row,
@@ -7442,7 +7601,6 @@ def export(request):
                                 {}
                             )
                         )
-
 
                         nl_start_row = ws.max_row + 1
 
@@ -7570,9 +7728,7 @@ def export(request):
                             ),
                         ])
 
-
                         nl_end_row = ws.max_row
-
 
                         ws.merge_cells(
                             start_row=nl_start_row,
@@ -7581,7 +7737,7 @@ def export(request):
                             end_column=1
                         )
 
-                        
+
                         # =================================================
                         # MASCHINEN-BLOCK SPEICHERN
                         # =================================================
@@ -7594,8 +7750,6 @@ def export(request):
                             "nl_start": nl_start_row,
                             "nl_end": nl_end_row,
                         })
-
-                        
 
 
                     # =================================================
@@ -7612,6 +7766,7 @@ def export(request):
                             or {}
                         )
 
+
                         # =================================================
                         # TABELLENKOPF
                         # =================================================
@@ -7624,6 +7779,7 @@ def export(request):
                         ])
 
                         betten_header_row = ws.max_row
+
 
                         # =================================================
                         # POTENTIALAUSGLEICHSWIDERSTAND
@@ -7639,6 +7795,7 @@ def export(request):
                         potential_start_row = (
                             ws.max_row + 1
                         )
+
 
                         # -------------------------------------------------
                         # MESSPUNKT 1
@@ -7681,6 +7838,7 @@ def export(request):
                             ),
                         ])
 
+
                         # -------------------------------------------------
                         # MESSPUNKT 2
                         # -------------------------------------------------
@@ -7717,6 +7875,7 @@ def export(request):
                                 else ""
                             ),
                         ])
+
 
                         # -------------------------------------------------
                         # MESSPUNKT 3
@@ -7755,13 +7914,11 @@ def export(request):
                             ),
                         ])
 
+
                         potential_end_row = (
                             ws.max_row
                         )
 
-                        # -------------------------------------------------
-                        # ZELLEN ZUSAMMENFÜHREN
-                        # -------------------------------------------------
 
                         ws.merge_cells(
                             start_row=potential_start_row,
@@ -7776,6 +7933,8 @@ def export(request):
                             end_row=potential_end_row,
                             end_column=2
                         )
+
+
                         # =================================================
                         # GERÄTEABLEITSTROM ERSATZMESSUNG
                         # =================================================
@@ -7791,6 +7950,7 @@ def export(request):
                             ws.max_row + 1
                         )
 
+
                         intrakardial = (
                             ersatzmessung.get(
                                 "intrakardiale_anwendung"
@@ -7800,16 +7960,13 @@ def export(request):
 
                         ws.append([
                             "Geräteableitstrom\nErsatzmessung",
-
                             "Intrakardiale Anwendung: < 50 µA",
-
                             str(
                                 intrakardial.get(
                                     "messwert",
                                     ""
                                 )
                             ).strip(),
-
                             (
                                 "OK"
                                 if intrakardial.get(
@@ -7819,6 +7976,7 @@ def export(request):
                                 else ""
                             ),
                         ])
+
 
                         typ_b = (
                             ersatzmessung.get(
@@ -7845,6 +8003,7 @@ def export(request):
                                 else ""
                             ),
                         ])
+
 
                         laserlampe = (
                             ersatzmessung.get(
@@ -7875,6 +8034,7 @@ def export(request):
                             ),
                         ])
 
+
                         netzspannung = (
                             ersatzmessung.get(
                                 "netzspannung"
@@ -7901,9 +8061,11 @@ def export(request):
                             ),
                         ])
 
+
                         ersatz_end_row = (
                             ws.max_row
                         )
+
 
                         ws.merge_cells(
                             start_row=ersatz_start_row,
@@ -7911,6 +8073,7 @@ def export(request):
                             end_row=ersatz_end_row,
                             end_column=1
                         )
+
 
                         # =================================================
                         # BETTEN-BLOCK SPEICHERN
@@ -7951,15 +8114,25 @@ def export(request):
                             ws.max_row
                         )
 
-                        # هنا تضع كود:
-                        # format_pruefung_name
-                        # clean_pruefung_path
-                        # export_pruefung_data
-                        # الموجود عندك حاليًا
+                        # -------------------------------------------------
+                        # DEIN BISHERIGER CODE
+                        # -------------------------------------------------
 
                         export_pruefung_data(
                             daten
                         )
+
+
+                # =================================================
+                # KEINE ELEKTRISCHE PRÜFUNG
+                # =================================================
+
+                else:
+
+                    ws.append([
+                        "Elektrische Prüfung",
+                        "Nein"
+                    ])
 
 
                 # =================================================

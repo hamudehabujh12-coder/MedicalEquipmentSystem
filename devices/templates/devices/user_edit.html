@@ -478,6 +478,8 @@
                     ⚙️ Einstellungen
                 </div>
 
+                <!-- HAUPTBEREICH EINSTELLUNGEN -->
+
                 <label class="permission-item">
 
                     <input
@@ -491,6 +493,8 @@
                         {% if not is_admin %}
                             disabled
                         {% endif %}
+
+                        onchange="toggleEinstellungen()"
                     >
 
                     <span>
@@ -499,9 +503,387 @@
 
                 </label>
 
-            </div>
 
-        </div>
+                <!-- =================================================
+                    EINSTELLUNGEN UNTERBEREICHE
+                ================================================== -->
+
+                <div
+                    id="einstellungen-subpermissions"
+                    style="
+                        {% if not permissions.permission_einstellungen %}
+                            display:none;
+                        {% endif %}
+                    "
+                >
+
+                    <div class="settings-subtitle">
+                        Berechtigungen für einzelne Einstellungen
+                    </div>
+
+
+                    <!-- BENUTZERVERWALTUNG -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_benutzer"
+
+                            {% if permissions.permission_einstellung_benutzer %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            👥 Benutzerverwaltung
+                        </span>
+
+                    </label>
+
+
+                    <!-- STANDORTE -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_standorte"
+
+                            {% if permissions.permission_einstellung_standorte %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            🏥 Standorte
+                        </span>
+
+                    </label>
+
+
+                    <!-- GERÄTEARTEN -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_geraetarten"
+
+                            {% if permissions.permission_einstellung_geraetarten %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            🩺 Gerätearten
+                        </span>
+
+                    </label>
+
+
+                    <!-- PRÜFARTEN -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_pruefarten"
+
+                            {% if permissions.permission_einstellung_pruefarten %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            🛠️ Prüfarten
+                        </span>
+
+                    </label>
+
+
+                    <!-- MESSMITTEL -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_messmittel"
+
+                            {% if permissions.permission_einstellung_messmittel %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            📏 Messmittel
+                        </span>
+
+                    </label>
+
+
+                    <!-- DOKUMENTTYPEN -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_dokumenttypen"
+
+                            {% if permissions.permission_einstellung_dokumenttypen %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            📁 Dokumenttypen
+                        </span>
+
+                    </label>
+
+
+                    <!-- DASHBOARD WIDGETS -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_dashboard_widgets"
+
+                            {% if permissions.permission_einstellung_dashboard_widgets %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            📊 Dashboard Widgets
+                        </span>
+
+                    </label>
+
+
+                    <!-- GERÄTEDETAILS -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_geraetedetails"
+
+                            {% if permissions.permission_einstellung_geraetedetails %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            🔧 Gerätedetails
+                        </span>
+
+                    </label>
+
+
+                    <!-- RECHNUNG KATEGORIEN -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_rechnung_kategorien"
+
+                            {% if permissions.permission_einstellung_rechnung_kategorien %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            🏷️ Rechnung Kategorien
+                        </span>
+
+                    </label>
+
+
+                    <!-- BACKUP -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_backup"
+
+                            {% if permissions.permission_einstellung_backup %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            💾 Backup
+                        </span>
+
+                    </label>
+
+
+                    <!-- EXPORT -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_export"
+
+                            {% if permissions.permission_einstellung_export %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            📤 Export
+                        </span>
+
+                    </label>
+
+
+                    <!-- KONTAKT -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_kontakt"
+
+                            {% if permissions.permission_einstellung_kontakt %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            📞 Kontakt
+                        </span>
+
+                    </label>
+
+
+                    <!-- HOME -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_home"
+
+                            {% if permissions.permission_einstellung_home %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            🏠 Home
+                        </span>
+
+                    </label>
+
+
+                    <!-- AUDIT LOG -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_audit_log"
+
+                            {% if permissions.permission_einstellung_audit_log %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            📜 Audit Log
+                        </span>
+
+                    </label>
+
+
+                    <!-- SYSTEM UPDATE -->
+
+                    <label class="permission-item sub-permission">
+
+                        <input
+                            type="checkbox"
+                            name="permission_einstellung_system_update"
+
+                            {% if permissions.permission_einstellung_system_update %}
+                                checked
+                            {% endif %}
+
+                            {% if not is_admin %}
+                                disabled
+                            {% endif %}
+                        >
+
+                        <span>
+                            🔄 System Update
+                        </span>
+
+                    </label>
+
+                </div>
+
+            </div>
 
 
         <!-- =====================================================
@@ -721,6 +1103,26 @@
     accent-color:#16a34a;
 }
 
+/* =========================================================
+   EINSTELLUNGEN – UNTERBEREICHE
+========================================================= */
+
+.settings-subtitle{
+    padding:14px 16px 8px 48px;
+    color:#6b7280;
+    font-size:14px;
+    font-weight:bold;
+    background:#f9fafb;
+}
+
+.sub-permission{
+    padding-left:48px;
+    border-top:1px solid #f3f4f6;
+}
+
+.sub-permission span{
+    font-size:15px;
+}
 
 /* =========================================================
    BUTTONS
@@ -829,5 +1231,34 @@
 }
 
 </style>
+<script>
 
+function toggleEinstellungen(){
+
+    const checkbox =
+        document.querySelector(
+            'input[name="permission_einstellungen"]'
+        );
+
+    const subpermissions =
+        document.getElementById(
+            "einstellungen-subpermissions"
+        );
+
+    if (!checkbox || !subpermissions) {
+        return;
+    }
+
+    if (checkbox.checked) {
+
+        subpermissions.style.display = "block";
+
+    } else {
+
+        subpermissions.style.display = "none";
+
+    }
+}
+
+</script>
 {% endblock %}

@@ -1787,6 +1787,71 @@ class UserPermission(models.Model):
         default=False
     )
 
+    # ==============================
+    # EINSTELLUNGEN – UNTERBEREICHE
+    # ==============================
+
+    permission_einstellung_benutzer = models.BooleanField(
+        default=False
+    )
+   
+
+    permission_einstellung_standorte = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_geraetarten = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_pruefarten = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_messmittel = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_dokumenttypen = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_dashboard_widgets = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_geraetedetails = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_rechnung_kategorien = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_backup = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_export = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_kontakt = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_home = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_audit_log = models.BooleanField(
+        default=False
+    )
+
+    permission_einstellung_system_update = models.BooleanField(
+        default=False
+    )
+
     def __str__(self):
         return f"Berechtigungen - {self.user.username}"
 

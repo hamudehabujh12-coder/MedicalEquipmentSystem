@@ -8,85 +8,125 @@
 
 <div class="settings-grid">
 
+    {% if is_admin or permissions.permission_einstellung_benutzer %}
     <a href="{% url 'user_list' %}" class="settings-card">
         👥
         <h3>Benutzerverwaltung</h3>
     </a>
+    {% endif %}
 
+
+    {% if is_admin or permissions.permission_einstellung_standorte %}
     <a href="{% url 'standort_list' %}" class="settings-card">
-    🏥
-    <h3>Standorte</h3>
-
+        🏥
+        <h3>Standorte</h3>
     </a>
+    {% endif %}
 
+
+    {% if is_admin or permissions.permission_einstellung_geraetarten %}
     <a href="{% url 'geraetarten' %}" class="settings-card">
         🩺
         <h3>Gerätearten</h3>
     </a>
- 
+    {% endif %}
+
+
+    {% if is_admin or permissions.permission_einstellung_pruefarten %}
     <a href="{% url 'pruefarten' %}" class="settings-card">
         🛠️
-        <h3> Prüfarten</h3>
+        <h3>Prüfarten</h3>
     </a>
-    
+    {% endif %}
+
+
+    {% if is_admin or permissions.permission_einstellung_messmittel %}
     <a href="{% url 'messmittel_list' %}" class="settings-card">
         📏
         <h3>Messmittel</h3>
     </a>
+    {% endif %}
 
+
+    {% if is_admin or permissions.permission_einstellung_dokumenttypen %}
     <a href="{% url 'document_types' %}" class="settings-card">
         📁
         <h3>Dokumenttypen</h3>
     </a>
+    {% endif %}
 
 
+    {% if is_admin or permissions.permission_einstellung_dashboard_widgets %}
     <a href="{% url 'dashboard_widgets' %}" class="settings-card">
         📊
         <h3>Dashboard Widgets</h3>
     </a>
-    
+    {% endif %}
+
+
+    {% if is_admin or permissions.permission_einstellung_geraetedetails %}
     <a href="{% url 'geraetedetails_settings' %}" class="settings-card">
         🔧
         <h3>Gerätedetails</h3>
     </a>
+    {% endif %}
 
+
+    {% if is_admin or permissions.permission_einstellung_rechnung_kategorien %}
     <a href="{% url 'rechnung_kategorie_list' %}" class="settings-card">
         🏷️
         <h3>Rechnung Kategorien</h3>
     </a>
-    
+    {% endif %}
+
+
+    {% if is_admin or permissions.permission_einstellung_backup %}
     <a href="{% url 'backup' %}" class="settings-card">
         💾
         <h3>Backup</h3>
     </a>
+    {% endif %}
 
+
+    {% if is_admin or permissions.permission_einstellung_export %}
     <a href="{% url 'export' %}" class="settings-card">
         📤
         <h3>Export</h3>
     </a>
+    {% endif %}
 
 
+    {% if is_admin or permissions.permission_einstellung_kontakt %}
     <a href="{% url 'kontakt_edit' %}" class="settings-card">
-        📞 
+        📞
         <h3>Kontakt</h3>
     </a>
+    {% endif %}
 
 
+    {% if is_admin or permissions.permission_einstellung_home %}
     <a href="{% url 'home_edit' %}" class="settings-card">
-        🏠 
+        🏠
         <h3>Home</h3>
-        
     </a>
+    {% endif %}
 
+
+    {% if is_admin or permissions.permission_einstellung_audit_log %}
     <a href="{% url 'audit_log' %}" class="settings-card">
         📜
         <h3>Audit Log</h3>
     </a>
+    {% endif %}
 
+
+    {% if is_admin or permissions.permission_einstellung_system_update %}
     <a href="{% url 'system_update' %}" class="settings-card">
         🔄
         <h3>System Update</h3>
     </a>
+    {% endif %}
+
 </div>
 
 <style>
