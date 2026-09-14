@@ -101,17 +101,30 @@ def rechnung_permission_required(view_func):
     @login_required
     def wrapper(request, *args, **kwargs):
 
-        # Superuser darf immer auf Rechnung zugreifen
+        # ==========================================
+        # ADMIN
+        # ==========================================
+
         if request.user.is_superuser:
             return view_func(request, *args, **kwargs)
 
-        # Benutzer mit Rechnung-Berechtigung
-        if request.user.has_perm(
-            "devices.access_rechnung"
-        ):
+        # ==========================================
+        # BENUTZER-BERECHTIGUNG
+        # ==========================================
+
+        permission = getattr(
+            request.user,
+            "custom_permissions",
+            None
+        )
+
+        if permission and permission.permission_rechnung:
             return view_func(request, *args, **kwargs)
 
-        # Keine Berechtigung
+        # ==========================================
+        # KEINE BERECHTIGUNG
+        # ==========================================
+
         return render(
             request,
             "403.html",
