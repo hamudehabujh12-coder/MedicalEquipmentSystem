@@ -5670,6 +5670,7 @@ def filterwechsel_history(request):
 
     # ==========================================
     # SUCHE
+    # Inventarnummer + Filtercode
     # ==========================================
 
     search = request.GET.get(
@@ -5680,7 +5681,13 @@ def filterwechsel_history(request):
     if search:
 
         filterwechsel = filterwechsel.filter(
-            inventarnummer__icontains=search
+            Q(
+                geraet__inventory_number__icontains=search
+            )
+            |
+            Q(
+                filtercode__icontains=search
+            )
         )
 
 
