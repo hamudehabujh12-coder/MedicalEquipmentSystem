@@ -6458,7 +6458,13 @@ def export(request):
 
     if request.user.is_superuser:
 
-        user_permission = None
+        permissions = {
+            "permission_geraete": True,
+            "permission_reparaturen": True,
+            "permission_filter": True,
+            "permission_wartung": True,
+            "permission_rechnung": True,
+        }
 
     else:
 
@@ -6478,6 +6484,22 @@ def export(request):
 
             return redirect("permission_denied")
 
+        permissions = {
+            "permission_geraete":
+                user_permission.permission_geraete,
+
+            "permission_reparaturen":
+                user_permission.permission_reparaturen,
+
+            "permission_filter":
+                user_permission.permission_filter,
+
+            "permission_wartung":
+                user_permission.permission_wartung,
+
+            "permission_rechnung":
+                user_permission.permission_rechnung,
+        }
 
    
 
@@ -10077,6 +10099,9 @@ def export(request):
 
             "kategorien":
                 kategorien,
+
+            "permissions":
+                permissions,
         }
     )
 
