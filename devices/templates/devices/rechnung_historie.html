@@ -385,21 +385,21 @@
 
                     </th>
 
-
-
-                    <!-- BEZAHLT AM -->
+                    <!-- Kostenstelle -->
 
                     <th>
-                        Bezahlt am
+                        Kostenstelle
+                    </th>
+
+                    <!-- Bemerkung -->
+
+                    <th>
+                        Bemerkung
                     </th>
 
 
 
-                    <!-- VERANTWORTLICHER -->
-
-                    <th>
-                        Verantwortlicher
-                    </th>
+                    
 
 
 
@@ -529,15 +529,9 @@
 
                 <td>
 
-                    {% if r.bezahlt_am %}
+                   {{ r.kostenstelle }}
 
-                        {{ r.bezahlt_am|date:"d.m.Y" }}
-
-                    {% else %}
-
-                        -
-
-                    {% endif %}
+                    
 
                 </td>
 
@@ -547,15 +541,9 @@
 
                 <td>
 
-                    {% if r.verantwortlicher %}
 
-                        {{ r.verantwortlicher }}
+                   {{ r.bemerkung }}
 
-                    {% else %}
-
-                        -
-
-                    {% endif %}
 
                 </td>
 
