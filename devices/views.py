@@ -56,6 +56,7 @@ from .models import (
     DevicePruefung,
     Pruefart,
     Reparatur,
+    Bestellung,
     Messmittel,
     PracticeSettings,
     DeviceDocument,
@@ -94,6 +95,8 @@ from .forms import (
     HomeInformationForm,
     ReparaturForm,
     ReparaturBearbeitenForm,
+    BestellungForm,
+    BestellungBearbeitenForm,
 )
 
 def rechnung_permission_required(view_func):
@@ -2322,6 +2325,223 @@ def reparatur_delete(request, pk):
     return redirect(
         "reparatur"
     )
+
+@login_required
+def bestellung_create(request):
+
+    if request.method == "POST":
+
+        form = BestellungForm(request.POST)
+
+        if form.is_valid():
+
+            bestellung = form.save()
+
+            geraet_info = ""
+
+            if bestellung.geraet:
+                geraet_info = (
+                    f" für Gerät {bestellung.geraet.name} "
+                    f"(Inventarnummer: "
+                    f"{bestellung.geraet.inventory_number})"
+                )
+
+            AuditLog.objects.create(
+                user=request.user,
+                action="CREATE",
+                model_name="Bestellung",
+                object_id=bestellung.id,
+                description=(
+                    f"Bestellung erstellt: "
+                    f"{bestellung.bestellartikel} "
+                    f"für Standort {bestellung.standort}"
+                    f"{geraet_info}"
+                )
+            )
+
+            messages.success(
+                request,
+                "Bestellung erfolgreich erstellt."
+            )
+
+            return redirect("bestellung_uebersicht")
+
+    else:
+
+        form = BestellungForm()
+
+    return render(
+        request,
+        "devices/bestellung_create.html",
+        {
+            "form": form,
+        }
+    )
+
+@login_required
+def bestellung_uebersicht(request):
+
+    bestellungen = Bestellung.objects.select_related(
+        "geraet",
+        "standort",
+        "kategorie"
+    ).filter(
+        status="In Bearbeitung"
+    ).order_by("-erstellt_am")
+
+    return render(
+        request,
+        "devices/bestellung_uebersicht.html",
+        {
+            "bestellungen": bestellungen,
+        }
+    )
+
+@login_required
+def bestellung_detail(request, pk):
+
+    bestellung = get_object_or_404(
+        Bestellung.objects.select_related(
+            "geraet",
+            "standort",
+            "kategorie"
+        ),
+        pk=pk
+    )
+
+    # Herkunft der Seite ermitteln
+    source_page = (
+        request.POST.get("from")
+        or request.GET.get("from")
+        or "uebersicht"
+    )
+
+    if source_page not in ["uebersicht", "historie"]:
+        source_page = "uebersicht"
+
+    if request.method == "POST":
+
+        form = BestellungBearbeitenForm(
+            request.POST,
+            request.FILES,
+            instance=bestellung
+        )
+
+        if form.is_valid():
+
+            form.save()
+
+            messages.success(
+                request,
+                "Bestellung erfolgreich aktualisiert."
+            )
+
+            if source_page == "historie":
+                return redirect("bestellung_historie")
+
+            return redirect("bestellung_uebersicht")
+
+    else:
+
+        form = BestellungBearbeitenForm(
+            instance=bestellung
+        )
+
+    return render(
+        request,
+        "devices/bestellung_detail.html",
+        {
+            "bestellung": bestellung,
+            "form": form,
+            "source_page": source_page,
+        }
+    )
+
+@login_required
+def bestellung_historie(request):
+
+    bestellungen = Bestellung.objects.select_related(
+        "geraet",
+        "standort",
+        "kategorie"
+    ).filter(
+        status="Erledigt"
+    ).order_by("-erstellt_am")
+
+
+    # Suchfeld
+    search = request.GET.get("search", "").strip()
+
+    if search:
+        bestellungen = bestellungen.filter(
+            Q(bestellartikel__icontains=search) |
+            Q(besteller__icontains=search) |
+            Q(standort__name__icontains=search) |
+            Q(geraet__inventory_number__icontains=search) |
+            Q(geraet__name__icontains=search)
+        )
+
+
+    # Standort Filter
+    standort_id = request.GET.get("standort")
+
+    if standort_id:
+        bestellungen = bestellungen.filter(
+            standort_id=standort_id
+        )
+
+
+    # Kategorie Filter
+    kategorie_id = request.GET.get("kategorie")
+
+    if kategorie_id:
+        bestellungen = bestellungen.filter(
+            kategorie_id=kategorie_id
+        )
+
+
+    return render(
+        request,
+        "devices/bestellung_historie.html",
+        {
+            "bestellungen": bestellungen,
+            "search": search,
+            "standorte": Standort.objects.all(),
+            "kategorien": RechnungKategorie.objects.all(),
+        }
+    )
+@login_required
+def bestellung_delete(request, pk):
+
+    bestellung = get_object_or_404(Bestellung, pk=pk)
+
+    source_page = request.GET.get(
+        "from",
+        request.POST.get("from", "uebersicht")
+    )
+
+    if source_page not in ["uebersicht", "historie"]:
+        source_page = "uebersicht"
+
+    if request.method == "POST":
+
+        bestellung.delete()
+
+        messages.success(
+            request,
+            "Bestellung erfolgreich gelöscht."
+        )
+
+        if source_page == "historie":
+            return redirect("bestellung_historie")
+
+        return redirect("bestellung_uebersicht")
+
+    return redirect(
+        "bestellung_detail",
+        pk=pk
+    )
+
 
 @login_required
 def device_search(request):
@@ -5005,7 +5225,6 @@ def user_edit(request, user_id):
     if not request.user.is_superuser:
 
         if user != request.user:
-
             return redirect("permission_denied")
 
     # =========================================================
@@ -5027,23 +5246,19 @@ def user_edit(request, user_id):
         # =====================================================
 
         user.username = request.POST.get(
-            "username",
-            ""
+            "username", ""
         ).strip()
 
         user.first_name = request.POST.get(
-            "first_name",
-            ""
+            "first_name", ""
         ).strip()
 
         user.last_name = request.POST.get(
-            "last_name",
-            ""
+            "last_name", ""
         ).strip()
 
         user.email = request.POST.get(
-            "email",
-            ""
+            "email", ""
         ).strip()
 
         # =====================================================
@@ -5052,157 +5267,125 @@ def user_edit(request, user_id):
 
         if request.user.is_superuser:
 
-            # ================================================
-            # ROLE
-            # ================================================
-
-            role = request.POST.get(
-                "role"
-            )
+            role = request.POST.get("role")
 
             if role == "admin":
-
                 user.is_staff = True
                 user.is_superuser = True
-
             else:
-
                 user.is_staff = False
                 user.is_superuser = False
 
             user.save()
 
-            # ================================================
+            # =================================================
             # PERMISSIONS
-            # ================================================
+            # =================================================
 
             permission.permission_geraete = (
-                "permission_geraete"
-                in request.POST
+                "permission_geraete" in request.POST
             )
 
             permission.permission_reparaturen = (
-                "permission_reparaturen"
-                in request.POST
+                "permission_reparaturen" in request.POST
+            )
+
+            # NEU: BESTELLUNGEN
+            permission.permission_bestellungen = (
+                "permission_bestellungen" in request.POST
             )
 
             permission.permission_filter = (
-                "permission_filter"
-                in request.POST
+                "permission_filter" in request.POST
             )
 
             permission.permission_wartung = (
-                "permission_wartung"
-                in request.POST
+                "permission_wartung" in request.POST
             )
 
             permission.permission_dokumente = (
-                "permission_dokumente"
-                in request.POST
+                "permission_dokumente" in request.POST
             )
 
             permission.permission_rechnung = (
-                "permission_rechnung"
-                in request.POST
+                "permission_rechnung" in request.POST
             )
 
             permission.permission_firmeninfos = (
-                "permission_firmeninfos"
-                in request.POST
+                "permission_firmeninfos" in request.POST
             )
 
             permission.permission_kontakt = (
-                "permission_kontakt"
-                in request.POST
+                "permission_kontakt" in request.POST
             )
 
             permission.permission_einstellungen = (
-                "permission_einstellungen"
-                in request.POST
+                "permission_einstellungen" in request.POST
             )
 
-
-
-            # =====================================================
+            # =================================================
             # EINSTELLUNGEN – UNTERBEREICHE
-            # =====================================================
+            # =================================================
 
             permission.permission_einstellung_benutzer = (
-                "permission_einstellung_benutzer"
-                in request.POST
+                "permission_einstellung_benutzer" in request.POST
             )
 
             permission.permission_einstellung_standorte = (
-                "permission_einstellung_standorte"
-                in request.POST
+                "permission_einstellung_standorte" in request.POST
             )
 
             permission.permission_einstellung_geraetarten = (
-                "permission_einstellung_geraetarten"
-                in request.POST
+                "permission_einstellung_geraetarten" in request.POST
             )
 
             permission.permission_einstellung_pruefarten = (
-                "permission_einstellung_pruefarten"
-                in request.POST
+                "permission_einstellung_pruefarten" in request.POST
             )
 
             permission.permission_einstellung_messmittel = (
-                "permission_einstellung_messmittel"
-                in request.POST
+                "permission_einstellung_messmittel" in request.POST
             )
 
             permission.permission_einstellung_dokumenttypen = (
-                "permission_einstellung_dokumenttypen"
-                in request.POST
+                "permission_einstellung_dokumenttypen" in request.POST
             )
 
             permission.permission_einstellung_dashboard_widgets = (
-                "permission_einstellung_dashboard_widgets"
-                in request.POST
+                "permission_einstellung_dashboard_widgets" in request.POST
             )
 
             permission.permission_einstellung_geraetedetails = (
-                "permission_einstellung_geraetedetails"
-                in request.POST
+                "permission_einstellung_geraetedetails" in request.POST
             )
 
             permission.permission_einstellung_rechnung_kategorien = (
-                "permission_einstellung_rechnung_kategorien"
-                in request.POST
+                "permission_einstellung_rechnung_kategorien" in request.POST
             )
 
             permission.permission_einstellung_backup = (
-                "permission_einstellung_backup"
-                in request.POST
+                "permission_einstellung_backup" in request.POST
             )
 
             permission.permission_einstellung_export = (
-                "permission_einstellung_export"
-                in request.POST
+                "permission_einstellung_export" in request.POST
             )
 
             permission.permission_einstellung_kontakt = (
-                "permission_einstellung_kontakt"
-                in request.POST
+                "permission_einstellung_kontakt" in request.POST
             )
 
             permission.permission_einstellung_home = (
-                "permission_einstellung_home"
-                in request.POST
+                "permission_einstellung_home" in request.POST
             )
 
             permission.permission_einstellung_audit_log = (
-                "permission_einstellung_audit_log"
-                in request.POST
+                "permission_einstellung_audit_log" in request.POST
             )
 
             permission.permission_einstellung_system_update = (
-                "permission_einstellung_system_update"
-                in request.POST
+                "permission_einstellung_system_update" in request.POST
             )
-
-
 
             permission.save()
 
@@ -5211,10 +5394,6 @@ def user_edit(request, user_id):
         # =====================================================
 
         else:
-
-            # Benutzer darf NUR seine Benutzerdaten ändern.
-            # Rolle und Berechtigungen werden NICHT verändert.
-
             user.save()
 
         # =====================================================
@@ -5226,14 +5405,7 @@ def user_edit(request, user_id):
             "Benutzerdaten erfolgreich geändert."
         )
 
-        # =====================================================
-        # ADMIN → USER LIST
-        # NORMALER BENUTZER → SEINE DATEN
-        # =====================================================
-
-        return redirect(
-            "user_list"
-        )
+        return redirect("user_list")
 
     # =========================================================
     # GET

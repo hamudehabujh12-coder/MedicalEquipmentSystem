@@ -1,0 +1,195 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <h2 class="mb-4">🛒 Bestellungsübersicht</h2>
+
+    <div class="table-responsive">
+
+        <table class="table table-striped table-hover table-bordered bestellungen-table">
+
+            <colgroup>
+                <col style="width: 100px;">
+                <col style="width: 110px;">
+                <col style="width: 280px;">
+                <col style="width: 110px;">
+                <col style="width: 120px;">
+                <col style="width: 110px;">
+                <col style="width: 150px;">
+                <col style="width: 130px;">
+            </colgroup>
+
+            <thead class="table-dark">
+                <tr>
+                    <th>Kategorie</th>
+                    <th>Standort</th>
+                    <th>Bestellartikel</th>
+                    <th>Besteller</th>
+                    <th>Bestelldatum</th>
+                    <th>Inventarnummer</th>
+                    <th>Gerätebezeichnung</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for bestellung in bestellungen %}
+
+                <tr
+                    class="bestellung-row"
+                    data-url="{% url 'bestellung_detail' bestellung.id %}?from=uebersicht"
+                    onclick="window.location.href=this.dataset.url"
+                    onkeydown="if(event.key === 'Enter') window.location.href=this.dataset.url"
+                    tabindex="0"
+                    style="cursor:pointer;"
+                >
+
+                    <td title="{{ bestellung.kategorie.name|default:'-' }}">
+                        {% if bestellung.kategorie %}
+                            {{ bestellung.kategorie.name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td title="{{ bestellung.standort|default:'-' }}">
+                        {{ bestellung.standort|default:"-" }}
+                    </td>
+
+                    <td title="{{ bestellung.bestellartikel }}">
+                        {{ bestellung.bestellartikel }}
+                    </td>
+
+                    <td title="{{ bestellung.besteller }}">
+                        {{ bestellung.besteller }}
+                    </td>
+
+                    <td>
+                        {{ bestellung.erstellt_am|date:"d.m.Y H:i" }}
+                    </td>
+
+                    <td title="{{ bestellung.geraet.inventory_number|default:'-' }}">
+                        {% if bestellung.geraet %}
+                            {{ bestellung.geraet.inventory_number }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td title="{{ bestellung.geraet.name|default:'-' }}">
+                        {% if bestellung.geraet %}
+                            {{ bestellung.geraet.name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if bestellung.status == "Erledigt" %}
+                            <span class="status-badge erledigt">
+                                ✅ Erledigt
+                            </span>
+                        {% elif bestellung.status == "In Bearbeitung" %}
+                            <span class="status-badge bearbeitung">
+                                🔧 In Bearbeitung
+                            </span>
+                        {% endif %}
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="8" class="text-center">
+                        Keine Bestellungen vorhanden.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<style>
+/* BESTELLUNGSÜBERSICHT */
+
+.bestellungen-table {
+    width: 100% !important;
+    min-width: 1100px !important;
+    max-width: none !important;
+
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+}
+
+/* Alle Tabellenzellen */
+
+.bestellungen-table th,
+.bestellungen-table td {
+    box-sizing: border-box !important;
+
+    height: 55px !important;
+    max-height: 55px !important;
+
+    padding: 10px !important;
+
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+
+    vertical-align: middle !important;
+}
+
+/* Status */
+
+.bestellungen-table .status-badge {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 6px 8px;
+    border-radius: 15px;
+}
+/* STATUS BADGES */
+
+.bestellungen-table .status-badge {
+    display: inline-block !important;
+    padding: 6px 10px !important;
+    border-radius: 15px !important;
+
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Erledigt - Grün */
+
+.bestellungen-table .status-badge.erledigt {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+}
+
+/* In Bearbeitung - Gelb */
+
+.bestellungen-table .status-badge.bearbeitung {
+    background-color: #ffc107 !important;
+    color: #000000 !important;
+}
+</style>
+
+{% endblock %}

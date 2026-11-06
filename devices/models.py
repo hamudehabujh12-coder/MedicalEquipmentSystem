@@ -1777,6 +1777,10 @@ class UserPermission(models.Model):
         default=False
     )
 
+    permission_bestellungen = models.BooleanField(
+        default=False
+    )
+
     permission_rechnung = models.BooleanField(
         default=False
     )
@@ -1874,3 +1878,92 @@ def create_user_permission(sender, instance, created, **kwargs):
         UserPermission.objects.get_or_create(
             user=instance
         )
+
+
+    
+# =========================================================
+# BESTELLUNGEN
+# =========================================================
+
+class Bestellung(models.Model):
+
+    geraet = models.ForeignKey(
+        Device,
+        on_delete=models.PROTECT,
+        related_name="bestellungen",
+        verbose_name="Gerät",
+        null=True,
+        blank=True
+    )
+
+    bestellartikel = models.TextField(
+        "Bestellartikel"
+    )
+
+    standort = models.ForeignKey(
+        Standort,
+        on_delete=models.PROTECT,
+        related_name="bestellungen",
+        verbose_name="Standort",
+        null=True,
+        blank=True
+    )
+
+    kategorie = models.ForeignKey(
+        RechnungKategorie,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bestellungen",
+        verbose_name="Kategorie"
+    )
+
+    besteller = models.CharField(
+        "Besteller",
+        max_length=100
+    )
+
+    erstellt_am = models.DateTimeField(
+        "Erstellt am",
+        auto_now_add=True
+    )
+
+    STATUS_CHOICES = [
+        ("In Bearbeitung", "In Bearbeitung"),
+        ("Erledigt", "Erledigt"),
+    ]
+
+    status = models.CharField(
+        "Status",
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default="In Bearbeitung"
+    )
+
+    lieferscheinnummer = models.CharField(
+        "Lieferscheinnummer",
+        max_length=100,
+        null=True,
+        blank=True
+    )
+    
+    lieferdatum = models.DateField(
+        "Lieferdatum",
+        null=True,
+        blank=True
+    )
+
+    lieferschein = models.FileField(
+        "Lieferschein",
+        upload_to="lieferscheine/",
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        ordering = ["-erstellt_am"]
+        verbose_name = "Bestellung"
+        verbose_name_plural = "Bestellungen"
+
+    def __str__(self):
+        return f"{self.bestellartikel} - {self.standort}"

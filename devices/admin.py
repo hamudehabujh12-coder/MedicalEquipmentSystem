@@ -10,6 +10,7 @@ from .models import (
 
 from .models import TechnicianDocument
 
+
 admin.site.register(TechnicianDocument)
 from .models import Geraetart
 
@@ -113,3 +114,4 @@ class SystemUpdateAdmin(admin.ModelAdmin):
         "finished_at",
         "created_at",
     )
+

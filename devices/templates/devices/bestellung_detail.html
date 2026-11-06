@@ -1,0 +1,278 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <h2 class="mb-4">📦 Bestellung Details</h2>
+
+    <!-- Hauptformular -->
+    <form id="detail-form"
+          method="post"
+          enctype="multipart/form-data"
+          action="{% url 'bestellung_detail' bestellung.id %}?from={{ source_page }}">
+
+        {% csrf_token %}
+
+        <input type="hidden" name="from" value="{{ source_page }}">
+
+        <!-- Gerät -->
+        <div class="form-group mb-3">
+            <label>Gerät</label>
+
+            {% if bestellung.geraet %}
+                <input type="text"
+                       class="form-control"
+                       value="{{ bestellung.geraet.inventory_number }} | {{ bestellung.geraet.name }}"
+                       readonly>
+            {% else %}
+                <input type="text"
+                       class="form-control"
+                       value="Kein Gerät zugeordnet"
+                       readonly>
+            {% endif %}
+        </div>
+
+        <!-- Bestellartikel -->
+        <div class="form-group mb-3">
+            <label>Bestellartikel</label>
+            <textarea class="form-control"
+                      rows="3"
+                      readonly>{{ bestellung.bestellartikel }}</textarea>
+        </div>
+
+        <!-- Standort -->
+        <div class="form-group mb-3">
+            <label>Standort</label>
+            <input type="text"
+                   class="form-control"
+                   value="{{ bestellung.standort|default:'-' }}"
+                   readonly>
+        </div>
+
+        <!-- Kategorie -->
+        <div class="form-group mb-3">
+            <label>Kategorie</label>
+            <input type="text"
+                   class="form-control"
+                   value="{{ bestellung.kategorie|default:'-' }}"
+                   readonly>
+        </div>
+
+        <!-- Besteller -->
+        <div class="form-group mb-3">
+            <label>Besteller</label>
+            <input type="text"
+                   class="form-control"
+                   value="{{ bestellung.besteller }}"
+                   readonly>
+        </div>
+
+        <!-- Bestelldatum -->
+        <div class="form-group mb-3">
+            <label>Bestelldatum</label>
+            <input type="text"
+                   class="form-control"
+                   value="{{ bestellung.erstellt_am|date:'d.m.Y H:i' }}"
+                   readonly>
+        </div>
+
+        <!-- STATUS -->
+        <h3 style="margin-top:30px;">
+            🔄 Status
+        </h3>
+
+        <div class="form-group mb-3">
+
+            <label for="id_bestellung_status">
+                Status
+            </label>
+
+            <select
+                name="status"
+                id="id_bestellung_status"
+                class="form-control"
+                style="
+                    width:100%;
+                    box-sizing:border-box;
+                    height:42px;
+                    min-height:42px;
+                    padding:8px 12px;
+                    border-radius:8px;
+                    background:white;
+                    color:#374151;
+                    border:1px solid #ccc;
+                    font-size:16px;
+                    cursor:pointer;
+                "
+            >
+                {% for value, label in form.status.field.choices %}
+
+                    <option
+                        value="{{ value }}"
+                        {% if form.status.value == value %}selected{% endif %}
+                    >
+                        {% if value == "In Bearbeitung" %}
+                            🟡 In Bearbeitung
+                        {% elif value == "Erledigt" %}
+                            🟢 Erledigt
+                        {% endif %}
+                    </option>
+
+                {% endfor %}
+            </select>
+
+            {{ form.status.errors }}
+
+        </div>
+
+        <!-- Lieferinformationen -->
+        <div id="lieferung-fields">
+
+            <hr>
+
+            <h4>📦 Lieferinformationen</h4>
+
+            <div class="form-group mb-3">
+                <label>Lieferscheinnummer</label>
+                {{ form.lieferscheinnummer }}
+                {{ form.lieferscheinnummer.errors }}
+            </div>
+
+            <div class="form-group mb-3">
+                <label>Lieferdatum</label>
+                {{ form.lieferdatum }}
+                {{ form.lieferdatum.errors }}
+            </div>
+
+            <div class="form-group mb-3">
+                <label>Lieferschein hochladen</label>
+                {{ form.lieferschein }}
+                {{ form.lieferschein.errors }}
+
+            </div>
+
+        </div>
+
+    </form>
+    <!-- Ende Hauptformular -->
+
+
+    <!-- Buttons -->
+    <div class="form-buttons mt-4">
+
+        <!-- 1. Speichern -->
+        <button type="submit"
+                form="detail-form"
+                class="btn btn-primary">
+            💾 Speichern
+        </button>
+
+        <!-- 2. Bestellung löschen -->
+        <button type="submit"
+                form="delete-form"
+                class="btn btn-danger">
+            🗑️ Bestellung löschen
+        </button>
+
+        <!-- 3. Abbrechen -->
+        {% if source_page == "historie" %}
+
+            <a href="{% url 'bestellung_historie' %}"
+               class="btn btn-secondary">
+                ❌ Abbrechen
+            </a>
+
+        {% else %}
+
+            <a href="{% url 'bestellung_uebersicht' %}"
+               class="btn btn-secondary">
+                ❌ Abbrechen
+            </a>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- Separates Löschformular -->
+    <form id="delete-form"
+          method="post"
+          action="{% url 'bestellung_delete' bestellung.id %}?from={{ source_page }}"
+          onsubmit="return confirm('Möchten Sie diese Bestellung wirklich löschen?');">
+
+        {% csrf_token %}
+
+        <input type="hidden"
+               name="from"
+               value="{{ source_page }}">
+
+    </form>
+
+</div>
+
+
+<!-- JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const statusSelect = document.getElementById("id_bestellung_status");
+    const lieferungFields = document.getElementById("lieferung-fields");
+
+    if (!statusSelect || !lieferungFields) {
+        return;
+    }
+
+    function updateStatus() {
+
+        // Hintergrund bleibt immer weiß
+        statusSelect.style.backgroundColor = "white";
+        statusSelect.style.color = "#374151";
+
+        // Lieferinformationen abhängig vom Status anzeigen
+        if (statusSelect.value === "Erledigt") {
+
+            lieferungFields.style.display = "block";
+
+        } else {
+
+            lieferungFields.style.display = "none";
+        }
+    }
+
+    statusSelect.addEventListener("change", updateStatus);
+
+    updateStatus();
+
+});
+</script>
+
+
+<!-- CSS -->
+<style>
+
+#id_bestellung_status {
+
+    appearance: none;
+    -webkit-appearance: none;
+
+    width: 100%;
+    padding: 10px 40px 10px 12px;
+
+    border: none;
+    border-radius: 15px;
+
+    font-weight: bold;
+    cursor: pointer;
+
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+
+
+</style>
+
+{% endblock %}

@@ -381,6 +381,36 @@ urlpatterns = [
     views.reparatur_historie_detail,
     name="reparatur_historie_detail",
     ),
+
+    path(
+        "bestellung/neu/",
+        views.bestellung_create,
+        name="bestellung_create"
+    ),
+    path(
+        "bestellung/uebersicht/",
+        views.bestellung_uebersicht,
+        name="bestellung_uebersicht"
+    ),
+
+    path(
+        "bestellung/<int:pk>/",
+        views.bestellung_detail,
+        name="bestellung_detail"
+    ),
+
+    path(
+        "bestellung/historie/",
+        views.bestellung_historie,
+        name="bestellung_historie"
+    ),
+
+    path(
+        "bestellung/<int:pk>/loeschen/",
+        views.bestellung_delete,
+        name="bestellung_delete"
+    ),
+
     path(
     "device-documents/<str:document_type>/",
     views.device_documents_list,

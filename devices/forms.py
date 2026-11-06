@@ -705,3 +705,111 @@ class DashboardWidgetForm(forms.ModelForm):
             "order": forms.NumberInput(attrs={"class": "form-control"}),
             "visible": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
+
+# =========================================================
+# BESTELLUNG FORM
+# =========================================================
+
+class BestellungForm(forms.ModelForm):
+
+    class Meta:
+        from .models import Bestellung
+
+        model = Bestellung
+
+        fields = [
+            "geraet",
+            "bestellartikel",
+            "standort",
+            "kategorie",
+            "besteller",
+        ]
+
+        widgets = {
+
+            "geraet": forms.Select(
+                attrs={"class": "form-control"}
+            ),
+
+            "bestellartikel": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Benötigten Bestellartikel eingeben"
+                }
+            ),
+
+            "standort": forms.Select(
+                attrs={"class": "form-control"}
+            ),
+
+            "kategorie": forms.Select(
+                attrs={"class": "form-control"}
+            ),
+
+            "besteller": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Name des Bestellers"
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["geraet"].required = False
+        self.fields["bestellartikel"].required = True
+        self.fields["standort"].required = True
+        self.fields["kategorie"].required = True
+        self.fields["besteller"].required = True
+
+        self.fields["standort"].empty_label = "Standort auswählen"
+        self.fields["kategorie"].empty_label = "Kategorie auswählen"
+
+
+class BestellungBearbeitenForm(forms.ModelForm):
+
+    class Meta:
+        from .models import Bestellung
+
+        model = Bestellung
+
+        fields = [
+            "status",
+            "lieferscheinnummer",
+            "lieferdatum",
+            "lieferschein",
+        ]
+
+        widgets = {
+
+            "status": forms.Select(
+                attrs={
+                    "class": "form-control",
+                    "id": "id_bestellung_status"
+                }
+            ),
+
+            "lieferscheinnummer": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Lieferscheinnummer eingeben"
+                }
+            ),
+
+            "lieferdatum": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "type": "date",
+                    "class": "form-control",
+                    "style": "font-size: 15px; padding: 10px;"
+                }
+            ),
+
+            "lieferschein": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control"
+                }
+            ),
+        }

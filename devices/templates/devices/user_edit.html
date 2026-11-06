@@ -365,6 +365,39 @@
 
             </div>
 
+            <!-- =================================================
+                BESTELLUNGEN
+            ================================================== -->
+
+            <div class="permission-group">
+
+                <div class="permission-header">
+                    🛒 Bestellungen
+                </div>
+
+                <label class="permission-item">
+
+                    <input
+                        type="checkbox"
+                        name="permission_bestellungen"
+
+                        {% if permissions.permission_bestellungen %}
+                            checked
+                        {% endif %}
+
+                        {% if not is_admin %}
+                            disabled
+                        {% endif %}
+                    >
+
+                    <span>
+                        Bestellungen
+                    </span>
+
+                </label>
+
+            </div>
+
 
             <!-- =================================================
                  RECHNUNG

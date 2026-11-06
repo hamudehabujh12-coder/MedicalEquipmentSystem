@@ -846,6 +846,8 @@ body.dark .settings-card p{
 
         {% endif %}
 
+        
+
 
         <!-- =================================================
             WARTUNG
@@ -922,7 +924,45 @@ body.dark .settings-card p{
 
         {% endif %}
 
+        <!-- =================================================
+            BESTELLUNGEN
+        ================================================== -->
 
+        {% if request.user.is_superuser or request.user.custom_permissions.permission_bestellungen %}
+
+            <details
+                class="menu-group"
+                id="bestellungen-menu">
+
+                <summary>
+                    🛒 Bestellungen
+                </summary>
+
+                <ul>
+
+                    <li>
+                        <a href="{% url 'bestellung_create' %}">
+                            ➕ Neue Bestellung
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'bestellung_uebersicht' %}">
+                            📋 Bestellungsübersicht
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'bestellung_historie' %}">
+                            🗂 Bestellhistorie
+                        </a>
+                    </li>
+
+                </ul>
+
+            </details>
+
+        {% endif %}
         <!-- =================================================
             RECHNUNG
         ================================================== -->

@@ -1,0 +1,806 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <h2 class="mb-4">📚 Bestellhistorie</h2>
+
+    <!-- SUCHFELD -->
+
+    <form
+        method="GET"
+        id="search-form"
+        style="margin-bottom:8px;"
+    >
+
+        <input
+            type="text"
+            id="search-input"
+            name="search"
+            value="{{ search|default:'' }}"
+            placeholder="Suche nach Inventarnummer, Bestellartikel, Standort, Kategorie..."
+            autocomplete="off"
+            style="
+                width:450px;
+                max-width:100%;
+                padding:12px;
+                border-radius:8px;
+                border:1px solid #ccc;
+                font-size:14px;
+                box-sizing:border-box;
+            "
+        >
+
+        <button
+            type="submit"
+            style="
+                padding:12px 20px;
+                border-radius:8px;
+                background:#1f2937;
+                color:white;
+                border:none;
+                cursor:pointer;
+            "
+        >
+            🔍 Suchen
+        </button>
+
+    </form>
+
+
+    <!-- BESTELLHISTORIE TABELLE -->
+
+    <div class="table-responsive">
+
+        <table class="table table-striped table-hover table-bordered bestellhistorie-table">
+
+            <!-- Feste Spaltenbreiten -->
+
+            <colgroup>
+                <col style="width: 10%;">
+                <col style="width: 10%;">
+                <col style="width: 20%;">
+                <col style="width: 10%;">
+                <col style="width: 11%;">
+                <col style="width: 9%;">
+                <col style="width: 9%;">
+                <col style="width: 12%;">
+                <col style="width: 9%;">
+            </colgroup>
+
+
+            <thead class="table-dark">
+
+                <tr>
+
+                    <!-- Kategorie Filter -->
+
+                    <th class="filter" id="kategorieFilter">
+
+                        <span>Kategorie ▼</span>
+
+                        <div class="filter-menu" id="kategorieFilterMenu">
+
+                            {% for kategorie in kategorien %}
+
+                                <a
+                                    href="#"
+                                    class="filter-link"
+                                    data-param="kategorie"
+                                    data-value="{{ kategorie.id }}"
+                                >
+                                    {{ kategorie }}
+                                </a>
+
+                            {% endfor %}
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-param="kategorie"
+                                data-value=""
+                            >
+                                Alle
+                            </a>
+
+                        </div>
+
+                    </th>
+
+
+                    <!-- Standort Filter -->
+
+                    <th
+                        class="filter standort-filter"
+                        id="standortFilter"
+                    >
+
+                        <span class="standort-title">
+                            Standort ▼
+                        </span>
+
+                        <div
+                            class="filter-menu"
+                            id="standortFilterMenu"
+                        >
+
+                            {% for standort in standorte %}
+
+                                <a
+                                    href="#"
+                                    class="filter-link"
+                                    data-param="practice"
+                                    data-value="{{ standort.id }}"
+                                >
+                                    🏥 {{ standort.name }}
+                                </a>
+
+                            {% endfor %}
+
+                            <a
+                                href="#"
+                                class="filter-link"
+                                data-param="practice"
+                                data-value=""
+                            >
+                                Alle
+                            </a>
+
+                        </div>
+
+                    </th>
+
+
+                    <th>Bestellartikel</th>
+
+                    <th>Besteller</th>
+
+                    <th>Bestelldatum</th>
+
+                    <th>Lieferdatum</th>
+
+                    <th>Inventarnummer</th>
+
+                    <th>Gerätebezeichnung</th>
+
+                    <th>Status</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for bestellung in bestellungen %}
+
+                <tr
+                    class="bestellung-row"
+                    data-url="{% url 'bestellung_detail' bestellung.id %}?from=historie"
+                    onclick="window.location.href=this.dataset.url"
+                    onkeydown="if(event.key === 'Enter') window.location.href=this.dataset.url"
+                    tabindex="0"
+                    style="cursor:pointer;"
+                >
+
+                    <!-- Kategorie -->
+
+                    <td title="{{ bestellung.kategorie|default:'-' }}">
+                        {{ bestellung.kategorie|default:"-" }}
+                    </td>
+
+
+                    <!-- Standort -->
+
+                    <td title="{{ bestellung.standort|default:'-' }}">
+                        {{ bestellung.standort|default:"-" }}
+                    </td>
+
+
+                    <!-- Bestellartikel -->
+
+                    <td title="{{ bestellung.bestellartikel }}">
+                        {{ bestellung.bestellartikel }}
+                    </td>
+
+
+                    <!-- Besteller -->
+
+                    <td title="{{ bestellung.besteller }}">
+                        {{ bestellung.besteller }}
+                    </td>
+
+
+                    <!-- Bestelldatum -->
+
+                    <td>
+                        {{ bestellung.erstellt_am|date:"d.m.Y H:i" }}
+                    </td>
+
+
+                    <!-- Lieferdatum -->
+
+                    <td>
+                        {% if bestellung.lieferdatum %}
+
+                            {{ bestellung.lieferdatum|date:"d.m.Y" }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+                    </td>
+
+
+                    <!-- Inventarnummer -->
+
+                    <td title="{{ bestellung.geraet.inventory_number|default:'-' }}">
+
+                        {% if bestellung.geraet %}
+
+                            {{ bestellung.geraet.inventory_number }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- Gerätebezeichnung -->
+
+                    <td title="{{ bestellung.geraet.name|default:'-' }}">
+
+                        {% if bestellung.geraet %}
+
+                            {{ bestellung.geraet.name }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- Status -->
+
+                    <td>
+
+                        <span class="status-badge erledigt">
+                            🟢 Erledigt
+                        </span>
+
+                    </td>
+
+                </tr>
+
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="9" class="text-center">
+
+                        Keine abgeschlossenen Bestellungen vorhanden.
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- =================================
+     LIVE SUCHMARKIERUNG
+================================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const input = document.getElementById("search-input");
+
+    const table = document.querySelector(
+        ".bestellhistorie-table"
+    );
+
+    if (!input || !table) {
+        return;
+    }
+
+    // Suchbare Spalten
+    const allowedColumns = [0, 1, 2, 6, 7];
+
+    function highlightSearch() {
+
+        const searchText = input.value.trim();
+
+        const rows = table.querySelectorAll("tbody tr");
+
+        rows.forEach(function (row) {
+
+            const cells = row.querySelectorAll("td");
+
+            cells.forEach(function (cell, index) {
+
+                // Alte Markierungen entfernen
+
+                cell.querySelectorAll("mark").forEach(function (mark) {
+
+                    mark.replaceWith(
+                        document.createTextNode(mark.textContent)
+                    );
+
+                });
+
+                cell.normalize();
+
+                if (!allowedColumns.includes(index)) {
+                    return;
+                }
+
+                if (searchText === "") {
+                    return;
+                }
+
+                const regex = new RegExp(
+                    searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+                    "gi"
+                );
+
+                const walker = document.createTreeWalker(
+                    cell,
+                    NodeFilter.SHOW_TEXT
+                );
+
+                const nodes = [];
+
+                while (walker.nextNode()) {
+                    nodes.push(walker.currentNode);
+                }
+
+                nodes.forEach(function (node) {
+
+                    const text = node.textContent;
+
+                    const fragment = document.createDocumentFragment();
+
+                    let lastIndex = 0;
+                    let match;
+
+                    regex.lastIndex = 0;
+
+                    while ((match = regex.exec(text)) !== null) {
+
+                        fragment.appendChild(
+                            document.createTextNode(
+                                text.substring(lastIndex, match.index)
+                            )
+                        );
+
+                        const mark = document.createElement("mark");
+
+                        mark.textContent = match[0];
+
+                        fragment.appendChild(mark);
+
+                        lastIndex = match.index + match[0].length;
+
+                    }
+
+                    if (lastIndex === 0) {
+                        return;
+                    }
+
+                    fragment.appendChild(
+                        document.createTextNode(
+                            text.substring(lastIndex)
+                        )
+                    );
+
+                    node.replaceWith(fragment);
+
+                });
+
+            });
+
+        });
+
+    }
+
+
+    // Live-Suche
+
+    input.addEventListener("input", highlightSearch);
+
+    // Markierung beim Laden
+
+    highlightSearch();
+
+
+    // Cursor am Ende des Suchtextes
+
+    if (input.value.trim() !== "") {
+
+        input.focus();
+
+        input.setSelectionRange(
+            input.value.length,
+            input.value.length
+        );
+
+    }
+
+});
+
+</script>
+
+
+
+<!-- =================================
+     FILTER FUNKTION
+================================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const filters = [
+
+        {
+            button: "standortFilter",
+            menu: "standortFilterMenu"
+        },
+
+        {
+            button: "kategorieFilter",
+            menu: "kategorieFilterMenu"
+        }
+
+    ];
+
+
+    filters.forEach(function (item) {
+
+        const button = document.getElementById(item.button);
+
+        const menu = document.getElementById(item.menu);
+
+        if (!button || !menu) return;
+
+
+        button.addEventListener("click", function (event) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            filters.forEach(function (other) {
+
+                const otherMenu = document.getElementById(other.menu);
+
+                if (otherMenu && otherMenu !== menu) {
+
+                    otherMenu.classList.remove("show");
+
+                }
+
+            });
+
+
+            menu.classList.toggle("show");
+
+        });
+
+
+        menu.addEventListener("click", function (event) {
+
+            event.stopPropagation();
+
+        });
+
+
+        menu.querySelectorAll(".filter-link").forEach(function (link) {
+
+            link.addEventListener("click", function (event) {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                const param = this.dataset.param;
+
+                const value = this.dataset.value;
+
+
+                const url = new URL(window.location.href);
+
+
+                if (value === "") {
+
+                    url.searchParams.delete(param);
+
+                } else {
+
+                    url.searchParams.set(param, value);
+
+                }
+
+
+                window.location.href = url.toString();
+
+            });
+
+        });
+
+    });
+
+
+    // Schließen beim Klick außerhalb
+
+    document.addEventListener("click", function () {
+
+        filters.forEach(function (item) {
+
+            const menu = document.getElementById(item.menu);
+
+            if (menu) {
+
+                menu.classList.remove("show");
+
+            }
+
+        });
+
+    });
+
+});
+
+</script>
+
+
+
+<!-- =================================
+     CSS
+================================= -->
+
+<style>
+
+/* =================================
+   BESTELLHISTORIE TABLE
+================================= */
+
+.bestellhistorie-table {
+
+    width: 100% !important;
+
+    min-width: 1100px !important;
+
+    max-width: none !important;
+
+    table-layout: fixed !important;
+
+    border-collapse: collapse !important;
+
+}
+
+
+/* Alle Tabellenzellen */
+
+.bestellhistorie-table th,
+.bestellhistorie-table td {
+
+    box-sizing: border-box !important;
+
+    height: 55px !important;
+
+    max-height: 55px !important;
+
+    padding: 10px !important;
+
+    overflow: hidden !important;
+
+    white-space: nowrap !important;
+
+    text-overflow: ellipsis !important;
+
+    vertical-align: middle !important;
+
+}
+
+
+/* Lange Texte */
+
+.bestellhistorie-table td {
+
+    word-break: normal !important;
+
+    overflow-wrap: normal !important;
+
+}
+
+
+/* =================================
+   STATUS BADGE
+================================= */
+
+.bestellhistorie-table .status-badge {
+
+    display: inline-block !important;
+
+    max-width: 100%;
+
+    padding: 6px 10px !important;
+
+    border-radius: 15px !important;
+
+    overflow: hidden !important;
+
+    white-space: nowrap !important;
+
+    text-overflow: ellipsis !important;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+}
+
+
+/* Erledigt - Grün */
+
+.bestellhistorie-table .status-badge.erledigt {
+
+    background-color: #28a745 !important;
+
+    color: white !important;
+
+}
+
+
+/* =================================
+   FILTER DROPDOWN
+================================= */
+
+.filter {
+
+    position: relative;
+
+    cursor: pointer;
+
+}
+
+
+/* Dropdown standardmäßig verstecken */
+
+.filter-menu {
+
+    display: none;
+
+    position: absolute;
+
+    top: 100%;
+
+    left: 0;
+
+    min-width: 180px;
+
+    background: white;
+
+    border: 1px solid #ccc;
+
+    border-radius: 6px;
+
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+
+    z-index: 2000;
+
+    max-height: 250px;
+
+    overflow-y: auto;
+
+    text-align: left;
+
+}
+
+
+/* Dropdown öffnen */
+
+.filter-menu.show {
+
+    display: block;
+
+}
+
+
+/* Filter Optionen */
+
+.filter-menu .filter-link {
+
+    display: block;
+
+    padding: 10px 14px;
+
+    color: #333;
+
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    font-weight: normal;
+
+}
+
+
+.filter-menu .filter-link:hover {
+
+    background: #f1f1f1;
+
+}
+
+
+/* Dropdown über der Tabelle */
+
+.table-responsive {
+
+    overflow-x: auto !important;
+
+    overflow-y: visible !important;
+
+}
+
+
+.bestellhistorie-table thead th.filter {
+
+    position: relative;
+
+    z-index: 1000;
+
+}
+
+
+.filter-menu {
+
+    position: absolute;
+
+    top: 100%;
+
+    left: 0;
+
+    z-index: 2000;
+
+}
+
+
+/* Suchmarkierung */
+
+.bestellhistorie-table mark {
+
+    background: #ffeb3b;
+
+    color: #000;
+
+    padding: 0;
+
+}
+
+</style>
+
+
+{% endblock %}

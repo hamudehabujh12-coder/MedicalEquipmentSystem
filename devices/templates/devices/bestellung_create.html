@@ -1,0 +1,208 @@
+{% extends "devices/base.html" %}
+
+{% block content %}
+
+<h2> 🛒 Neue Bestellung</h2>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="form-group">
+
+        <label>Gerät (optional)</label>
+
+        {{ form.geraet.as_hidden }}
+
+        <input
+            type="text"
+            id="device-search"
+            class="form-control"
+            placeholder="Inventarnummer, Gerätebezeichnung oder Seriennummer..."
+            autocomplete="off"
+        >
+
+        <div id="device-results" class="search-results"></div>
+
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Bestellartikel</label>
+        {{ form.bestellartikel }}
+        {{ form.bestellartikel.errors }}
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Standort</label>
+        {{ form.standort }}
+        {{ form.standort.errors }}
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Kategorie</label>
+        {{ form.kategorie }}
+        {{ form.kategorie.errors }}
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Besteller</label>
+        {{ form.besteller }}
+        {{ form.besteller.errors }}
+    </div>
+
+    <div class="form-buttons mt-4">
+
+        <button type="submit" class="btn btn-primary">
+            💾 Speichern
+        </button>
+
+        <a href="{% url 'bestellung_uebersicht' %}"
+            class="btn btn-secondary">
+            ❌ Abbrechen
+        </a>
+
+    </div>
+
+</form>
+
+
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.getElementById("device-search");
+    const hiddenInput = document.getElementById("id_geraet");
+    const resultBox = document.getElementById("device-results");
+
+    searchInput.addEventListener("input", function () {
+
+        let query = this.value.trim();
+
+        if (query.length < 1) {
+            resultBox.innerHTML = "";
+            hiddenInput.value = "";
+            return;
+        }
+
+        fetch("{% url 'search_reparatur_device' %}?q=" + encodeURIComponent(query))
+
+            .then(response => response.json())
+
+            .then(data => {
+
+                resultBox.innerHTML = "";
+
+                if (data.length === 0) {
+                    resultBox.innerHTML =
+                        "<div class='no-result'>Keine Geräte gefunden</div>";
+                    return;
+                }
+
+                data.forEach(device => {
+
+                    let item = document.createElement("div");
+
+                    item.className = "search-item";
+
+                    item.textContent =
+                        device.inventory +
+                        " | Seriennummer: " + device.serial +
+                        " | Standort: " + device.standort;
+
+                    item.onclick = function () {
+
+                        hiddenInput.value = device.id;
+                        searchInput.value = device.inventory;
+                        resultBox.innerHTML = "";
+
+                    };
+
+                    resultBox.appendChild(item);
+
+                });
+
+            })
+
+            .catch(error => {
+                console.error("Fehler bei der Gerätesuche:", error);
+            });
+
+    });
+
+});
+
+</script>
+
+
+<style>
+
+.search-results{
+
+    margin-top:5px;
+
+    border:1px solid #ccc;
+
+    border-radius:8px;
+
+    background:white;
+
+    max-height:250px;
+
+    overflow-y:auto;
+
+}
+
+
+
+.search-item{
+
+    padding:12px;
+
+    cursor:pointer;
+
+    border-bottom:1px solid #eee;
+
+}
+
+
+
+.search-item:hover{
+
+    background:#f1f5f9;
+
+}
+
+
+
+.no-result{
+
+    padding:12px;
+
+    color:#777;
+
+}
+
+
+
+/* Standort und Kategorie */
+#id_standort,
+#id_kategorie {
+    font-size: 16px !important;
+    height: 42px !important;
+    padding: 8px 12px !important;
+}
+
+/* Beschriftungen */
+label[for="id_standort"],
+label[for="id_kategorie"] {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+
+
+</style>
+
+{% endblock %}
