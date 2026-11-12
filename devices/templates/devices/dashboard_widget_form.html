@@ -11,11 +11,9 @@
     {% endif %}
 </h1>
 
-
 <form method="post">
 
 {% csrf_token %}
-
 
 <!-- =========================================================
      WIDGET TYP
@@ -23,9 +21,7 @@
 
 <div class="form-group">
 
-    <label>
-        Widget Typ
-    </label>
+    <label>Widget Typ</label>
 
     <select
         name="widget_type"
@@ -35,10 +31,7 @@
         required
     >
 
-        <option value="">
-            Bitte wählen
-        </option>
-
+        <option value="">Bitte wählen</option>
 
         {% for value, label in types %}
 
@@ -58,37 +51,21 @@
 </div>
 
 
-
 <!-- =========================================================
      GERÄTE
 ========================================================= -->
 
-<div
-    id="device-fields"
-    class="dynamic-fields"
-    style="display:none;"
->
+<div id="device-fields" class="dynamic-fields" style="display:none;">
 
     <h3>🏥 Gerätefilter</h3>
 
-
-    <!-- STANDORT -->
-
     <div class="form-group">
 
-        <label>
-            Standort
-        </label>
+        <label>Standort</label>
 
-        <select
-            name="standort"
-            class="form-control"
-        >
+        <select name="standort" class="form-control">
 
-            <option value="">
-                Alle Standorte
-            </option>
-
+            <option value="">Alle Standorte</option>
 
             {% for s in standorte %}
 
@@ -107,24 +84,13 @@
 
     </div>
 
-
-    <!-- GERÄTEART -->
-
     <div class="form-group">
 
-        <label>
-            Geräteart
-        </label>
+        <label>Geräteart</label>
 
-        <select
-            name="geraetart"
-            class="form-control"
-        >
+        <select name="geraetart" class="form-control">
 
-            <option value="">
-                Alle Gerätearten
-            </option>
-
+            <option value="">Alle Gerätearten</option>
 
             {% for g in geraetarten %}
 
@@ -146,17 +112,11 @@
 </div>
 
 
-
 <!-- =========================================================
      REPARATUREN
-     EIN Widget
 ========================================================= -->
 
-<div
-    id="repair-fields"
-    class="dynamic-fields repair-fields"
-    style="display:none;"
->
+<div id="repair-fields" class="dynamic-fields repair-fields" style="display:none;">
 
     <h3>🔧 Reparaturen</h3>
 
@@ -164,13 +124,9 @@
         Wählen Sie den Status der Reparaturen.
     </p>
 
-
     <div class="form-group">
 
-        <label>
-            Reparaturstatus
-        </label>
-
+        <label>Reparaturstatus</label>
 
         <select
             name="reparatur_status"
@@ -178,10 +134,7 @@
             class="form-control"
         >
 
-            <option value="">
-                Alle Reparaturen
-            </option>
-
+            <option value="">Alle Reparaturen</option>
 
             {% for value, label in reparatur_status_choices %}
 
@@ -200,41 +153,24 @@
 
     </div>
 
-
 </div>
-
 
 
 <!-- =========================================================
      PRÜFUNGSART
 ========================================================= -->
 
-<div
-    id="pruef-fields"
-    class="dynamic-fields"
-    style="display:none;"
->
+<div id="pruef-fields" class="dynamic-fields" style="display:none;">
 
     <h3>📅 Prüfungsart</h3>
 
-
-    <!-- PRÜFUNGSART -->
-
     <div class="form-group">
 
-        <label>
-            Prüfungsart
-        </label>
+        <label>Prüfungsart</label>
 
-        <select
-            name="pruefart"
-            class="form-control"
-        >
+        <select name="pruefart" class="form-control">
 
-            <option value="">
-                Alle Prüfungsarten
-            </option>
-
+            <option value="">Alle Prüfungsarten</option>
 
             {% for p in pruefarten %}
 
@@ -253,24 +189,13 @@
 
     </div>
 
-
-    <!-- PRÜFUNGSSTATUS -->
-
     <div class="form-group">
 
-        <label>
-            Prüfungsstatus
-        </label>
+        <label>Prüfungsstatus</label>
 
-        <select
-            name="pruef_status"
-            class="form-control"
-        >
+        <select name="pruef_status" class="form-control">
 
-            <option value="">
-                Alle Status
-            </option>
-
+            <option value="">Alle Status</option>
 
             {% for value, label in pruef_status_choices %}
 
@@ -292,36 +217,21 @@
 </div>
 
 
-
 <!-- =========================================================
      RECHNUNGEN
 ========================================================= -->
 
-<div
-    id="rechnung-fields"
-    class="dynamic-fields"
-    style="display:none;"
->
+<div id="rechnung-fields" class="dynamic-fields" style="display:none;">
 
     <h3>🧾 Rechnungen</h3>
 
-
     <div class="form-group">
 
-        <label>
-            Rechnungsstatus
-        </label>
+        <label>Rechnungsstatus</label>
 
+        <select name="rechnung_status" class="form-control">
 
-        <select
-            name="rechnung_status"
-            class="form-control"
-        >
-
-            <option value="">
-                Alle Rechnungen
-            </option>
-
+            <option value="">Alle Rechnungen</option>
 
             {% for value, label in rechnung_status_choices %}
 
@@ -343,6 +253,51 @@
 </div>
 
 
+<!-- =========================================================
+     BESTELLUNGEN
+========================================================= -->
+
+<div id="bestellung-fields" class="dynamic-fields" style="display:none;">
+
+    <h3>🛒 Bestellungen</h3>
+
+    <p class="field-description">
+        Wählen Sie den Status der Bestellungen.
+    </p>
+
+    <div class="form-group">
+
+        <label>Bestellungsstatus</label>
+
+        <select
+            name="bestellung_status"
+            id="bestellung_status"
+            class="form-control"
+        >
+
+            <option value="">
+                Alle Bestellungen
+            </option>
+
+            {% for value, label in bestellung_status_choices %}
+
+                <option
+                    value="{{ value }}"
+                    {% if widget and widget.bestellung_status == value %}
+                        selected
+                    {% endif %}
+                >
+                    {{ label }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+</div>
+
 
 <!-- =========================================================
      EIGENER TITEL
@@ -350,9 +305,7 @@
 
 <div class="form-group">
 
-    <label>
-        Eigener Titel (optional)
-    </label>
+    <label>Eigener Titel (optional)</label>
 
     <input
         type="text"
@@ -365,146 +318,43 @@
 </div>
 
 
-
 <!-- =========================================================
      FARBE
 ========================================================= -->
 
 <div class="form-group">
 
-    <label>
-        Farbe
-    </label>
+    <label>Farbe</label>
 
+    <select name="color" class="form-control">
 
-    <select
-        name="color"
-        class="form-control"
-    >
+        <option value="primary" {% if not widget or widget.color == "primary" %}selected{% endif %}>🔵 Blau</option>
 
-        <option
-            value="primary"
-            {% if not widget or widget.color == "primary" %}
-                selected
-            {% endif %}
-        >
-            🔵 Blau
-        </option>
+        <option value="success" {% if widget.color == "success" %}selected{% endif %}>🟢 Grün</option>
 
+        <option value="danger" {% if widget.color == "danger" %}selected{% endif %}>🔴 Rot</option>
 
-        <option
-            value="success"
-            {% if widget.color == "success" %}
-                selected
-            {% endif %}
-        >
-            🟢 Grün
-        </option>
+        <option value="warning" {% if widget.color == "warning" %}selected{% endif %}>🟡 Gelb</option>
 
+        <option value="info" {% if widget.color == "info" %}selected{% endif %}>🔷 Türkis</option>
 
-        <option
-            value="danger"
-            {% if widget.color == "danger" %}
-                selected
-            {% endif %}
-        >
-            🔴 Rot
-        </option>
+        <option value="purple" {% if widget.color == "purple" %}selected{% endif %}>🟣 Lila</option>
 
+        <option value="dark" {% if widget.color == "dark" %}selected{% endif %}>⚫ Dunkel</option>
 
-        <option
-            value="warning"
-            {% if widget.color == "warning" %}
-                selected
-            {% endif %}
-        >
-            🟡 Gelb
-        </option>
+        <option value="orange" {% if widget.color == "orange" %}selected{% endif %}>🟠 Orange</option>
 
+        <option value="teal" {% if widget.color == "teal" %}selected{% endif %}>🟦 Petrol</option>
 
-        <option
-            value="info"
-            {% if widget.color == "info" %}
-                selected
-            {% endif %}
-        >
-            🔷 Türkis
-        </option>
+        <option value="pink" {% if widget.color == "pink" %}selected{% endif %}>🩷 Pink</option>
 
+        <option value="brown" {% if widget.color == "brown" %}selected{% endif %}>🟤 Braun</option>
 
-        <option
-            value="purple"
-            {% if widget.color == "purple" %}
-                selected
-            {% endif %}
-        >
-            🟣 Lila
-        </option>
-
-
-        <option
-            value="dark"
-            {% if widget.color == "dark" %}
-                selected
-            {% endif %}
-        >
-            ⚫ Dunkel
-        </option>
-
-
-        <option
-            value="orange"
-            {% if widget.color == "orange" %}
-                selected
-            {% endif %}
-        >
-            🟠 Orange
-        </option>
-
-
-        <option
-            value="teal"
-            {% if widget.color == "teal" %}
-                selected
-            {% endif %}
-        >
-            🟦 Petrol
-        </option>
-
-
-        <option
-            value="pink"
-            {% if widget.color == "pink" %}
-                selected
-            {% endif %}
-        >
-            🩷 Pink
-        </option>
-
-
-        <option
-            value="brown"
-            {% if widget.color == "brown" %}
-                selected
-            {% endif %}
-        >
-            🟤 Braun
-        </option>
-
-
-        <option
-            value="gray"
-            {% if widget.color == "gray" %}
-                selected
-            {% endif %}
-        >
-            ⚪ Grau
-        </option>
+        <option value="gray" {% if widget.color == "gray" %}selected{% endif %}>⚪ Grau</option>
 
     </select>
 
 </div>
-
 
 
 <!-- =========================================================
@@ -513,9 +363,7 @@
 
 <div class="form-group">
 
-    <label>
-        Reihenfolge
-    </label>
+    <label>Reihenfolge</label>
 
     <input
         type="number"
@@ -526,7 +374,6 @@
     >
 
 </div>
-
 
 
 <!-- =========================================================
@@ -551,44 +398,26 @@
 </div>
 
 
-
 <br>
-
 
 
 <!-- =========================================================
      BUTTONS
 ========================================================= -->
 
-<div
-    style="
-        display:flex;
-        gap:10px;
-        flex-wrap:wrap;
-        margin-top:20px;
-    "
->
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
 
-    <button
-        type="submit"
-        class="btn btn-success"
-    >
+    <button type="submit" class="btn btn-success">
         💾 Widget speichern
     </button>
 
-
-    <a
-        href="{% url 'dashboard_widgets' %}"
-        class="btn btn-secondary"
-    >
+    <a href="{% url 'dashboard_widgets' %}" class="btn btn-secondary">
         Zurück
     </a>
 
 </div>
 
-
 </form>
-
 
 
 <!-- =========================================================
@@ -601,13 +430,11 @@
     margin-bottom: 20px;
 }
 
-
 .form-group label {
     display: block;
     margin-bottom: 7px;
     font-weight: 600;
 }
-
 
 .form-control {
     width: 100%;
@@ -619,7 +446,6 @@
     box-sizing: border-box;
 }
 
-
 .dynamic-fields {
     padding: 20px;
     margin-bottom: 22px;
@@ -628,17 +454,14 @@
     border-radius: 8px;
 }
 
-
 .dynamic-fields h3 {
     margin-top: 0;
     margin-bottom: 18px;
 }
 
-
 .repair-fields {
     border-left-color: #f59e0b;
 }
-
 
 .field-description {
     margin-top: -8px;
@@ -646,32 +469,18 @@
     color: #6b7280;
 }
 
-
-.status-info {
-    margin-top: 15px;
-    padding: 12px 15px;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 7px;
-    line-height: 1.9;
-}
-
-
 .form-check {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-
 .form-check input {
     width: 18px;
     height: 18px;
 }
 
-
 </style>
-
 
 
 <!-- =========================================================
@@ -682,106 +491,75 @@
 
 function toggleWidgetFields() {
 
-    const type =
-        document.getElementById("widget_type").value;
+    const type = document.getElementById("widget_type").value;
+
+    // Alle Bereiche ausblenden
+
+    const fields = [
+        "device-fields",
+        "repair-fields",
+        "pruef-fields",
+        "rechnung-fields",
+        "bestellung-fields"
+    ];
+
+    fields.forEach(function(id) {
+
+        document.getElementById(id).style.display = "none";
+
+    });
 
 
-    /*
-     * Alle dynamischen Bereiche ausblenden
-     */
-
-    document.getElementById(
-        "device-fields"
-    ).style.display = "none";
-
-
-    document.getElementById(
-        "repair-fields"
-    ).style.display = "none";
-
-
-    document.getElementById(
-        "pruef-fields"
-    ).style.display = "none";
-
-
-    document.getElementById(
-        "rechnung-fields"
-    ).style.display = "none";
-
-
-    /*
-     * GERÄTE
-     */
+    // GERÄTE
 
     if (type === "devices") {
 
-        document.getElementById(
-            "device-fields"
-        ).style.display = "block";
+        document.getElementById("device-fields").style.display = "block";
 
     }
 
-
-    /*
-     * REPARATUREN
-     *
-     * Wichtig:
-     * Jetzt nur noch EIN Widget-Typ:
-     *
-     * repairs
-     */
+    // REPARATUREN
 
     else if (type === "repairs") {
 
-        document.getElementById(
-            "repair-fields"
-        ).style.display = "block";
+        document.getElementById("repair-fields").style.display = "block";
 
     }
 
-
-    /*
-     * PRÜFUNGSART
-     */
+    // PRÜFUNGSART
 
     else if (type === "pruefart") {
 
-        document.getElementById(
-            "pruef-fields"
-        ).style.display = "block";
+        document.getElementById("pruef-fields").style.display = "block";
 
     }
 
-
-    /*
-     * RECHNUNGEN
-     */
+    // RECHNUNGEN
 
     else if (type === "rechnung") {
 
-        document.getElementById(
-            "rechnung-fields"
-        ).style.display = "block";
+        document.getElementById("rechnung-fields").style.display = "block";
+
+    }
+
+    // BESTELLUNGEN
+
+    else if (type === "bestellungen") {
+
+        document.getElementById("bestellung-fields").style.display = "block";
 
     }
 
 }
 
 
+// Beim Laden der Seite
 
-/*
- * Beim Laden der Seite
- */
+document.addEventListener("DOMContentLoaded", function() {
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+    toggleWidgetFields();
 
-        toggleWidgetFields();
-
-    }
-);
+});
 
 </script>
 

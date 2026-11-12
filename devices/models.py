@@ -1028,39 +1028,22 @@ class HomeImage(models.Model):
 
 class DashboardWidget(models.Model):
 
-    # =========================================================
-    # WIDGET-TYPEN
-    # =========================================================
-
     WIDGET_TYPES = [
-
         ("devices_overview", "Geräteübersicht"),
-
         ("devices", "Geräte"),
-
         ("repairs", "Reparaturen"),
-
         ("filter_history", "Filterwechselhistorie"),
-
         ("pruefart", "Prüfungsart"),
-
         ("rechnung", "Rechnungen"),
-
+        ("bestellungen", "Bestellungen"),
         ("device_documents", "Medizingeräte Dokumente"),
-
         ("technician_documents", "Technikerdokumente"),
-
     ]
-
 
     widget_type = models.CharField(
         max_length=50,
         choices=WIDGET_TYPES
     )
-    # =========================================================
-    # BENUTZER
-    # Jeder Benutzer hat eigene Dashboard Widgets
-    # =========================================================
 
     user = models.ForeignKey(
         User,
@@ -1071,21 +1054,11 @@ class DashboardWidget(models.Model):
         verbose_name="Benutzer"
     )
 
-    # =========================================================
-    # EIGENER TITEL
-    # =========================================================
-
     title = models.CharField(
         max_length=200,
         blank=True,
         verbose_name="Eigener Titel"
     )
-
-
-    # =========================================================
-    # STANDORT
-    # Nur für Geräte
-    # =========================================================
 
     standort = models.ForeignKey(
         Standort,
@@ -1095,12 +1068,6 @@ class DashboardWidget(models.Model):
         verbose_name="Standort"
     )
 
-
-    # =========================================================
-    # GERÄTART
-    # Nur für Geräte
-    # =========================================================
-
     geraetart = models.ForeignKey(
         Geraetart,
         on_delete=models.CASCADE,
@@ -1109,22 +1076,15 @@ class DashboardWidget(models.Model):
         verbose_name="Geräteart"
     )
 
-
-    # =========================================================
-    # REPARATUR STATUS
-    # Für Widget "Reparaturen"
-    # =========================================================
+    # =====================================================
+    # REPARATURSTATUS
+    # =====================================================
 
     REPARATUR_STATUS_CHOICES = [
-
         ("offen", "🔵 Offen"),
-
         ("in_bearbeitung", "🟡 In Bearbeitung"),
-
         ("erledigt", "🟢 Erledigt"),
-
     ]
-
 
     reparatur_status = models.CharField(
         max_length=30,
@@ -1134,11 +1094,9 @@ class DashboardWidget(models.Model):
         verbose_name="Reparaturstatus"
     )
 
-
-    # =========================================================
+    # =====================================================
     # PRÜFUNGSART
-    # Für Widget "Prüfungsart"
-    # =========================================================
+    # =====================================================
 
     pruefart = models.ForeignKey(
         Pruefart,
@@ -1148,21 +1106,11 @@ class DashboardWidget(models.Model):
         verbose_name="Prüfungsart"
     )
 
-
-    # =========================================================
-    # PRÜFUNGS STATUS
-    # =========================================================
-
     PRUEF_STATUS_CHOICES = [
-
         ("gueltig", "🟢 Gültig"),
-
         ("faellig", "🟡 Fällig"),
-
         ("ueberfaellig", "🔴 Überfällig"),
-
     ]
-
 
     pruef_status = models.CharField(
         max_length=20,
@@ -1172,22 +1120,15 @@ class DashboardWidget(models.Model):
         verbose_name="Prüfungsstatus"
     )
 
-
-    # =========================================================
-    # RECHNUNG STATUS
-    # Für Widget "Rechnungen"
-    # =========================================================
+    # =====================================================
+    # RECHNUNGSSTATUS
+    # =====================================================
 
     RECHNUNG_STATUS_CHOICES = [
-
         ("offen", "🔵 Offen"),
-
         ("in_bearbeitung", "🟡 In Bearbeitung"),
-
         ("erledigt", "🟢 Erledigt"),
-
     ]
-
 
     rechnung_status = models.CharField(
         max_length=30,
@@ -1197,58 +1138,52 @@ class DashboardWidget(models.Model):
         verbose_name="Rechnungsstatus"
     )
 
+    # =====================================================
+    # BESTELLUNGSSTATUS
+    # =====================================================
 
-    # =========================================================
-    # SICHTBARKEIT
-    # =========================================================
+    BESTELLUNG_STATUS_CHOICES = [
+        ("In Bearbeitung", "🟡 In Bearbeitung"),
+        ("Erledigt", "🟢 Erledigt"),
+    ]
+
+    bestellung_status = models.CharField(
+        max_length=30,
+        choices=BESTELLUNG_STATUS_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name="Bestellungsstatus"
+    )
+
+    # =====================================================
+    # ALLGEMEINE EINSTELLUNGEN
+    # =====================================================
 
     visible = models.BooleanField(
         default=True,
         verbose_name="Im Dashboard anzeigen"
     )
 
+    order = models.PositiveIntegerField(default=0)
 
-    # =========================================================
-    # REIHENFOLGE
-    # =========================================================
-
-    order = models.PositiveIntegerField(
-        default=0
-    )
-
-
-    # =========================================================
+    # =====================================================
     # FARBEN
-    # =========================================================
+    # =====================================================
 
     COLOR_CHOICES = [
-
         ("primary", "🔵 Blau"),
-
         ("success", "🟢 Grün"),
-
         ("danger", "🔴 Rot"),
-
         ("warning", "🟡 Gelb"),
-
         ("info", "🔷 Türkis"),
-
         ("purple", "🟣 Lila"),
-
         ("dark", "⚫ Schwarz"),
-
         ("orange", "🟠 Orange"),
-
         ("teal", "🟦 Petrol"),
-
         ("pink", "🩷 Pink"),
-
         ("brown", "🟤 Braun"),
-
         ("gray", "⚪ Grau"),
-
     ]
-
 
     color = models.CharField(
         max_length=20,
@@ -1256,33 +1191,22 @@ class DashboardWidget(models.Model):
         default="primary"
     )
 
-
-    # =========================================================
+    # =====================================================
     # ICONS
-    # =========================================================
+    # =====================================================
 
     ICON_CHOICES = [
-
         ("bi-grid", "📊 Übersicht"),
-
         ("bi-hospital", "🏥 Krankenhaus"),
-
         ("bi-tools", "🛠 Reparaturen"),
-
         ("bi-filter", "🧪 Filterwechsel"),
-
         ("bi-calendar-check", "📅 Prüfungen"),
-
         ("bi-file-earmark-text", "📄 Rechnungen"),
-
+        ("bi-cart-check", "🛒 Bestellungen"),
         ("bi-heart-pulse", "❤️ Medizin"),
-
         ("bi-folder", "📁 Dokumente"),
-
         ("bi-gear", "⚙ Einstellungen"),
-
     ]
-
 
     icon = models.CharField(
         max_length=50,
@@ -1290,194 +1214,100 @@ class DashboardWidget(models.Model):
         default="bi-grid"
     )
 
-
-    # =========================================================
+    # =====================================================
     # META
-    # =========================================================
+    # =====================================================
 
     class Meta:
+        ordering = ["order"]
 
-        ordering = [
-            "order"
-        ]
-
-
-    # =========================================================
+    # =====================================================
     # DISPLAY TITLE
-    # =========================================================
+    # =====================================================
 
     @property
     def display_title(self):
 
-        # -----------------------------------------------------
-        # Eigener Titel
-        # -----------------------------------------------------
-
         if self.title:
-
             return self.title
 
-
-        # -----------------------------------------------------
-        # Geräte
-        # -----------------------------------------------------
-
         if self.widget_type == "devices":
-
-            if self.geraetart and self.standort:
-
-                return (
-                    f"{self.geraetart.name} - "
-                    f"{self.standort.name}"
-                )
+            parts = []
 
             if self.geraetart:
-
-                return self.geraetart.name
+                parts.append(self.geraetart.name)
 
             if self.standort:
+                parts.append(self.standort.name)
 
-                return self.standort.name
-
-
-        # -----------------------------------------------------
-        # Reparaturen
-        # -----------------------------------------------------
+            return " - ".join(parts) if parts else "Geräte"
 
         if self.widget_type == "repairs":
-
             if self.reparatur_status:
-
-                return (
-                    f"Reparaturen - "
-                    f"{self.get_reparatur_status_display()}"
-                )
-
-
-        # -----------------------------------------------------
-        # Prüfungsart
-        # -----------------------------------------------------
+                return f"Reparaturen - {self.get_reparatur_status_display()}"
 
         if self.widget_type == "pruefart":
-
-            if self.pruefart and self.pruef_status:
-
-                return (
-                    f"{self.pruefart.name} - "
-                    f"{self.get_pruef_status_display()}"
-                )
+            parts = []
 
             if self.pruefart:
+                parts.append(self.pruefart.name)
 
-                return self.pruefart.name
+            if self.pruef_status:
+                parts.append(self.get_pruef_status_display())
 
-
-        # -----------------------------------------------------
-        # Rechnungen
-        # -----------------------------------------------------
+            return " - ".join(parts) if parts else "Prüfungen"
 
         if self.widget_type == "rechnung":
-
             if self.rechnung_status:
+                return f"Rechnungen - {self.get_rechnung_status_display()}"
 
-                return (
-                    f"Rechnungen - "
-                    f"{self.get_rechnung_status_display()}"
-                )
-
-
-        # -----------------------------------------------------
-        # Standard
-        # -----------------------------------------------------
+        if self.widget_type == "bestellungen":
+            if self.bestellung_status:
+                return f"Bestellungen - {self.get_bestellung_status_display()}"
 
         return self.get_widget_type_display()
 
-
-    # =========================================================
+    # =====================================================
     # SAVE
-    # =========================================================
+    # =====================================================
 
     def save(self, *args, **kwargs):
 
-        # -----------------------------------------------------
-        # Geräteübersicht
-        # -----------------------------------------------------
-
         if self.widget_type == "devices_overview":
-
             self.icon = "bi-grid"
 
-
-        # -----------------------------------------------------
-        # Geräte
-        # -----------------------------------------------------
-
         elif self.widget_type == "devices":
-
             self.icon = "bi-hospital"
 
-
-        # -----------------------------------------------------
-        # Reparaturen
-        # -----------------------------------------------------
-
         elif self.widget_type == "repairs":
-
             self.icon = "bi-tools"
 
-
-        # -----------------------------------------------------
-        # Filterwechsel
-        # -----------------------------------------------------
-
         elif self.widget_type == "filter_history":
-
             self.icon = "bi-filter"
 
-
-        # -----------------------------------------------------
-        # Prüfungsart
-        # -----------------------------------------------------
-
         elif self.widget_type == "pruefart":
-
             self.icon = "bi-calendar-check"
 
-
-        # -----------------------------------------------------
-        # Rechnungen
-        # -----------------------------------------------------
-
         elif self.widget_type == "rechnung":
-
             self.icon = "bi-file-earmark-text"
 
-
-        # -----------------------------------------------------
-        # Dokumente
-        # -----------------------------------------------------
+        elif self.widget_type == "bestellungen":
+            self.icon = "bi-cart-check"
 
         elif self.widget_type in [
-
             "device_documents",
             "technician_documents"
-
         ]:
-
             self.icon = "bi-file-earmark-text"
-
 
         super().save(*args, **kwargs)
 
-
-    # =========================================================
+    # =====================================================
     # STRING
-    # =========================================================
+    # =====================================================
 
     def __str__(self):
-
         return self.display_title
-
     
     
 class SystemUpdate(models.Model):

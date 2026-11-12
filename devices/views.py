@@ -2644,7 +2644,6 @@ def dashboard(request):
     search = request.GET.get("search", "").strip()
 
     if search:
-
         devices = devices.filter(
             Q(name__icontains=search)
             | Q(inventory_number__icontains=search)
@@ -2660,10 +2659,7 @@ def dashboard(request):
     status = request.GET.get("status", "").strip()
 
     if status:
-
-        devices = devices.filter(
-            status=status
-        )
+        devices = devices.filter(status=status)
 
     # =====================================================
     # SORTIERUNG
@@ -2672,78 +2668,50 @@ def dashboard(request):
     sort = request.GET.get("sort", "").strip()
 
     if sort == "inventory_number":
-
-        devices = devices.order_by(
-            "inventory_number"
-        )
+        devices = devices.order_by("inventory_number")
 
     elif sort == "-inventory_number":
-
-        devices = devices.order_by(
-            "-inventory_number"
-        )
+        devices = devices.order_by("-inventory_number")
 
     elif sort == "operating_hours":
-
         devices = (
             devices
-            .filter(
-                operating_hours__isnull=False
-            )
-            .order_by(
-                "operating_hours"
-            )
+            .filter(operating_hours__isnull=False)
+            .order_by("operating_hours")
         )
 
     elif sort == "-operating_hours":
-
         devices = (
             devices
-            .filter(
-                operating_hours__isnull=False
-            )
-            .order_by(
-                "-operating_hours"
-            )
+            .filter(operating_hours__isnull=False)
+            .order_by("-operating_hours")
         )
 
     elif sort == "practice":
-
-        devices = devices.order_by(
-            "practice__name"
-        )
+        devices = devices.order_by("practice__name")
 
     elif sort == "-practice":
-
-        devices = devices.order_by(
-            "-practice__name"
-        )
+        devices = devices.order_by("-practice__name")
 
     elif sort == "next_pruefung":
-
         devices = (
             devices
             .filter(
                 pruefungen__aktiv=True,
                 pruefungen__naechstes_datum__isnull=False
             )
-            .order_by(
-                "pruefungen__naechstes_datum"
-            )
+            .order_by("pruefungen__naechstes_datum")
             .distinct()
         )
 
     elif sort == "-next_pruefung":
-
         devices = (
             devices
             .filter(
                 pruefungen__aktiv=True,
                 pruefungen__naechstes_datum__isnull=False
             )
-            .order_by(
-                "-pruefungen__naechstes_datum"
-            )
+            .order_by("-pruefungen__naechstes_datum")
             .distinct()
         )
 
@@ -2777,10 +2745,6 @@ def dashboard(request):
 
     # =====================================================
     # PRÜFUNGEN
-    #
-    # Neues System:
-    # Nur "Prüfungsart"
-    # Keine STK / MTK / DGUV mehr
     # =====================================================
 
     pruefungen = (
@@ -2813,7 +2777,6 @@ def dashboard(request):
 
     # =====================================================
     # DASHBOARD WIDGETS
-    # Jeder Benutzer sieht nur seine eigenen Widgets
     # =====================================================
 
     dashboard_widgets = (
@@ -2823,14 +2786,11 @@ def dashboard(request):
             visible=True
         )
         .select_related(
-            
             "standort",
             "geraetart",
             "pruefart"
         )
-        .order_by(
-            "order"
-        )
+        .order_by("order")
     )
 
     # =====================================================
@@ -2838,10 +2798,6 @@ def dashboard(request):
     # =====================================================
 
     for widget in dashboard_widgets:
-
-        # =================================================
-        # STANDARD
-        # =================================================
 
         widget.value = 0
         widget.url = None
@@ -2854,60 +2810,34 @@ def dashboard(request):
 
             qs = Device.objects.all()
 
-            # -------------------------
-            # STANDORT
-            # -------------------------
-
             if widget.standort:
-
                 qs = qs.filter(
                     practice=widget.standort
                 )
 
-            # -------------------------
-            # GERÄTEART
-            # -------------------------
-
             if widget.geraetart:
-
                 qs = qs.filter(
                     geraetart=widget.geraetart
                 )
 
-            # -------------------------
-            # WERT
-            # -------------------------
-
             widget.value = qs.count()
 
-            # -------------------------
-            # LINK
-            # -------------------------
-
-            widget.url = reverse(
-                "device_list"
-            )
+            widget.url = reverse("device_list")
 
             params = []
 
             if widget.standort:
-
                 params.append(
                     f"practice={widget.standort.id}"
                 )
 
             if widget.geraetart:
-
                 params.append(
                     f"geraetart={widget.geraetart.id}"
                 )
 
             if params:
-
-                widget.url += (
-                    "?"
-                    + "&".join(params)
-                )
+                widget.url += "?" + "&".join(params)
 
         # =================================================
         # GERÄTEÜBERSICHT
@@ -2917,9 +2847,7 @@ def dashboard(request):
 
             widget.value = Device.objects.count()
 
-            widget.url = reverse(
-                "device_list"
-            )
+            widget.url = reverse("device_list")
 
         # =================================================
         # REPARATUREN
@@ -2930,60 +2858,30 @@ def dashboard(request):
             qs = Reparatur.objects.all()
 
             status_map = {
-
-                "offen":
-                    "Offen",
-
-                "in_bearbeitung":
-                    "In Bearbeitung",
-
-                "erledigt":
-                    "Erledigt",
-
+                "offen": "Offen",
+                "in_bearbeitung": "In Bearbeitung",
+                "erledigt": "Erledigt",
             }
-
-            # -------------------------
-            # STATUS FILTER
-            # -------------------------
 
             reparatur_status = None
 
             if widget.reparatur_status:
-
-                reparatur_status = (
-                    status_map.get(
-                        widget.reparatur_status
-                    )
+                reparatur_status = status_map.get(
+                    widget.reparatur_status
                 )
 
             if reparatur_status:
-
-                qs = qs.filter(
-                    status=reparatur_status
-                )
-
-            # -------------------------
-            # WERT
-            # -------------------------
+                qs = qs.filter(status=reparatur_status)
 
             widget.value = qs.count()
 
-            # -------------------------
-            # LINK
-            # -------------------------
-
             if reparatur_status == "Erledigt":
-
-                # Erledigte Reparaturen
-                # befinden sich in der Historie
 
                 widget.url = reverse(
                     "reparatur_historie"
                 )
 
             else:
-
-                # Offen / In Bearbeitung
 
                 widget.url = reverse(
                     "reparatur_uebersicht"
@@ -2993,15 +2891,9 @@ def dashboard(request):
 
                     from urllib.parse import urlencode
 
-                    widget.url += (
-                        "?"
-                        + urlencode(
-                            {
-                                "status":
-                                    reparatur_status
-                            }
-                        )
-                    )
+                    widget.url += "?" + urlencode({
+                        "status": reparatur_status
+                    })
 
         # =================================================
         # FILTERWECHSEL
@@ -3009,9 +2901,7 @@ def dashboard(request):
 
         elif widget.widget_type == "filter_history":
 
-            widget.value = (
-                Filterwechsel.objects.count()
-            )
+            widget.value = Filterwechsel.objects.count()
 
             widget.url = reverse(
                 "filterwechsel_history"
@@ -3029,19 +2919,10 @@ def dashboard(request):
                 naechstes_datum__isnull=False
             )
 
-            # -------------------------
-            # PRÜFUNGSART
-            # -------------------------
-
             if widget.pruefart:
-
                 qs = qs.filter(
                     pruefart=widget.pruefart
                 )
-
-            # -------------------------
-            # STATUS
-            # -------------------------
 
             if widget.pruef_status == "gueltig":
 
@@ -3062,48 +2943,26 @@ def dashboard(request):
                     naechstes_datum__lt=heute
                 )
 
-            # -------------------------
-            # WERT
-            # -------------------------
-
             widget.value = qs.count()
-
-            # -------------------------
-            # LINK
-            # -------------------------
 
             if widget.pruefart:
 
                 widget.url = reverse(
                     "faellige_pruefung",
-                    args=[
-                        widget.pruefart.id
-                    ]
+                    args=[widget.pruefart.id]
                 )
-
-                # =============================================
-                # PRÜFUNGS STATUS AN URL ÜBERGEBEN
-                # =============================================
 
                 if widget.pruef_status:
 
                     from urllib.parse import urlencode
 
-                    widget.url += (
-                        "?"
-                        + urlencode(
-                            {
-                                "status":
-                                    widget.pruef_status
-                            }
-                        )
-                    )
+                    widget.url += "?" + urlencode({
+                        "status": widget.pruef_status
+                    })
 
             else:
 
-                widget.url = reverse(
-                    "device_list"
-                )
+                widget.url = reverse("device_list")
 
         # =================================================
         # RECHNUNGEN
@@ -3112,31 +2971,17 @@ def dashboard(request):
         elif widget.widget_type == "rechnung":
 
             status_map = {
-
-                "offen":
-                    "Offen",
-
-                "in_bearbeitung":
-                    "In Bearbeitung",
-
-                "erledigt":
-                    "Erledigt",
-
+                "offen": "Offen",
+                "in_bearbeitung": "In Bearbeitung",
+                "erledigt": "Erledigt",
             }
 
             rechnung_status = None
 
             if widget.rechnung_status:
-
-                rechnung_status = (
-                    status_map.get(
-                        widget.rechnung_status
-                    )
+                rechnung_status = status_map.get(
+                    widget.rechnung_status
                 )
-
-            # -------------------------
-            # ERLEDIGT
-            # -------------------------
 
             if rechnung_status == "Erledigt":
 
@@ -3150,21 +2995,13 @@ def dashboard(request):
                     "rechnung_historie"
                 )
 
-            # -------------------------
-            # OFFEN / IN BEARBEITUNG
-            # -------------------------
-
             else:
 
-                qs = (
-                    Rechnung.objects
-                    .exclude(
-                        status="Erledigt"
-                    )
+                qs = Rechnung.objects.exclude(
+                    status="Erledigt"
                 )
 
                 if rechnung_status:
-
                     qs = qs.filter(
                         status=rechnung_status
                     )
@@ -3179,15 +3016,43 @@ def dashboard(request):
 
                     from urllib.parse import urlencode
 
-                    widget.url += (
-                        "?"
-                        + urlencode(
-                            {
-                                "status":
-                                    rechnung_status
-                            }
-                        )
-                    )
+                    widget.url += "?" + urlencode({
+                        "status": rechnung_status
+                    })
+
+        # =================================================
+        # BESTELLUNGEN
+        # =================================================
+
+        elif widget.widget_type == "bestellungen":
+
+            qs = Bestellung.objects.all()
+
+            # STATUS FILTER
+
+            if widget.bestellung_status:
+
+                qs = qs.filter(
+                    status=widget.bestellung_status
+                )
+
+            # ANZAHL
+
+            widget.value = qs.count()
+
+            # LINK
+            # Vorläufig zurück zum Dashboard mit Statusparameter
+
+            from urllib.parse import urlencode
+
+            widget.url = (
+                reverse("dashboard")
+                + "?"
+                + urlencode({
+                    "bestellung_status":
+                        widget.bestellung_status or ""
+                })
+            )
 
         # =================================================
         # MEDIZINGERÄTE-DOKUMENTE
@@ -3195,13 +3060,9 @@ def dashboard(request):
 
         elif widget.widget_type == "device_documents":
 
-            widget.value = (
-                DeviceDocument.objects.count()
-            )
+            widget.value = DeviceDocument.objects.count()
 
-            widget.url = reverse(
-                "documents"
-            )
+            widget.url = reverse("documents")
 
         # =================================================
         # TECHNIKER-DOKUMENTE
@@ -3209,13 +3070,9 @@ def dashboard(request):
 
         elif widget.widget_type == "technician_documents":
 
-            widget.value = (
-                TechnicianDocument.objects.count()
-            )
+            widget.value = TechnicianDocument.objects.count()
 
-            widget.url = reverse(
-                "technician_documents"
-            )
+            widget.url = reverse("technician_documents")
 
         # =================================================
         # UNBEKANNTER WIDGET-TYP
@@ -3232,65 +3089,24 @@ def dashboard(request):
 
     context = {
 
-        "devices":
-            devices,
+        "devices": devices,
+        "search": search,
+        "status": status,
 
-        "search":
-            search,
+        "offene_reparaturen": offene_reparaturen,
+        "reparaturen_bearbeitung": reparaturen_bearbeitung,
+        "reparaturen_erledigt": reparaturen_erledigt,
 
-        "status":
-            status,
+        "pruefungen": pruefungen,
 
-        # -------------------------------------------------
-        # REPARATUREN
-        # -------------------------------------------------
+        "luebeck_total": luebeck_total,
+        "ratzeburg_total": ratzeburg_total,
 
-        "offene_reparaturen":
-            offene_reparaturen,
+        "geraete_uebersicht": geraete_uebersicht,
 
-        "reparaturen_bearbeitung":
-            reparaturen_bearbeitung,
+        "dashboard_settings": dashboard_settings,
 
-        "reparaturen_erledigt":
-            reparaturen_erledigt,
-
-        # -------------------------------------------------
-        # PRÜFUNGEN
-        # -------------------------------------------------
-
-        "pruefungen":
-            pruefungen,
-
-        # -------------------------------------------------
-        # STANDORTE
-        # -------------------------------------------------
-
-        "luebeck_total":
-            luebeck_total,
-
-        "ratzeburg_total":
-            ratzeburg_total,
-
-        # -------------------------------------------------
-        # GERÄTEÜBERSICHT
-        # -------------------------------------------------
-
-        "geraete_uebersicht":
-            geraete_uebersicht,
-
-        # -------------------------------------------------
-        # DASHBOARD EINSTELLUNGEN
-        # -------------------------------------------------
-
-        "dashboard_settings":
-            dashboard_settings,
-
-        # -------------------------------------------------
-        # DASHBOARD WIDGETS
-        # -------------------------------------------------
-
-        "dashboard_widgets":
-            dashboard_widgets,
+        "dashboard_widgets": dashboard_widgets,
     }
 
     return render(
@@ -3298,6 +3114,7 @@ def dashboard(request):
         "devices/dashboard.html",
         context
     )
+
 
 @login_required
 def dashboard_settings(request):
@@ -10883,31 +10700,21 @@ def dashboard_widget_create(request):
         # WIDGET-TYP
         # =====================================================
 
-        widget.widget_type = request.POST.get(
-            "widget_type"
-        )
+        widget.widget_type = request.POST.get("widget_type")
 
         # =====================================================
         # TITEL
         # =====================================================
 
-        widget.title = request.POST.get(
-            "title"
-        )
+        widget.title = request.POST.get("title")
 
         # =====================================================
         # STANDORT
-        # Nur für Geräte
         # =====================================================
 
-        standort_id = request.POST.get(
-            "standort"
-        )
+        standort_id = request.POST.get("standort")
 
-        if (
-            widget.widget_type == "devices"
-            and standort_id
-        ):
+        if widget.widget_type == "devices" and standort_id:
 
             widget.standort = get_object_or_404(
                 Standort,
@@ -10915,22 +10722,15 @@ def dashboard_widget_create(request):
             )
 
         else:
-
             widget.standort = None
 
         # =====================================================
         # GERÄTART
-        # Nur für Geräte
         # =====================================================
 
-        geraetart_id = request.POST.get(
-            "geraetart"
-        )
+        geraetart_id = request.POST.get("geraetart")
 
-        if (
-            widget.widget_type == "devices"
-            and geraetart_id
-        ):
+        if widget.widget_type == "devices" and geraetart_id:
 
             widget.geraetart = get_object_or_404(
                 Geraetart,
@@ -10938,7 +10738,6 @@ def dashboard_widget_create(request):
             )
 
         else:
-
             widget.geraetart = None
 
         # =====================================================
@@ -10948,28 +10747,19 @@ def dashboard_widget_create(request):
         if widget.widget_type == "repairs":
 
             widget.reparatur_status = (
-                request.POST.get(
-                    "reparatur_status"
-                )
-                or None
+                request.POST.get("reparatur_status") or None
             )
 
         else:
-
             widget.reparatur_status = None
 
         # =====================================================
         # PRÜFUNGSART
         # =====================================================
 
-        pruefart_id = request.POST.get(
-            "pruefart"
-        )
+        pruefart_id = request.POST.get("pruefart")
 
-        if (
-            widget.widget_type == "pruefart"
-            and pruefart_id
-        ):
+        if widget.widget_type == "pruefart" and pruefart_id:
 
             widget.pruefart = get_object_or_404(
                 Pruefart,
@@ -10977,7 +10767,6 @@ def dashboard_widget_create(request):
             )
 
         else:
-
             widget.pruefart = None
 
         # =====================================================
@@ -10987,14 +10776,10 @@ def dashboard_widget_create(request):
         if widget.widget_type == "pruefart":
 
             widget.pruef_status = (
-                request.POST.get(
-                    "pruef_status"
-                )
-                or None
+                request.POST.get("pruef_status") or None
             )
 
         else:
-
             widget.pruef_status = None
 
         # =====================================================
@@ -11004,50 +10789,48 @@ def dashboard_widget_create(request):
         if widget.widget_type == "rechnung":
 
             widget.rechnung_status = (
-                request.POST.get(
-                    "rechnung_status"
-                )
-                or None
+                request.POST.get("rechnung_status") or None
             )
 
         else:
-
             widget.rechnung_status = None
+
+        # =====================================================
+        # BESTELLUNG STATUS
+        # =====================================================
+
+        if widget.widget_type == "bestellungen":
+
+            widget.bestellung_status = (
+                request.POST.get("bestellung_status") or None
+            )
+
+        else:
+            widget.bestellung_status = None
 
         # =====================================================
         # SICHTBAR
         # =====================================================
 
-        widget.visible = (
-            request.POST.get("visible") == "on"
-        )
+        widget.visible = request.POST.get("visible") == "on"
 
         # =====================================================
         # REIHENFOLGE
         # =====================================================
 
-        widget.order = (
-            request.POST.get("order")
-            or 0
-        )
+        widget.order = request.POST.get("order") or 0
 
         # =====================================================
         # FARBE
         # =====================================================
 
-        widget.color = (
-            request.POST.get("color")
-            or "primary"
-        )
+        widget.color = request.POST.get("color") or "primary"
 
         # =====================================================
         # ICON
         # =====================================================
 
-        widget.icon = (
-            request.POST.get("icon")
-            or "bi-grid"
-        )
+        widget.icon = request.POST.get("icon") or "bi-grid"
 
         # =====================================================
         # SPEICHERN
@@ -11060,25 +10843,17 @@ def dashboard_widget_create(request):
             "Dashboard Widget erstellt."
         )
 
-        return redirect(
-            "dashboard_widgets"
-        )
+        return redirect("dashboard_widgets")
 
     return render(
         request,
         "devices/dashboard_widget_form.html",
         {
-            "standorte": Standort.objects.filter(
-                active=True
-            ),
+            "standorte": Standort.objects.filter(active=True),
 
-            "geraetarten": Geraetart.objects.filter(
-                aktiv=True
-            ),
+            "geraetarten": Geraetart.objects.filter(aktiv=True),
 
-            "pruefarten": Pruefart.objects.all().order_by(
-                "name"
-            ),
+            "pruefarten": Pruefart.objects.all().order_by("name"),
 
             "types": DashboardWidget.WIDGET_TYPES,
 
@@ -11090,6 +10865,9 @@ def dashboard_widget_create(request):
 
             "reparatur_status_choices":
                 DashboardWidget.REPARATUR_STATUS_CHOICES,
+
+            "bestellung_status_choices":
+                DashboardWidget.BESTELLUNG_STATUS_CHOICES,
         }
     )
 
@@ -11117,30 +10895,21 @@ def dashboard_widget_edit(request, id):
         # WIDGET-TYP
         # =====================================================
 
-        widget.widget_type = request.POST.get(
-            "widget_type"
-        )
+        widget.widget_type = request.POST.get("widget_type")
 
         # =====================================================
         # TITEL
         # =====================================================
 
-        widget.title = request.POST.get(
-            "title"
-        )
+        widget.title = request.POST.get("title")
 
         # =====================================================
         # STANDORT
         # =====================================================
 
-        standort_id = request.POST.get(
-            "standort"
-        )
+        standort_id = request.POST.get("standort")
 
-        if (
-            widget.widget_type == "devices"
-            and standort_id
-        ):
+        if widget.widget_type == "devices" and standort_id:
 
             widget.standort = get_object_or_404(
                 Standort,
@@ -11148,21 +10917,15 @@ def dashboard_widget_edit(request, id):
             )
 
         else:
-
             widget.standort = None
 
         # =====================================================
         # GERÄTART
         # =====================================================
 
-        geraetart_id = request.POST.get(
-            "geraetart"
-        )
+        geraetart_id = request.POST.get("geraetart")
 
-        if (
-            widget.widget_type == "devices"
-            and geraetart_id
-        ):
+        if widget.widget_type == "devices" and geraetart_id:
 
             widget.geraetart = get_object_or_404(
                 Geraetart,
@@ -11170,7 +10933,6 @@ def dashboard_widget_edit(request, id):
             )
 
         else:
-
             widget.geraetart = None
 
         # =====================================================
@@ -11180,28 +10942,19 @@ def dashboard_widget_edit(request, id):
         if widget.widget_type == "repairs":
 
             widget.reparatur_status = (
-                request.POST.get(
-                    "reparatur_status"
-                )
-                or None
+                request.POST.get("reparatur_status") or None
             )
 
         else:
-
             widget.reparatur_status = None
 
         # =====================================================
         # PRÜFUNGSART
         # =====================================================
 
-        pruefart_id = request.POST.get(
-            "pruefart"
-        )
+        pruefart_id = request.POST.get("pruefart")
 
-        if (
-            widget.widget_type == "pruefart"
-            and pruefart_id
-        ):
+        if widget.widget_type == "pruefart" and pruefart_id:
 
             widget.pruefart = get_object_or_404(
                 Pruefart,
@@ -11209,7 +10962,6 @@ def dashboard_widget_edit(request, id):
             )
 
         else:
-
             widget.pruefart = None
 
         # =====================================================
@@ -11219,14 +10971,10 @@ def dashboard_widget_edit(request, id):
         if widget.widget_type == "pruefart":
 
             widget.pruef_status = (
-                request.POST.get(
-                    "pruef_status"
-                )
-                or None
+                request.POST.get("pruef_status") or None
             )
 
         else:
-
             widget.pruef_status = None
 
         # =====================================================
@@ -11236,58 +10984,48 @@ def dashboard_widget_edit(request, id):
         if widget.widget_type == "rechnung":
 
             widget.rechnung_status = (
-                request.POST.get(
-                    "rechnung_status"
-                )
-                or None
+                request.POST.get("rechnung_status") or None
             )
 
         else:
-
             widget.rechnung_status = None
+
+        # =====================================================
+        # BESTELLUNG STATUS
+        # =====================================================
+
+        if widget.widget_type == "bestellungen":
+
+            widget.bestellung_status = (
+                request.POST.get("bestellung_status") or None
+            )
+
+        else:
+            widget.bestellung_status = None
 
         # =====================================================
         # FARBE
         # =====================================================
 
-        widget.color = (
-            request.POST.get(
-                "color"
-            )
-            or "primary"
-        )
+        widget.color = request.POST.get("color") or "primary"
 
         # =====================================================
         # ICON
         # =====================================================
 
-        widget.icon = (
-            request.POST.get(
-                "icon"
-            )
-            or "bi-grid"
-        )
+        widget.icon = request.POST.get("icon") or "bi-grid"
 
         # =====================================================
         # REIHENFOLGE
         # =====================================================
 
-        widget.order = (
-            request.POST.get(
-                "order"
-            )
-            or 0
-        )
+        widget.order = request.POST.get("order") or 0
 
         # =====================================================
         # SICHTBAR
         # =====================================================
 
-        widget.visible = (
-            request.POST.get(
-                "visible"
-            ) == "on"
-        )
+        widget.visible = request.POST.get("visible") == "on"
 
         # =====================================================
         # SPEICHERN
@@ -11300,9 +11038,7 @@ def dashboard_widget_edit(request, id):
             "Dashboard Widget geändert."
         )
 
-        return redirect(
-            "dashboard_widgets"
-        )
+        return redirect("dashboard_widgets")
 
     # =========================================================
     # GET
@@ -11314,17 +11050,11 @@ def dashboard_widget_edit(request, id):
         {
             "widget": widget,
 
-            "standorte": Standort.objects.filter(
-                active=True
-            ),
+            "standorte": Standort.objects.filter(active=True),
 
-            "geraetarten": Geraetart.objects.filter(
-                aktiv=True
-            ),
+            "geraetarten": Geraetart.objects.filter(aktiv=True),
 
-            "pruefarten": Pruefart.objects.all().order_by(
-                "name"
-            ),
+            "pruefarten": Pruefart.objects.all().order_by("name"),
 
             "types": DashboardWidget.WIDGET_TYPES,
 
@@ -11336,6 +11066,9 @@ def dashboard_widget_edit(request, id):
 
             "reparatur_status_choices":
                 DashboardWidget.REPARATUR_STATUS_CHOICES,
+
+            "bestellung_status_choices":
+                DashboardWidget.BESTELLUNG_STATUS_CHOICES,
         }
     )
 

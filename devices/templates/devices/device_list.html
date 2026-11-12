@@ -254,7 +254,7 @@
                 <!-- BETRIEBSSTUNDEN -->
                 <!-- ================================================= -->
                 <td>
-                    {% if device.geraetart and device.geraetart.name == "Dialyse Maschinen" %}
+                    {% if device.geraetart and device.geraetart.name == "Maschinen" %}
                         {{ device.operating_hours|default:"-" }}
                     {% else %}
                         -

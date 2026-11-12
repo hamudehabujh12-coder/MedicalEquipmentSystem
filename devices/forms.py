@@ -685,25 +685,70 @@ class DashboardWidgetForm(forms.ModelForm):
 
     class Meta:
         model = DashboardWidget
+
         fields = [
             "widget_type",
             "title",
             "standort",
             "geraetart",
+            "reparatur_status",
+            "pruefart",
+            "pruef_status",
+            "rechnung_status",
+            "bestellung_status",
             "color",
             "order",
             "visible",
         ]
 
         widgets = {
-            "widget_type": forms.Select(attrs={"class": "form-control"}),
-            "title": forms.TextInput(attrs={"class": "form-control"}),
-            "standort": forms.Select(attrs={"class": "form-control"}),
-            "geraetart": forms.Select(attrs={"class": "form-control"}),
-            "color": forms.Select(attrs={"class": "form-control"}),
-            "icon": forms.Select(attrs={"class": "form-control"}),
-            "order": forms.NumberInput(attrs={"class": "form-control"}),
-            "visible": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "widget_type": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "title": forms.TextInput(attrs={
+                "class": "form-control"
+            }),
+
+            "standort": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "geraetart": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "reparatur_status": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "pruefart": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "pruef_status": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "rechnung_status": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "bestellung_status": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "color": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "order": forms.NumberInput(attrs={
+                "class": "form-control"
+            }),
+
+            "visible": forms.CheckboxInput(attrs={
+                "class": "form-check-input"
+            }),
         }
 
 # =========================================================
