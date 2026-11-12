@@ -3031,7 +3031,6 @@ def dashboard(request):
             # STATUS FILTER
 
             if widget.bestellung_status:
-
                 qs = qs.filter(
                     status=widget.bestellung_status
                 )
@@ -3041,18 +3040,18 @@ def dashboard(request):
             widget.value = qs.count()
 
             # LINK
-            # Vorläufig zurück zum Dashboard mit Statusparameter
 
-            from urllib.parse import urlencode
+            if widget.bestellung_status == "Erledigt":
 
-            widget.url = (
-                reverse("dashboard")
-                + "?"
-                + urlencode({
-                    "bestellung_status":
-                        widget.bestellung_status or ""
-                })
-            )
+                widget.url = reverse(
+                    "bestellung_historie"
+                )
+
+            else:
+
+                widget.url = reverse(
+                    "bestellung_uebersicht"
+                )
 
         # =================================================
         # MEDIZINGERÄTE-DOKUMENTE
